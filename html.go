@@ -577,10 +577,10 @@ func Canvas(args ...any) Element {
 	return newElem("canvas", args...)
 }
 
-// MapElement is used with &lt;area&gt; elements to define an image map (a clickable link area).
+// Map is used with &lt;area&gt; elements to define an image map (a clickable link area).
 //
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/map
-func MapElement(args ...any) Element {
+func Map(args ...any) Element {
 	return newElem("map", args...)
 }
 
