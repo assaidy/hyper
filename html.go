@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"maps"
 	"slices"
 	"strings"
 )
@@ -158,17 +159,19 @@ func (me Element) renderChildren(w io.Writer) error {
 func newElem(tag string, args ...any) Element {
 	e := Element{Tag: tag}
 	for _, arg := range args {
+		// Note: nil arguments are not checked/filtered - fmt.Sprint() will render them as "Nil",
+		// which is intentional for better debugging (makes it obvious when nil values are passed).
 		switch value := arg.(type) {
 		case KV:
 			if e.Attrs == nil {
 				e.Attrs = value
 			} else {
-				for k, v := range value {
-					e.Attrs[k] = v
-				}
+				maps.Copy(e.Attrs, value)
 			}
 		case Node:
 			e.Children = append(e.Children, value)
+		// Explicit string and fmt.Stringer cases for performance:
+		// fmt.Sprint() would handle these, but with overhead from type inspection and buffer allocation.
 		case string:
 			e.Children = append(e.Children, textNode(value))
 		case fmt.Stringer:
@@ -182,8 +185,8 @@ func newElem(tag string, args ...any) Element {
 
 func newVoidElem(tag string, attrs ...KV) Element {
 	e := Element{Tag: tag, IsVoid: true}
-	if len(attrs) > 0 {
-		e.Attrs = attrs[0]
+	for _, attr := range attrs {
+		maps.Copy(e.Attrs, attr)
 	}
 	return e
 }
