@@ -56,7 +56,7 @@ func If(condition bool, result Node) Node {
 //		}),
 //	)
 func Repeat(n int, f func() Node) Node {
-	result := Empty()
+	result := newElem("")
 	for range n {
 		result.Children = append(result.Children, f())
 	}
@@ -77,7 +77,7 @@ func Repeat(n int, f func() Node) Node {
 //		}),
 //	)
 func MapSlice[T any](input []T, f func(T) Node) Node {
-	result := Empty()
+	result := newElem("")
 	for _, item := range input {
 		result.Children = append(result.Children, f(item))
 	}

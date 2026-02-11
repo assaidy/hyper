@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/assaidy/gg"
+	"github.com/assaidy/g"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/assaidy/gg"
+	"github.com/assaidy/g"
 )
 
 func getBenchmarkData() []User {

@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/assaidy/gg"
+	"github.com/assaidy/g"
 )
 
 func main() {

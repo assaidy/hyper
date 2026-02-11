@@ -1,0 +1,160 @@
+package g_vs_templ
+
+// Benchmark 1: Simple Element
+templ SimpleElementTempl() {
+	<div>Hello World</div>
+}
+
+// Benchmark 2: Deep Nesting
+templ DeepNestingTempl() {
+	<div>
+		<div>
+			<div>
+				<div>
+					<div>
+						<p>Deep content</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// Benchmark 3: Many Attributes
+templ ManyAttributesTempl() {
+	<div
+		id="main"
+		class="container wrapper"
+		data-role="content"
+		data-value="12345"
+		aria-label="Main content"
+		hidden
+	>
+	</div>
+}
+
+// Benchmark 4: Large Text
+templ LargeTextTempl(text string) {
+	<p>{ text }</p>
+}
+
+// Benchmark 5 & 6: List Iteration
+templ ListTempl(items []string) {
+	<ul>
+		for _, item := range items {
+			<li>{ item }</li>
+		}
+	</ul>
+}
+
+// Benchmark 7: Complex Conditionals
+templ ConditionalsTempl(first, second, third bool) {
+	<div>
+		if first {
+			<span>First</span>
+		}
+		if second {
+			<span>Second</span>
+		}
+		if third {
+			<span>Third</span>
+		}
+		if true {
+			<strong>True</strong>
+		} else {
+			<em>False</em>
+		}
+	</div>
+}
+
+// Benchmark 8: Mixed Content
+templ MixedContentTempl() {
+	<div>
+		<h1>Title</h1>
+		<p>Paragraph with <strong>bold</strong> and <em>italic</em> text.</p>
+		<ul>
+			<li>Item 1</li>
+			<li><a href="#">Link</a></li>
+		</ul>
+		<div class="footer">
+			<small>Copyright 2024</small>
+		</div>
+	</div>
+}
+
+// Benchmark 9: Void Elements
+templ VoidElementsTempl() {
+	<div>
+		<img src="image.jpg" alt="Image"/>
+		<br/>
+		<hr/>
+		<input type="text" value="input"/>
+		<meta charset="UTF-8"/>
+		<link rel="stylesheet" href="style.css"/>
+	</div>
+}
+
+// Benchmark 10: HTML Escaping
+templ HTMLEscapingTempl(content string) {
+	<div>{ content }</div>
+}
+
+// Benchmark 11: Table
+templ TableTempl(rows int) {
+	<table>
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Value</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+			for i := 0; i < rows; i++ {
+				<tr>
+					<td>Cell 1</td>
+					<td>Cell 2</td>
+					<td><button>Click</button></td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+// Benchmark 12: Form Elements
+templ FormTempl() {
+	<form action="/submit" method="POST">
+		<fieldset>
+			<legend>User Form</legend>
+			<label for="name">Name:</label>
+			<input type="text" id="name" name="name"/>
+			<br/>
+			<label for="email">Email:</label>
+			<input type="email" id="email" name="email"/>
+			<br/>
+			<button type="submit">Submit</button>
+		</fieldset>
+	</form>
+}
+
+// Benchmark 13: Real World Page (already defined in page.templ as Page)
+// Using Page(users []User) from page.templ
+
+// Benchmark 14: Empty Page
+templ EmptyPageTempl() {
+	<html>
+		<body></body>
+	</html>
+}
+
+// Benchmark 15: RawHTML
+templ RawHTMLTempl(html string) {
+	@templ.Raw(html)
+}
+
+// Benchmark 16: SVG
+templ SVGTempl() {
+	<svg width="100" height="100">
+		<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red"/>
+	</svg>
+}

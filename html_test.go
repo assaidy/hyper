@@ -128,7 +128,7 @@ func TestTextNode_Render_Error(t *testing.T) {
 func TestElement_Render(t *testing.T) {
 	tests := []struct {
 		name     string
-		element  Element
+		element  Node
 		expected string
 		wantErr  bool
 	}{
@@ -146,7 +146,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Div with text child (auto-escaped string)",
-			element: func() Element {
+			element: func() Node {
 				return Div("Hello World")
 			}(),
 			expected: "<div>Hello World</div>",
@@ -154,7 +154,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Div with multiple string children",
-			element: func() Element {
+			element: func() Node {
 				return Div("Hello", " ", "World")
 			}(),
 			expected: "<div>Hello World</div>",
@@ -162,7 +162,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Div with auto-escaped HTML string",
-			element: func() Element {
+			element: func() Node {
 				return Div("<script>alert('xss')</script>")
 			}(),
 			expected: "<div>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</div>",
@@ -170,7 +170,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Div with RawHTML (unescaped)",
-			element: func() Element {
+			element: func() Node {
 				return Div(RawHTML("<script>alert('xss')</script>"))
 			}(),
 			expected: "<div><script>alert('xss')</script></div>",
@@ -178,7 +178,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Nested elements with strings",
-			element: func() Element {
+			element: func() Node {
 				return Div(P("Hello"))
 			}(),
 			expected: "<div><p>Hello</p></div>",
@@ -204,7 +204,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Empty element with string children",
-			element: func() Element {
+			element: func() Node {
 				return Empty("Hello")
 			}(),
 			expected: "Hello",
@@ -230,7 +230,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Div with integer (auto-converted)",
-			element: func() Element {
+			element: func() Node {
 				return Div(42)
 			}(),
 			expected: "<div>42</div>",
@@ -238,7 +238,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Div with boolean (auto-converted)",
-			element: func() Element {
+			element: func() Node {
 				return Div(true)
 			}(),
 			expected: "<div>true</div>",
@@ -246,7 +246,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Div with fmt.Stringer (auto-converted)",
-			element: func() Element {
+			element: func() Node {
 				return Div(stringerType("hello from stringer"))
 			}(),
 			expected: "<div>hello from stringer</div>",
@@ -254,7 +254,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Div with mixed types",
-			element: func() Element {
+			element: func() Node {
 				return Div("Count: ", 42, " Active: ", true)
 			}(),
 			expected: "<div>Count: 42 Active: true</div>",
@@ -262,7 +262,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name: "Div with len() result (auto-converted)",
-			element: func() Element {
+			element: func() Node {
 				items := []string{"a", "b", "c"}
 				return Div("Total: ", len(items))
 			}(),
