@@ -5,7 +5,6 @@ import (
 	"html"
 	"io"
 	"maps"
-	"slices"
 	"strings"
 )
 
@@ -87,33 +86,16 @@ func (me Element) Render(w io.Writer) error {
 }
 
 func (me Element) renderAttrs(w io.Writer) error {
-	if len(me.Attrs) == 0 {
-		return nil
-	}
-
-	// for deterministic attrs order (usefull for testing)
-	type kv struct {
-		key   string
-		value any
-	}
-	attrSlice := make([]kv, 0, len(me.Attrs))
 	for key, value := range me.Attrs {
-		attrSlice = append(attrSlice, kv{key, value})
-	}
-	slices.SortFunc(attrSlice, func(a, b kv) int {
-		return strings.Compare(a.key, b.key)
-	})
-
-	for _, attr := range attrSlice {
-		k := strings.TrimSpace(attr.key)
+		k := strings.TrimSpace(key)
 		if k == "" {
 			return fmt.Errorf("empty/whitespace attribute key not allowed.")
 		}
-		if attr.value == nil {
+		if value == nil {
 			return fmt.Errorf("attribute '%s' has nil value", k)
 		}
 
-		switch v := attr.value.(type) {
+		switch v := value.(type) {
 		case string:
 			if _, err := io.WriteString(w, " "); err != nil {
 				return err

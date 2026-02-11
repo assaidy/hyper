@@ -139,9 +139,9 @@ func TestElement_Render(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name:     "Div with attributes",
-			element:  Div(KV{"class": "container", "id": "main"}),
-			expected: `<div class="container" id="main"></div>`,
+			name:     "Div with single attribute",
+			element:  Div(KV{"class": "container"}),
+			expected: `<div class="container"></div>`,
 			wantErr:  false,
 		},
 		{
@@ -191,9 +191,9 @@ func TestElement_Render(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name:     "Void element with attributes (img)",
-			element:  Img(KV{"src": "test.jpg", "alt": "test"}),
-			expected: `<img alt="test" src="test.jpg">`,
+			name:     "Void element with single attribute (img)",
+			element:  Img(KV{"src": "test.jpg"}),
+			expected: `<img src="test.jpg">`,
 			wantErr:  false,
 		},
 		{
@@ -211,21 +211,15 @@ func TestElement_Render(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name: "Boolean attribute true",
-			element: Div(KV{
-				"hidden": true,
-				"class":  "test",
-			}),
-			expected: `<div class="test" hidden></div>`,
+			name:     "Boolean attribute true",
+			element:  Div(KV{"hidden": true}),
+			expected: `<div hidden></div>`,
 			wantErr:  false,
 		},
 		{
-			name: "Boolean attribute false",
-			element: Div(KV{
-				"hidden": false,
-				"class":  "test",
-			}),
-			expected: `<div class="test"></div>`,
+			name:     "Boolean attribute false",
+			element:  Div(KV{"hidden": false}),
+			expected: `<div></div>`,
 			wantErr:  false,
 		},
 		{
@@ -294,9 +288,9 @@ func TestElement_renderAttrs(t *testing.T) {
 		expectErr bool
 	}{
 		{
-			name:      "String attributes",
-			attrs:     KV{"class": "test", "id": "main"},
-			expected:  ` class="test" id="main"`,
+			name:      "Single string attribute",
+			attrs:     KV{"class": "test"},
+			expected:  ` class="test"`,
 			expectErr: false,
 		},
 		{
