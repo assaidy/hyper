@@ -7,6 +7,17 @@ import (
 	"github.com/assaidy/g"
 )
 
+// getBenchmarkData returns sample user data for benchmarks
+func getBenchmarkData() []User {
+	return []User{
+		{Name: "Alice", Admin: true},
+		{Name: "Bob", Admin: false},
+		{Name: "Charlie", Admin: false},
+		{Name: "Diana", Admin: true},
+		{Name: "Eve", Admin: false},
+	}
+}
+
 // ============================================================================
 // BENCHMARK 1: Simple Element
 // Single div with text content
@@ -386,7 +397,7 @@ func BenchmarkRealWorld_Templ(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		Page(users).Render(ctx, &buf)
+		RealWorldTempl(users).Render(ctx, &buf)
 	}
 }
 
@@ -526,4 +537,251 @@ func BenchmarkSVG_G(b *testing.B) {
 		var buf bytes.Buffer
 		gg.Render(&buf, page)
 	}
+}
+
+// ============================================================================
+// CONCURRENT BENCHMARKS: Real Server Load Simulation
+// These benchmarks simulate real-world server scenarios where multiple requests
+// are processed concurrently. This gives you the actual requests/second your
+// library can handle under load.
+// ============================================================================
+
+// buildRealWorldPage creates a realistic full page using many library utilities
+func buildRealWorldPage(users []User) gg.Node {
+	return gg.Empty(
+		gg.DoctypeHTML(),
+		gg.Html(
+			gg.Head(
+				gg.Meta(gg.KV{"charset": "UTF-8"}),
+				gg.Meta(gg.KV{"name": "viewport", "content": "width=device-width, initial-scale=1.0"}),
+				gg.Title(gg.RawHTML("Dashboard - User Management")),
+				gg.Link(gg.KV{"rel": "stylesheet", "href": "/css/main.css"}),
+				gg.Link(gg.KV{"rel": "icon", "href": "/favicon.ico"}),
+			),
+			gg.Body(
+				gg.Header(
+					gg.KV{"class": "site-header"},
+					gg.Nav(
+						gg.KV{"class": "main-nav"},
+						gg.A(gg.KV{"href": "/", "class": "nav-link"}, "Home"),
+						gg.A(gg.KV{"href": "/users", "class": "nav-link active"}, "Users"),
+						gg.A(gg.KV{"href": "/settings", "class": "nav-link"}, "Settings"),
+						gg.A(gg.KV{"href": "/logout", "class": "nav-link"}, "Logout"),
+					),
+				),
+				gg.Main(
+					gg.KV{"class": "main-content"},
+					gg.H1("User Management Dashboard"),
+					gg.P("Welcome to the admin dashboard. Manage users and permissions below."),
+					gg.If(len(users) > 0,
+						gg.Section(
+							gg.KV{"class": "users-section"},
+							gg.H2("Active Users"),
+							gg.Table(
+								gg.KV{"class": "users-table"},
+								gg.Thead(
+									gg.Tr(
+										gg.Th("ID"),
+										gg.Th("Name"),
+										gg.Th("Role"),
+										gg.Th("Status"),
+										gg.Th("Actions"),
+									),
+								),
+								gg.Tbody(
+									gg.MapSlice(users, func(u User) gg.Node {
+										return gg.Tr(
+											gg.Td(gg.Strong("#")),
+											gg.Td(u.Name),
+											gg.Td(gg.IfElse(u.Admin,
+												gg.Span(gg.KV{"class": "badge admin"}, "Administrator"),
+												gg.Span(gg.KV{"class": "badge user"}, "User"),
+											)),
+											gg.Td(gg.Span(gg.KV{"class": "status active"}, "Active")),
+											gg.Td(
+												gg.Button(gg.KV{"class": "btn-edit"}, "Edit"),
+												gg.Button(gg.KV{"class": "btn-delete"}, "Delete"),
+											),
+										)
+									}),
+								),
+							),
+						),
+					),
+					gg.If(len(users) == 0,
+						gg.Div(
+							gg.KV{"class": "empty-state"},
+							gg.P("No users found. Add your first user to get started."),
+						),
+					),
+					gg.Section(
+						gg.KV{"class": "quick-stats"},
+						gg.H3("Quick Stats"),
+						gg.Div(
+							gg.KV{"class": "stats-grid"},
+							gg.Div(
+								gg.KV{"class": "stat-card"},
+								gg.Strong(len(users)),
+								gg.Span("Total Users"),
+							),
+							gg.Div(
+								gg.KV{"class": "stat-card"},
+								gg.Strong(gg.IfElse(len(users) > 0, len(users), 0)),
+								gg.Span("Active Now"),
+							),
+						),
+					),
+				),
+				gg.Footer(
+					gg.KV{"class": "site-footer"},
+					gg.P("2025 Company Inc. All rights reserved."),
+				),
+			),
+		),
+	)
+}
+
+// BenchmarkSequential_RealWorld_G measures single-threaded (sequential) performance
+// This is what you'd see in the standard benchmarks - operations per second on one CPU
+func BenchmarkSequential_RealWorld_G(b *testing.B) {
+	users := getBenchmarkData()
+	page := buildRealWorldPage(users)
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		gg.Render(&buf, page)
+	}
+}
+
+// BenchmarkConcurrent10_RealWorld_G simulates 10 concurrent requests
+// Typical for a small web application under light load
+func BenchmarkConcurrent10_RealWorld_G(b *testing.B) {
+	users := getBenchmarkData()
+	page := buildRealWorldPage(users)
+	b.SetParallelism(10)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			gg.Render(&buf, page)
+		}
+	})
+}
+
+// BenchmarkConcurrent100_RealWorld_G simulates 100 concurrent requests
+// Typical for a medium-traffic web application
+func BenchmarkConcurrent100_RealWorld_G(b *testing.B) {
+	users := getBenchmarkData()
+	page := buildRealWorldPage(users)
+	b.SetParallelism(100)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			gg.Render(&buf, page)
+		}
+	})
+}
+
+// BenchmarkConcurrent1000_RealWorld_G simulates 1000 concurrent requests
+// High-load scenario - stress test for the library
+func BenchmarkConcurrent1000_RealWorld_G(b *testing.B) {
+	users := getBenchmarkData()
+	page := buildRealWorldPage(users)
+	b.SetParallelism(1000)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			gg.Render(&buf, page)
+		}
+	})
+}
+
+// BenchmarkConcurrentRealistic_RealWorld_G uses GOMAXPROCS goroutines
+// This represents the most realistic server scenario where concurrency
+// matches available CPU cores (what real servers typically use)
+func BenchmarkConcurrentRealistic_RealWorld_G(b *testing.B) {
+	users := getBenchmarkData()
+	page := buildRealWorldPage(users)
+	// No SetParallelism - uses default GOMAXPROCS
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			gg.Render(&buf, page)
+		}
+	})
+}
+
+// ============================================================================
+// CONCURRENT BENCHMARKS: Templ Comparison
+// Matching benchmarks for templ to compare with G library
+// ============================================================================
+
+// BenchmarkSequential_RealWorld_Templ measures templ single-threaded performance
+func BenchmarkSequential_RealWorld_Templ(b *testing.B) {
+	users := getBenchmarkData()
+	ctx := b.Context()
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		RealWorldTempl(users).Render(ctx, &buf)
+	}
+}
+
+// BenchmarkConcurrent10_RealWorld_Templ simulates 10 concurrent requests with templ
+func BenchmarkConcurrent10_RealWorld_Templ(b *testing.B) {
+	users := getBenchmarkData()
+	ctx := b.Context()
+	b.SetParallelism(10)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			RealWorldTempl(users).Render(ctx, &buf)
+		}
+	})
+}
+
+// BenchmarkConcurrent100_RealWorld_Templ simulates 100 concurrent requests with templ
+func BenchmarkConcurrent100_RealWorld_Templ(b *testing.B) {
+	users := getBenchmarkData()
+	ctx := b.Context()
+	b.SetParallelism(100)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			RealWorldTempl(users).Render(ctx, &buf)
+		}
+	})
+}
+
+// BenchmarkConcurrent1000_RealWorld_Templ simulates 1000 concurrent requests with templ
+func BenchmarkConcurrent1000_RealWorld_Templ(b *testing.B) {
+	users := getBenchmarkData()
+	ctx := b.Context()
+	b.SetParallelism(1000)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			RealWorldTempl(users).Render(ctx, &buf)
+		}
+	})
+}
+
+// BenchmarkConcurrentRealistic_RealWorld_Templ uses GOMAXPROCS goroutines with templ
+func BenchmarkConcurrentRealistic_RealWorld_Templ(b *testing.B) {
+	users := getBenchmarkData()
+	ctx := b.Context()
+	// No SetParallelism - uses default GOMAXPROCS
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			RealWorldTempl(users).Render(ctx, &buf)
+		}
+	})
 }

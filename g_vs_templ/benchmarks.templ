@@ -1,5 +1,11 @@
 package g_vs_templ
 
+// User represents a user in the system
+type User struct {
+	Name  string
+	Admin bool
+}
+
 // Benchmark 1: Simple Element
 templ SimpleElementTempl() {
 	<div>Hello World</div>
@@ -157,4 +163,96 @@ templ SVGTempl() {
 	<svg width="100" height="100">
 		<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red"/>
 	</svg>
+}
+
+// Benchmark 17: Real World Page (Concurrent)
+// Full realistic page with all features for concurrent benchmarking
+templ RealWorldTempl(users []User) {
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Dashboard - User Management</title>
+			<link rel="stylesheet" href="/css/main.css"/>
+			<link rel="icon" href="/favicon.ico"/>
+		</head>
+		<body>
+			<header class="site-header">
+				<nav class="main-nav">
+					<a href="/" class="nav-link">Home</a>
+					<a href="/users" class="nav-link active">Users</a>
+					<a href="/settings" class="nav-link">Settings</a>
+					<a href="/logout" class="nav-link">Logout</a>
+				</nav>
+			</header>
+			<main class="main-content">
+				<h1>User Management Dashboard</h1>
+				<p>Welcome to the admin dashboard. Manage users and permissions below.</p>
+				if len(users) > 0 {
+					<section class="users-section">
+						<h2>Active Users</h2>
+						<table class="users-table">
+							<thead>
+								<tr>
+									<th>ID</th>
+									<th>Name</th>
+									<th>Role</th>
+									<th>Status</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								for _, u := range users {
+									<tr>
+										<td><strong>#</strong></td>
+										<td>{ u.Name }</td>
+										<td>
+											if u.Admin {
+												<span class="badge admin">Administrator</span>
+											} else {
+												<span class="badge user">User</span>
+											}
+										</td>
+										<td><span class="status active">Active</span></td>
+										<td>
+											<button class="btn-edit">Edit</button>
+											<button class="btn-delete">Delete</button>
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</section>
+				}
+				if len(users) == 0 {
+					<div class="empty-state">
+						<p>No users found. Add your first user to get started.</p>
+					</div>
+				}
+				<section class="quick-stats">
+					<h3>Quick Stats</h3>
+					<div class="stats-grid">
+						<div class="stat-card">
+							<strong>{ len(users) }</strong>
+							<span>Total Users</span>
+						</div>
+						<div class="stat-card">
+							<strong>
+								if len(users) > 0 {
+									{ len(users) }
+								} else {
+									0
+								}
+							</strong>
+							<span>Active Now</span>
+						</div>
+					</div>
+				</section>
+			</main>
+			<footer class="site-footer">
+				<p>&copy; 2025 Company Inc. All rights reserved.</p>
+			</footer>
+		</body>
+	</html>
 }
