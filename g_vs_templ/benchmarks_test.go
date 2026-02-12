@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/assaidy/g"
+	"github.com/assaidy/h"
 )
 
 // getBenchmarkData returns sample user data for benchmarks
@@ -33,11 +33,11 @@ func BenchmarkSimpleElement_Templ(b *testing.B) {
 }
 
 func BenchmarkSimpleElement_G(b *testing.B) {
-	page := gg.Div("Hello World")
+	page := h.Div("Hello World")
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -56,12 +56,12 @@ func BenchmarkDeepNesting_Templ(b *testing.B) {
 }
 
 func BenchmarkDeepNesting_G(b *testing.B) {
-	page := gg.Div(
-		gg.Div(
-			gg.Div(
-				gg.Div(
-					gg.Div(
-						gg.P("Deep content"),
+	page := h.Div(
+		h.Div(
+			h.Div(
+				h.Div(
+					h.Div(
+						h.P("Deep content"),
 					),
 				),
 			),
@@ -70,7 +70,7 @@ func BenchmarkDeepNesting_G(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -89,7 +89,7 @@ func BenchmarkManyAttributes_Templ(b *testing.B) {
 }
 
 func BenchmarkManyAttributes_G(b *testing.B) {
-	page := gg.Div(gg.KV{
+	page := h.Div(h.KV{
 		"id":         "main",
 		"class":      "container wrapper",
 		"data-role":  "content",
@@ -101,7 +101,7 @@ func BenchmarkManyAttributes_G(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -122,11 +122,11 @@ func BenchmarkLargeText_Templ(b *testing.B) {
 
 func BenchmarkLargeText_G(b *testing.B) {
 	text := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-	page := gg.P(text)
+	page := h.P(text)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -147,15 +147,15 @@ func BenchmarkList10_Templ(b *testing.B) {
 
 func BenchmarkList10_G(b *testing.B) {
 	items := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
-	page := gg.Ul(
-		gg.MapSlice(items, func(s string) gg.Node {
-			return gg.Li(s)
+	page := h.Ul(
+		h.MapSlice(items, func(s string) h.Node {
+			return h.Li(s)
 		}),
 	)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -182,15 +182,15 @@ func BenchmarkList100_G(b *testing.B) {
 	for i := range items {
 		items[i] = "item"
 	}
-	page := gg.Ul(
-		gg.MapSlice(items, func(s string) gg.Node {
-			return gg.Li(s)
+	page := h.Ul(
+		h.MapSlice(items, func(s string) h.Node {
+			return h.Li(s)
 		}),
 	)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -209,16 +209,16 @@ func BenchmarkConditionals_Templ(b *testing.B) {
 }
 
 func BenchmarkConditionals_G(b *testing.B) {
-	page := gg.Div(
-		gg.If(true, gg.Span("First")),
-		gg.If(false, gg.Span("Second")),
-		gg.If(true, gg.Span("Third")),
-		gg.IfElse(true, gg.Strong("True"), gg.Em("False")),
+	page := h.Div(
+		h.If(true, h.Span("First")),
+		h.If(false, h.Span("Second")),
+		h.If(true, h.Span("Third")),
+		h.IfElse(true, h.Strong("True"), h.Em("False")),
 	)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -237,21 +237,21 @@ func BenchmarkMixedContent_Templ(b *testing.B) {
 }
 
 func BenchmarkMixedContent_G(b *testing.B) {
-	page := gg.Div(
-		gg.H1("Title"),
-		gg.P("Paragraph with ", gg.Strong("bold"), " and ", gg.Em("italic"), " text."),
-		gg.Ul(
-			gg.Li("Item 1"),
-			gg.Li(gg.A(gg.KV{"href": "#"}, "Link")),
+	page := h.Div(
+		h.H1("Title"),
+		h.P("Paragraph with ", h.Strong("bold"), " and ", h.Em("italic"), " text."),
+		h.Ul(
+			h.Li("Item 1"),
+			h.Li(h.A(h.KV{"href": "#"}, "Link")),
 		),
-		gg.Div(gg.KV{"class": "footer"},
-			gg.Small("Copyright 2024"),
+		h.Div(h.KV{"class": "footer"},
+			h.Small("Copyright 2024"),
 		),
 	)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -270,18 +270,18 @@ func BenchmarkVoidElements_Templ(b *testing.B) {
 }
 
 func BenchmarkVoidElements_G(b *testing.B) {
-	page := gg.Div(
-		gg.Img(gg.KV{"src": "image.jpg", "alt": "Image"}),
-		gg.Br(),
-		gg.Hr(),
-		gg.Input(gg.KV{"type": "text", "value": "input"}),
-		gg.Meta(gg.KV{"charset": "UTF-8"}),
-		gg.Link(gg.KV{"rel": "stylesheet", "href": "style.css"}),
+	page := h.Div(
+		h.Img(h.KV{"src": "image.jpg", "alt": "Image"}),
+		h.Br(),
+		h.Hr(),
+		h.Input(h.KV{"type": "text", "value": "input"}),
+		h.Meta(h.KV{"charset": "UTF-8"}),
+		h.Link(h.KV{"rel": "stylesheet", "href": "style.css"}),
 	)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -302,11 +302,11 @@ func BenchmarkHTMLEscaping_Templ(b *testing.B) {
 
 func BenchmarkHTMLEscaping_G(b *testing.B) {
 	content := "<script>alert('xss')</script> & more <b>bold</b>"
-	page := gg.Div(content)
+	page := h.Div(content)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -327,20 +327,20 @@ func BenchmarkTable_Templ(b *testing.B) {
 
 func BenchmarkTable_G(b *testing.B) {
 	rows := 10
-	page := gg.Table(
-		gg.Thead(
-			gg.Tr(
-				gg.Th("Name"),
-				gg.Th("Value"),
-				gg.Th("Action"),
+	page := h.Table(
+		h.Thead(
+			h.Tr(
+				h.Th("Name"),
+				h.Th("Value"),
+				h.Th("Action"),
 			),
 		),
-		gg.Tbody(
-			gg.Repeat(rows, func() gg.Node {
-				return gg.Tr(
-					gg.Td("Cell 1"),
-					gg.Td("Cell 2"),
-					gg.Td(gg.Button("Click")),
+		h.Tbody(
+			h.Repeat(rows, func() h.Node {
+				return h.Tr(
+					h.Td("Cell 1"),
+					h.Td("Cell 2"),
+					h.Td(h.Button("Click")),
 				)
 			}),
 		),
@@ -348,7 +348,7 @@ func BenchmarkTable_G(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -367,22 +367,22 @@ func BenchmarkForm_Templ(b *testing.B) {
 }
 
 func BenchmarkForm_G(b *testing.B) {
-	page := gg.Form(gg.KV{"action": "/submit", "method": "POST"},
-		gg.Fieldset(
-			gg.Legend("User Form"),
-			gg.Label(gg.KV{"for": "name"}, "Name:"),
-			gg.Input(gg.KV{"type": "text", "id": "name", "name": "name"}),
-			gg.Br(),
-			gg.Label(gg.KV{"for": "email"}, "Email:"),
-			gg.Input(gg.KV{"type": "email", "id": "email", "name": "email"}),
-			gg.Br(),
-			gg.Button(gg.KV{"type": "submit"}, "Submit"),
+	page := h.Form(h.KV{"action": "/submit", "method": "POST"},
+		h.Fieldset(
+			h.Legend("User Form"),
+			h.Label(h.KV{"for": "name"}, "Name:"),
+			h.Input(h.KV{"type": "text", "id": "name", "name": "name"}),
+			h.Br(),
+			h.Label(h.KV{"for": "email"}, "Email:"),
+			h.Input(h.KV{"type": "email", "id": "email", "name": "email"}),
+			h.Br(),
+			h.Button(h.KV{"type": "submit"}, "Submit"),
 		),
 	)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -403,47 +403,47 @@ func BenchmarkRealWorld_Templ(b *testing.B) {
 
 func BenchmarkRealWorld_G(b *testing.B) {
 	users := getBenchmarkData()
-	page := gg.Empty(
-		gg.DoctypeHTML(),
-		gg.Html(
-			gg.Head(
-				gg.Meta(gg.KV{"charset": "UTF-8"}),
-				gg.Title(gg.RawHTML("User Dashboard")),
-				gg.Link(gg.KV{"rel": "stylesheet", "href": "/style.css"}),
+	page := h.Empty(
+		h.DoctypeHTML(),
+		h.Html(
+			h.Head(
+				h.Meta(h.KV{"charset": "UTF-8"}),
+				h.Title(h.RawHTML("User Dashboard")),
+				h.Link(h.KV{"rel": "stylesheet", "href": "/style.css"}),
 			),
-			gg.Body(
-				gg.Header(
-					gg.H1("User Dashboard"),
-					gg.Nav(
-						gg.A(gg.KV{"href": "/"}, "Home"),
-						gg.A(gg.KV{"href": "/users"}, "Users"),
-						gg.A(gg.KV{"href": "/settings"}, "Settings"),
+			h.Body(
+				h.Header(
+					h.H1("User Dashboard"),
+					h.Nav(
+						h.A(h.KV{"href": "/"}, "Home"),
+						h.A(h.KV{"href": "/users"}, "Users"),
+						h.A(h.KV{"href": "/settings"}, "Settings"),
 					),
 				),
-				gg.Main(
-					gg.H2("Users"),
-					gg.If(len(users) > 0,
-						gg.Table(
-							gg.Thead(
-								gg.Tr(
-									gg.Th("Name"),
-									gg.Th("Role"),
+				h.Main(
+					h.H2("Users"),
+					h.If(len(users) > 0,
+						h.Table(
+							h.Thead(
+								h.Tr(
+									h.Th("Name"),
+									h.Th("Role"),
 								),
 							),
-							gg.Tbody(
-								gg.MapSlice(users, func(u User) gg.Node {
-									return gg.Tr(
-										gg.Td(u.Name),
-										gg.Td(gg.IfElse(u.Admin, gg.Strong("Admin"), gg.Span("User"))),
+							h.Tbody(
+								h.MapSlice(users, func(u User) h.Node {
+									return h.Tr(
+										h.Td(u.Name),
+										h.Td(h.IfElse(u.Admin, h.Strong("Admin"), h.Span("User"))),
 									)
 								}),
 							),
 						),
 					),
-					gg.If(len(users) == 0, gg.P("No users found.")),
+					h.If(len(users) == 0, h.P("No users found.")),
 				),
-				gg.Footer(
-					gg.P("© 2024 Company"),
+				h.Footer(
+					h.P("© 2024 Company"),
 				),
 			),
 		),
@@ -451,7 +451,7 @@ func BenchmarkRealWorld_G(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -470,11 +470,11 @@ func BenchmarkEmptyPage_Templ(b *testing.B) {
 }
 
 func BenchmarkEmptyPage_G(b *testing.B) {
-	page := gg.Html(gg.Body())
+	page := h.Html(h.Body())
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -495,21 +495,21 @@ func BenchmarkRawHTML_Templ(b *testing.B) {
 
 func BenchmarkRawHTML_G(b *testing.B) {
 	html := "<div><span>Content</span></div>"
-	page := gg.Div(gg.RawHTML(html))
+	page := h.Div(h.RawHTML(html))
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
 func BenchmarkRegularString_G(b *testing.B) {
 	text := "<div><span>Content</span></div>"
-	page := gg.Div(text)
+	page := h.Div(text)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -529,13 +529,13 @@ func BenchmarkSVG_Templ(b *testing.B) {
 
 func BenchmarkSVG_G(b *testing.B) {
 	// NOTE: In real example all the SVG tag is copied and put inside RawHTML.
-	page := gg.Svg(gg.KV{"width": "100", "height": "100"},
-		gg.RawHTML(`<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />`),
+	page := h.Svg(h.KV{"width": "100", "height": "100"},
+		h.RawHTML(`<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />`),
 	)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -547,60 +547,60 @@ func BenchmarkSVG_G(b *testing.B) {
 // ============================================================================
 
 // buildRealWorldPage creates a realistic full page using many library utilities
-func buildRealWorldPage(users []User) gg.Node {
-	return gg.Empty(
-		gg.DoctypeHTML(),
-		gg.Html(
-			gg.Head(
-				gg.Meta(gg.KV{"charset": "UTF-8"}),
-				gg.Meta(gg.KV{"name": "viewport", "content": "width=device-width, initial-scale=1.0"}),
-				gg.Title(gg.RawHTML("Dashboard - User Management")),
-				gg.Link(gg.KV{"rel": "stylesheet", "href": "/css/main.css"}),
-				gg.Link(gg.KV{"rel": "icon", "href": "/favicon.ico"}),
+func buildRealWorldPage(users []User) h.Node {
+	return h.Empty(
+		h.DoctypeHTML(),
+		h.Html(
+			h.Head(
+				h.Meta(h.KV{"charset": "UTF-8"}),
+				h.Meta(h.KV{"name": "viewport", "content": "width=device-width, initial-scale=1.0"}),
+				h.Title(h.RawHTML("Dashboard - User Management")),
+				h.Link(h.KV{"rel": "stylesheet", "href": "/css/main.css"}),
+				h.Link(h.KV{"rel": "icon", "href": "/favicon.ico"}),
 			),
-			gg.Body(
-				gg.Header(
-					gg.KV{"class": "site-header"},
-					gg.Nav(
-						gg.KV{"class": "main-nav"},
-						gg.A(gg.KV{"href": "/", "class": "nav-link"}, "Home"),
-						gg.A(gg.KV{"href": "/users", "class": "nav-link active"}, "Users"),
-						gg.A(gg.KV{"href": "/settings", "class": "nav-link"}, "Settings"),
-						gg.A(gg.KV{"href": "/logout", "class": "nav-link"}, "Logout"),
+			h.Body(
+				h.Header(
+					h.KV{"class": "site-header"},
+					h.Nav(
+						h.KV{"class": "main-nav"},
+						h.A(h.KV{"href": "/", "class": "nav-link"}, "Home"),
+						h.A(h.KV{"href": "/users", "class": "nav-link active"}, "Users"),
+						h.A(h.KV{"href": "/settings", "class": "nav-link"}, "Settings"),
+						h.A(h.KV{"href": "/logout", "class": "nav-link"}, "Logout"),
 					),
 				),
-				gg.Main(
-					gg.KV{"class": "main-content"},
-					gg.H1("User Management Dashboard"),
-					gg.P("Welcome to the admin dashboard. Manage users and permissions below."),
-					gg.If(len(users) > 0,
-						gg.Section(
-							gg.KV{"class": "users-section"},
-							gg.H2("Active Users"),
-							gg.Table(
-								gg.KV{"class": "users-table"},
-								gg.Thead(
-									gg.Tr(
-										gg.Th("ID"),
-										gg.Th("Name"),
-										gg.Th("Role"),
-										gg.Th("Status"),
-										gg.Th("Actions"),
+				h.Main(
+					h.KV{"class": "main-content"},
+					h.H1("User Management Dashboard"),
+					h.P("Welcome to the admin dashboard. Manage users and permissions below."),
+					h.If(len(users) > 0,
+						h.Section(
+							h.KV{"class": "users-section"},
+							h.H2("Active Users"),
+							h.Table(
+								h.KV{"class": "users-table"},
+								h.Thead(
+									h.Tr(
+										h.Th("ID"),
+										h.Th("Name"),
+										h.Th("Role"),
+										h.Th("Status"),
+										h.Th("Actions"),
 									),
 								),
-								gg.Tbody(
-									gg.MapSlice(users, func(u User) gg.Node {
-										return gg.Tr(
-											gg.Td(gg.Strong("#")),
-											gg.Td(u.Name),
-											gg.Td(gg.IfElse(u.Admin,
-												gg.Span(gg.KV{"class": "badge admin"}, "Administrator"),
-												gg.Span(gg.KV{"class": "badge user"}, "User"),
+								h.Tbody(
+									h.MapSlice(users, func(u User) h.Node {
+										return h.Tr(
+											h.Td(h.Strong("#")),
+											h.Td(u.Name),
+											h.Td(h.IfElse(u.Admin,
+												h.Span(h.KV{"class": "badge admin"}, "Administrator"),
+												h.Span(h.KV{"class": "badge user"}, "User"),
 											)),
-											gg.Td(gg.Span(gg.KV{"class": "status active"}, "Active")),
-											gg.Td(
-												gg.Button(gg.KV{"class": "btn-edit"}, "Edit"),
-												gg.Button(gg.KV{"class": "btn-delete"}, "Delete"),
+											h.Td(h.Span(h.KV{"class": "status active"}, "Active")),
+											h.Td(
+												h.Button(h.KV{"class": "btn-edit"}, "Edit"),
+												h.Button(h.KV{"class": "btn-delete"}, "Delete"),
 											),
 										)
 									}),
@@ -608,33 +608,33 @@ func buildRealWorldPage(users []User) gg.Node {
 							),
 						),
 					),
-					gg.If(len(users) == 0,
-						gg.Div(
-							gg.KV{"class": "empty-state"},
-							gg.P("No users found. Add your first user to get started."),
+					h.If(len(users) == 0,
+						h.Div(
+							h.KV{"class": "empty-state"},
+							h.P("No users found. Add your first user to get started."),
 						),
 					),
-					gg.Section(
-						gg.KV{"class": "quick-stats"},
-						gg.H3("Quick Stats"),
-						gg.Div(
-							gg.KV{"class": "stats-grid"},
-							gg.Div(
-								gg.KV{"class": "stat-card"},
-								gg.Strong(len(users)),
-								gg.Span("Total Users"),
+					h.Section(
+						h.KV{"class": "quick-stats"},
+						h.H3("Quick Stats"),
+						h.Div(
+							h.KV{"class": "stats-grid"},
+							h.Div(
+								h.KV{"class": "stat-card"},
+								h.Strong(len(users)),
+								h.Span("Total Users"),
 							),
-							gg.Div(
-								gg.KV{"class": "stat-card"},
-								gg.Strong(gg.IfElse(len(users) > 0, len(users), 0)),
-								gg.Span("Active Now"),
+							h.Div(
+								h.KV{"class": "stat-card"},
+								h.Strong(h.IfElse(len(users) > 0, len(users), 0)),
+								h.Span("Active Now"),
 							),
 						),
 					),
 				),
-				gg.Footer(
-					gg.KV{"class": "site-footer"},
-					gg.P("2025 Company Inc. All rights reserved."),
+				h.Footer(
+					h.KV{"class": "site-footer"},
+					h.P("2025 Company Inc. All rights reserved."),
 				),
 			),
 		),
@@ -649,7 +649,7 @@ func BenchmarkSequential_RealWorld_G(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		gg.Render(&buf, page)
+		h.Render(&buf, page)
 	}
 }
 
@@ -663,7 +663,7 @@ func BenchmarkConcurrent10_RealWorld_G(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			var buf bytes.Buffer
-			gg.Render(&buf, page)
+			h.Render(&buf, page)
 		}
 	})
 }
@@ -678,7 +678,7 @@ func BenchmarkConcurrent100_RealWorld_G(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			var buf bytes.Buffer
-			gg.Render(&buf, page)
+			h.Render(&buf, page)
 		}
 	})
 }
@@ -693,7 +693,7 @@ func BenchmarkConcurrent1000_RealWorld_G(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			var buf bytes.Buffer
-			gg.Render(&buf, page)
+			h.Render(&buf, page)
 		}
 	})
 }
@@ -709,7 +709,7 @@ func BenchmarkConcurrentRealistic_RealWorld_G(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			var buf bytes.Buffer
-			gg.Render(&buf, page)
+			h.Render(&buf, page)
 		}
 	})
 }

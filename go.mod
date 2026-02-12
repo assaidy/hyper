@@ -1,4 +1,4 @@
-module github.com/assaidy/g
+module github.com/assaidy/h
 
 go 1.25.5
 

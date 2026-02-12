@@ -13,7 +13,7 @@ A fast, type-safe HTML generator for Go.
 ## Installation
 
 ```bash
-go get github.com/assaidy/g
+go get github.com/assaidy/h
 ```
 
 ## Quick Start
@@ -23,7 +23,7 @@ package main
 
 import (
     "os"
-    "github.com/assaidy/g"
+    "github.com/assaidy/h"
 )
 
 func main() {
@@ -157,7 +157,7 @@ package main
 
 import (
     "os"
-    "github.com/assaidy/g"
+    "github.com/assaidy/h"
 )
 
 func main() {

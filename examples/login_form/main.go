@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/assaidy/g"
+	"github.com/assaidy/h"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
 	mux.Handle("/login", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
-		if err := gg.Render(w, loginPage()); err != nil {
+		if err := h.Render(w, loginPage()); err != nil {
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			log.Printf("couldn't render html: %v", err)
 		}
@@ -28,40 +28,40 @@ func main() {
 	log.Fatal(server.ListenAndServe())
 }
 
-func pageLayout(title string, content gg.Node) gg.Node {
-	return gg.Html(
-		gg.Head(
-			gg.Meta(gg.KV{"charset": "UTF-8"}),
-			gg.Meta(gg.KV{"name": "viewport", "content": "width=device-width, initial-scale=1"}),
-			gg.Title(title),
+func pageLayout(title string, content h.Node) h.Node {
+	return h.Html(
+		h.Head(
+			h.Meta(h.KV{"charset": "UTF-8"}),
+			h.Meta(h.KV{"name": "viewport", "content": "width=device-width, initial-scale=1"}),
+			h.Title(title),
 		),
-		gg.Body(content),
+		h.Body(content),
 	)
 }
 
-func loginPage() gg.Node {
-	return pageLayout("login", gg.Empty(
+func loginPage() h.Node {
+	return pageLayout("login", h.Empty(
 		loginPageStyle(),
 
-		gg.Form(gg.KV{"method": "post"},
-			gg.H1("Login"),
-			gg.Div(
-				gg.Label("Username:"),
-				gg.Input(gg.KV{"type": "text", "name": "username", "required": true, "placeholder": "Enter your username"}),
+		h.Form(h.KV{"method": "post"},
+			h.H1("Login"),
+			h.Div(
+				h.Label("Username:"),
+				h.Input(h.KV{"type": "text", "name": "username", "required": true, "placeholder": "Enter your username"}),
 			),
-			gg.Div(
-				gg.Label("Password:"),
-				gg.Input(gg.KV{"type": "password", "name": "password", "required": true, "placeholder": "Enter your password"}),
+			h.Div(
+				h.Label("Password:"),
+				h.Input(h.KV{"type": "password", "name": "password", "required": true, "placeholder": "Enter your password"}),
 			),
-			gg.Div(
-				gg.Button(gg.KV{"type": "submit"}, "Login"),
+			h.Div(
+				h.Button(h.KV{"type": "submit"}, "Login"),
 			),
 		),
 	))
 }
 
-func loginPageStyle() gg.Node {
-	return gg.Style(`
+func loginPageStyle() h.Node {
+	return h.Style(`
 			body {
 				font-family: Arial, sans-serif;
 				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
