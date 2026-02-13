@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html"
 	"io"
-	"maps"
 	"strings"
 )
 
@@ -40,12 +39,17 @@ func (me RawHTML) Render(w io.Writer) error {
 //	// Renders: class="container" hidden
 type KV map[string]any
 
+type attribute struct {
+	key   string
+	value any
+}
+
 // Element represents an HTML element with its attributes and children.
 type Element struct {
-	Tag      string // HTML tag name
-	IsVoid   bool   // Whether the tag is self-closing (e.g., <br>, <img>)
-	Attrs    KV     // HTML attributes as key-value pairs
-	Children []Node // Child nodes
+	Tag      string      // HTML tag name
+	IsVoid   bool        // Whether the tag is self-closing (e.g., <br>, <img>)
+	Attrs    []attribute // HTML attributes as key-value pairs
+	Children []Node      // Child nodes
 }
 
 // Render generates the HTML for the element and its children to the provided writer.
@@ -86,16 +90,16 @@ func (me Element) Render(w io.Writer) error {
 }
 
 func (me Element) renderAttrs(w io.Writer) error {
-	for key, value := range me.Attrs {
-		k := strings.TrimSpace(key)
+	for _, attr := range me.Attrs {
+		k := strings.TrimSpace(attr.key)
 		if k == "" {
 			return fmt.Errorf("empty/whitespace attribute key not allowed.")
 		}
-		if value == nil {
+		if attr.value == nil {
 			return fmt.Errorf("attribute '%s' has nil value", k)
 		}
 
-		switch v := value.(type) {
+		switch v := attr.value.(type) {
 		case string:
 			if _, err := io.WriteString(w, " "); err != nil {
 				return err
@@ -145,11 +149,7 @@ func newElem(tag string, args ...any) Element {
 		// which is intentional for better debugging (makes it obvious when nil values are passed).
 		switch value := arg.(type) {
 		case KV:
-			if e.Attrs == nil {
-				e.Attrs = value
-			} else {
-				maps.Copy(e.Attrs, value)
-			}
+			e.Attrs = fillAttrsWithKV(e.Attrs, value)
 		case Node:
 			e.Children = append(e.Children, value)
 		// Explicit string and fmt.Stringer cases for performance:
@@ -167,13 +167,35 @@ func newElem(tag string, args ...any) Element {
 
 func newVoidElem(tag string, attrs ...KV) Element {
 	e := Element{Tag: tag, IsVoid: true}
-	if len(attrs) > 0 {
-		e.Attrs = KV{}
-		for _, attr := range attrs {
-			maps.Copy(e.Attrs, attr)
-		}
+	for _, kv := range attrs {
+		e.Attrs = fillAttrsWithKV(e.Attrs, kv)
 	}
 	return e
+}
+
+func fillAttrsWithKV(attrs []attribute, kv KV) []attribute {
+	if attrs == nil {
+		attrs = make([]attribute, 0, len(kv))
+		for k, v := range kv {
+			attrs = append(attrs, attribute{key: k, value: v})
+		}
+	} else {
+		if len(kv) > cap(attrs)-len(attrs) {
+			required := len(attrs) + len(kv)
+			newCap := 1
+			// Ensure new cap is a power of 2
+			for newCap < required {
+				newCap <<= 1
+			}
+			newSlice := make([]attribute, len(attrs), newCap)
+			copy(newSlice, attrs)
+			attrs = newSlice
+		}
+		for k, v := range kv {
+			attrs = append(attrs, attribute{key: k, value: v})
+		}
+	}
+	return attrs
 }
 
 // Empty creates an empty element (no tag).

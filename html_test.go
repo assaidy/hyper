@@ -351,7 +351,7 @@ func TestElement_renderAttrs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			element := &Element{Attrs: tt.attrs}
+			element := &Element{Attrs: fillAttrsWithKV(nil, tt.attrs)}
 			var builder strings.Builder
 			err := element.renderAttrs(&builder)
 
