@@ -82,6 +82,6 @@ func main() {
 		panic(err)
 	}
 	// the same as:
-	// if err := g.Render(os.Stdout, page); err != nil {
+	// if err := h.Render(os.Stdout, page); err != nil {
 	// }
 }
