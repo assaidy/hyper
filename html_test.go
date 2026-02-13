@@ -2,7 +2,6 @@ package h
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 )
 
@@ -352,16 +351,16 @@ func TestElement_renderAttrs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			element := &Element{Attrs: fillAttrsWithKV(nil, tt.attrs)}
-			var builder strings.Builder
-			err := element.renderAttrs(&builder)
+			var buf bytes.Buffer
+			err := element.renderAttrsToBuffer(&buf)
 
 			if (err != nil) != tt.expectErr {
 				t.Errorf("renderAttrs() error = %v, expectErr %v", err, tt.expectErr)
 				return
 			}
 
-			if !tt.expectErr && builder.String() != tt.expected {
-				t.Errorf("renderAttrs() = %q, want %q", builder.String(), tt.expected)
+			if !tt.expectErr && buf.String() != tt.expected {
+				t.Errorf("renderAttrs() = %q, want %q", buf.String(), tt.expected)
 			}
 		})
 	}

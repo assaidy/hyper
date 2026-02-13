@@ -1,10 +1,12 @@
 package h
 
 import (
+	"bytes"
 	"fmt"
 	"html"
 	"io"
 	"strings"
+	"sync"
 )
 
 // textNode represents a plain text node that renders HTML-escaped content.
@@ -54,42 +56,75 @@ type Element struct {
 
 // Render generates the HTML for the element and its children to the provided writer.
 func (me Element) Render(w io.Writer) error {
-	if me.Tag == "" { // empty tag
-		return me.renderChildren(w)
+	buf := bufferPool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufferPool.Put(buf)
+	}()
+
+	if err := me.renderElementToBuffer(buf); err != nil {
+		return err
+	}
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+var bufferPool = sync.Pool{
+	New: func() any {
+		var buf bytes.Buffer
+		buf.Grow(1024)
+		return &buf
+	},
+}
+
+func (me Element) renderElementToBuffer(buf *bytes.Buffer) error {
+	if me.Tag == "" {
+		for _, child := range me.Children {
+			switch c := child.(type) {
+			case Element:
+				if err := c.renderElementToBuffer(buf); err != nil {
+					return err
+				}
+			case textNode:
+				buf.WriteString(html.EscapeString(string(c)))
+			case RawHTML:
+				buf.WriteString(string(c))
+			}
+		}
+		return nil
 	}
 
-	if _, err := io.WriteString(w, "<"); err != nil {
+	buf.WriteByte('<')
+	buf.WriteString(me.Tag)
+	if err := me.renderAttrsToBuffer(buf); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, me.Tag); err != nil {
-		return err
-	}
-	if err := me.renderAttrs(w); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, ">"); err != nil {
-		return err
-	}
+	buf.WriteByte('>')
 
 	if me.IsVoid {
 		return nil
 	}
 
-	if err := me.renderChildren(w); err != nil {
-		return err
+	for _, child := range me.Children {
+		switch c := child.(type) {
+		case Element:
+			if err := c.renderElementToBuffer(buf); err != nil {
+				return err
+			}
+		case textNode:
+			buf.WriteString(html.EscapeString(string(c)))
+		case RawHTML:
+			buf.WriteString(string(c))
+		}
 	}
 
-	if _, err := io.WriteString(w, "</"); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, me.Tag); err != nil {
-		return err
-	}
-	_, err := io.WriteString(w, ">")
-	return err
+	buf.WriteString("</")
+	buf.WriteString(me.Tag)
+	buf.WriteByte('>')
+	return nil
 }
 
-func (me Element) renderAttrs(w io.Writer) error {
+func (me Element) renderAttrsToBuffer(buf *bytes.Buffer) error {
 	for _, attr := range me.Attrs {
 		k := strings.TrimSpace(attr.key)
 		if k == "" {
@@ -101,42 +136,18 @@ func (me Element) renderAttrs(w io.Writer) error {
 
 		switch v := attr.value.(type) {
 		case string:
-			if _, err := io.WriteString(w, " "); err != nil {
-				return err
-			}
-			if _, err := io.WriteString(w, html.EscapeString(k)); err != nil {
-				return err
-			}
-			if _, err := io.WriteString(w, "=\""); err != nil {
-				return err
-			}
-			if _, err := io.WriteString(w, strings.ReplaceAll(v, "\"", "&quot;")); err != nil {
-				return err
-			}
-			if _, err := io.WriteString(w, "\""); err != nil {
-				return err
-			}
+			buf.WriteByte(' ')
+			buf.WriteString(html.EscapeString(k))
+			buf.WriteString(`="`)
+			buf.WriteString(strings.ReplaceAll(v, `"`, "&quot;"))
+			buf.WriteByte('"')
 		case bool:
-			if v == true {
-				if _, err := io.WriteString(w, " "); err != nil {
-					return err
-				}
-				if _, err := io.WriteString(w, html.EscapeString(k)); err != nil {
-					return err
-				}
+			if v {
+				buf.WriteByte(' ')
+				buf.WriteString(html.EscapeString(k))
 			}
 		default:
 			return fmt.Errorf("attribute value must be string or bool, got %T for key '%s'", v, k)
-		}
-	}
-
-	return nil
-}
-
-func (me Element) renderChildren(w io.Writer) error {
-	for _, child := range me.Children {
-		if err := child.Render(w); err != nil {
-			return err
 		}
 	}
 	return nil
