@@ -1,4 +1,4 @@
-# h
+# hyper
 
 A fast, type-safe HTML generator for Go.
 
@@ -13,7 +13,7 @@ A fast, type-safe HTML generator for Go.
 ## Installation
 
 ```bash
-go get github.com/assaidy/h
+go get github.com/assaidy/hyper
 ```
 
 ## Quick Start
@@ -23,7 +23,7 @@ package main
 
 import (
     "os"
-    "github.com/assaidy/h"
+    "github.com/assaidy/hyper"
 )
 
 func main() {
@@ -157,7 +157,7 @@ package main
 
 import (
     "os"
-    "github.com/assaidy/h"
+    "github.com/assaidy/hyper"
 )
 
 func main() {

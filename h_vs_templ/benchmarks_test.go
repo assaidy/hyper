@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/assaidy/h"
+	"github.com/assaidy/hyper"
 )
 
 // getBenchmarkData returns sample user data for benchmarks

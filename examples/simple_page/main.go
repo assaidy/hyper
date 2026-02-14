@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/assaidy/h"
+	"github.com/assaidy/hyper"
 )
 
 func main() {
