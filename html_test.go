@@ -15,52 +15,52 @@ func (s stringerType) String() string {
 func TestTextNode_Render(t *testing.T) {
 	tests := []struct {
 		name     string
-		text     textNode
+		text     Text
 		expected string
 	}{
 		{
 			name:     "Simple text",
-			text:     textNode("Hello World"),
+			text:     Text("Hello World"),
 			expected: "Hello World",
 		},
 		{
 			name:     "Empty text",
-			text:     textNode(""),
+			text:     Text(""),
 			expected: "",
 		},
 		{
 			name:     "Text with HTML entities",
-			text:     textNode("<script>alert('xss')</script>"),
+			text:     Text("<script>alert('xss')</script>"),
 			expected: "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;",
 		},
 		{
 			name:     "Text with quotes",
-			text:     textNode("Hello \"World\" & 'Universe'"),
+			text:     Text("Hello \"World\" & 'Universe'"),
 			expected: "Hello &#34;World&#34; &amp; &#39;Universe&#39;",
 		},
 		{
 			name:     "Text with leading space",
-			text:     textNode("  hello"),
+			text:     Text("  hello"),
 			expected: "  hello",
 		},
 		{
 			name:     "Text with trailing space",
-			text:     textNode("hello  "),
+			text:     Text("hello  "),
 			expected: "hello  ",
 		},
 		{
 			name:     "Text with leading and trailing spaces",
-			text:     textNode("  hello  "),
+			text:     Text("  hello  "),
 			expected: "  hello  ",
 		},
 		{
 			name:     "Text with multiple spaces inside",
-			text:     textNode("hello    world"),
+			text:     Text("hello    world"),
 			expected: "hello    world",
 		},
 		{
 			name:     "Text with newlines and tabs",
-			text:     textNode("hello\n\tworld"),
+			text:     Text("hello\n\tworld"),
 			expected: "hello\n\tworld",
 		},
 	}
@@ -80,20 +80,20 @@ func TestTextNode_Render(t *testing.T) {
 	}
 }
 
-func TestRawHTML_Render(t *testing.T) {
+func TestRawText_Render(t *testing.T) {
 	tests := []struct {
 		name     string
-		html     RawHTML
+		html     RawText
 		expected string
 	}{
 		{
 			name:     "Simple raw HTML",
-			html:     RawHTML("Hello World"),
+			html:     RawText("Hello World"),
 			expected: "Hello World",
 		},
 		{
 			name:     "Raw HTML with HTML",
-			html:     RawHTML("<script>alert('xss')</script>"),
+			html:     RawText("<script>alert('xss')</script>"),
 			expected: "<script>alert('xss')</script>",
 		},
 	}
@@ -103,11 +103,11 @@ func TestRawHTML_Render(t *testing.T) {
 			var buf bytes.Buffer
 			err := tt.html.Render(&buf)
 			if err != nil {
-				t.Errorf("RawHTML.Render() returned error: %v", err)
+				t.Errorf("RawText.Render() returned error: %v", err)
 				return
 			}
 			if buf.String() != tt.expected {
-				t.Errorf("RawHTML.Render() = %q, want %q", buf.String(), tt.expected)
+				t.Errorf("RawText.Render() = %q, want %q", buf.String(), tt.expected)
 			}
 		})
 	}
@@ -116,7 +116,7 @@ func TestRawHTML_Render(t *testing.T) {
 func TestTextNode_Render_Error(t *testing.T) {
 	// textNode.Render() should never return an error based on the implementation
 	// This test ensures that behavior
-	text := textNode("test")
+	text := Text("test")
 	var buf bytes.Buffer
 	err := text.Render(&buf)
 	if err != nil {
@@ -168,9 +168,9 @@ func TestElement_Render(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name: "Div with RawHTML (unescaped)",
+			name: "Div with RawText (unescaped)",
 			element: func() Node {
-				return Div(RawHTML("<script>alert('xss')</script>"))
+				return Div(RawText("<script>alert('xss')</script>"))
 			}(),
 			expected: "<div><script>alert('xss')</script></div>",
 			wantErr:  false,
@@ -352,7 +352,7 @@ func TestElement_renderAttrs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			element := &Element{Attrs: fillAttrsWithKV(nil, tt.attrs)}
 			var buf bytes.Buffer
-			err := element.renderAttrsToBuffer(&buf)
+			err := element.renderAttrs(&buf)
 
 			if (err != nil) != tt.expectErr {
 				t.Errorf("renderAttrs() error = %v, expectErr %v", err, tt.expectErr)

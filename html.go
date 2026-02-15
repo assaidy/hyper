@@ -9,21 +9,21 @@ import (
 	"sync"
 )
 
-// textNode represents a plain text node that renders HTML-escaped content.
-// Unlike HTML elements, textNode nodes are not wrapped in tags and are rendered
+// Text represents a plain text node that renders HTML-escaped content.
+// Unlike HTML elements, Text nodes are not wrapped in tags and are rendered
 // as literal text content with HTML entities automatically escaped.
-type textNode string
+type Text string
 
-func (me textNode) Render(w io.Writer) error {
+func (me Text) Render(w io.Writer) error {
 	_, err := io.WriteString(w, html.EscapeString(string(me)))
 	return err
 }
 
-// RawHTML represents a text node that renders its content exactly as provided,
+// RawText represents a text node that renders its content exactly as provided,
 // without any HTML escaping.
-type RawHTML string
+type RawText string
 
-func (me RawHTML) Render(w io.Writer) error {
+func (me RawText) Render(w io.Writer) error {
 	_, err := io.WriteString(w, string(me))
 	return err
 }
@@ -62,13 +62,16 @@ func (me Element) Render(w io.Writer) error {
 		bufferPool.Put(buf)
 	}()
 
-	if err := me.renderElementToBuffer(buf); err != nil {
+	if err := me.renderElement(buf); err != nil {
 		return err
 	}
-	_, err := buf.WriteTo(w)
+	_, err := w.Write(buf.Bytes())
 	return err
 }
 
+// bufferPool is a sync pool for reusing byte buffers during HTML rendering.
+// This reduces allocations when rendering many elements by recycling buffers
+// with a pre-allocated capacity of 1KB.
 var bufferPool = sync.Pool{
 	New: func() any {
 		var buf bytes.Buffer
@@ -77,26 +80,15 @@ var bufferPool = sync.Pool{
 	},
 }
 
-func (me Element) renderElementToBuffer(buf *bytes.Buffer) error {
+// renderElement renders the element to the provided buffer.
+func (me Element) renderElement(buf *bytes.Buffer) error {
 	if me.Tag == "" {
-		for _, child := range me.Children {
-			switch c := child.(type) {
-			case Element:
-				if err := c.renderElementToBuffer(buf); err != nil {
-					return err
-				}
-			case textNode:
-				buf.WriteString(html.EscapeString(string(c)))
-			case RawHTML:
-				buf.WriteString(string(c))
-			}
-		}
-		return nil
+		return me.renderChildren(buf)
 	}
 
 	buf.WriteByte('<')
 	buf.WriteString(me.Tag)
-	if err := me.renderAttrsToBuffer(buf); err != nil {
+	if err := me.renderAttrs(buf); err != nil {
 		return err
 	}
 	buf.WriteByte('>')
@@ -105,17 +97,8 @@ func (me Element) renderElementToBuffer(buf *bytes.Buffer) error {
 		return nil
 	}
 
-	for _, child := range me.Children {
-		switch c := child.(type) {
-		case Element:
-			if err := c.renderElementToBuffer(buf); err != nil {
-				return err
-			}
-		case textNode:
-			buf.WriteString(html.EscapeString(string(c)))
-		case RawHTML:
-			buf.WriteString(string(c))
-		}
+	if err := me.renderChildren(buf); err != nil {
+		return err
 	}
 
 	buf.WriteString("</")
@@ -124,7 +107,32 @@ func (me Element) renderElementToBuffer(buf *bytes.Buffer) error {
 	return nil
 }
 
-func (me Element) renderAttrsToBuffer(buf *bytes.Buffer) error {
+// renderChildren renders all child nodes to the provided buffer.
+func (me Element) renderChildren(buf *bytes.Buffer) error {
+	for _, child := range me.Children {
+		switch c := child.(type) {
+		// I'm tring to pass the concrete type [bytes.Buffer] as possible.
+		// That's why I'm not using Render(buf).
+		case Element:
+			if err := c.renderElement(buf); err != nil {
+				return err
+			}
+		case Text:
+			buf.WriteString(html.EscapeString(string(c)))
+		case RawText:
+			buf.WriteString(string(c))
+
+		default:
+			if err := c.Render(buf); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (me Element) renderAttrs(buf *bytes.Buffer) error {
 	for _, attr := range me.Attrs {
 		k := strings.TrimSpace(attr.key)
 		if k == "" {
@@ -153,10 +161,12 @@ func (me Element) renderAttrsToBuffer(buf *bytes.Buffer) error {
 	return nil
 }
 
+// newElem creates an HTML element with the given tag name and arguments.
+// Arguments can be KV for attributes, Node for children, or other types to convert to text.
 func newElem(tag string, args ...any) Element {
 	e := Element{Tag: tag}
 	for _, arg := range args {
-		// Note: nil arguments are not checked/filtered - fmt.Sprint() will render them as "Nil",
+		// NOTE: nil arguments are not checked/filtered - fmt.Sprint() will render them as "Nil",
 		// which is intentional for better debugging (makes it obvious when nil values are passed).
 		switch value := arg.(type) {
 		case KV:
@@ -166,16 +176,17 @@ func newElem(tag string, args ...any) Element {
 		// Explicit string and fmt.Stringer cases for performance:
 		// fmt.Sprint() would handle these, but with overhead from type inspection and buffer allocation.
 		case string:
-			e.Children = append(e.Children, textNode(value))
+			e.Children = append(e.Children, Text(value))
 		case fmt.Stringer:
-			e.Children = append(e.Children, textNode(value.String()))
+			e.Children = append(e.Children, Text(value.String()))
 		default:
-			e.Children = append(e.Children, textNode(fmt.Sprint(value)))
+			e.Children = append(e.Children, Text(fmt.Sprint(value)))
 		}
 	}
 	return e
 }
 
+// newVoidElem creates a self-closing (void) HTML element with the given tag name and attributes.
 func newVoidElem(tag string, attrs ...KV) Element {
 	e := Element{Tag: tag, IsVoid: true}
 	for _, kv := range attrs {
@@ -184,6 +195,7 @@ func newVoidElem(tag string, attrs ...KV) Element {
 	return e
 }
 
+// fillAttrsWithKV appends key-value attributes to the attributes slice and returns the updated slice.
 func fillAttrsWithKV(attrs []attribute, kv KV) []attribute {
 	if attrs == nil {
 		attrs = make([]attribute, 0, len(kv))

@@ -408,7 +408,7 @@ func BenchmarkRealWorld_H(b *testing.B) {
 		h.Html(
 			h.Head(
 				h.Meta(h.KV{"charset": "UTF-8"}),
-				h.Title(h.RawHTML("User Dashboard")),
+				h.Title(h.RawText("User Dashboard")),
 				h.Link(h.KV{"rel": "stylesheet", "href": "/style.css"}),
 			),
 			h.Body(
@@ -479,23 +479,23 @@ func BenchmarkEmptyPage_H(b *testing.B) {
 }
 
 // ============================================================================
-// BENCHMARK 15: RawHTML vs String
-// Using RawHTML (no escaping) vs regular string (with escaping)
+// BENCHMARK 15: RawText vs String
+// Using RawText (no escaping) vs regular string (with escaping)
 // ============================================================================
 
-func BenchmarkRawHTML_Templ(b *testing.B) {
+func BenchmarkRawText_Templ(b *testing.B) {
 	ctx := b.Context()
 	html := "<div><span>Content</span></div>"
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		RawHTMLTempl(html).Render(ctx, &buf)
+		RawTextTempl(html).Render(ctx, &buf)
 	}
 }
 
-func BenchmarkRawHTML_H(b *testing.B) {
+func BenchmarkRawText_H(b *testing.B) {
 	html := "<div><span>Content</span></div>"
-	page := h.Div(h.RawHTML(html))
+	page := h.Div(h.RawText(html))
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
@@ -528,9 +528,9 @@ func BenchmarkSVG_Templ(b *testing.B) {
 }
 
 func BenchmarkSVG_H(b *testing.B) {
-	// NOTE: In real example all the SVG tag is copied and put inside RawHTML.
+	// NOTE: In real example all the SVG tag is copied and put inside RawText.
 	page := h.Svg(h.KV{"width": "100", "height": "100"},
-		h.RawHTML(`<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />`),
+		h.RawText(`<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />`),
 	)
 	b.ResetTimer()
 	for b.Loop() {
@@ -554,7 +554,7 @@ func buildRealWorldPage(users []User) h.Node {
 			h.Head(
 				h.Meta(h.KV{"charset": "UTF-8"}),
 				h.Meta(h.KV{"name": "viewport", "content": "width=device-width, initial-scale=1.0"}),
-				h.Title(h.RawHTML("Dashboard - User Management")),
+				h.Title(h.RawText("Dashboard - User Management")),
 				h.Link(h.KV{"rel": "stylesheet", "href": "/css/main.css"}),
 				h.Link(h.KV{"rel": "icon", "href": "/favicon.ico"}),
 			),

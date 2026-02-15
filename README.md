@@ -58,7 +58,7 @@ h.P("<script>alert('xss')</script>")
 // <p>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</p>
 
 // Raw HTML (not escaped. use with caution)
-h.Div(h.RawHTML("<svg>...</svg>")) // <svg>...</svg>
+h.Div(h.RawText("<svg>...</svg>")) // <svg>...</svg>
 
 // Numbers and booleans are auto-converted
 h.P("Count: ", 42)           // <p>Count: 42</p>
