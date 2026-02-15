@@ -170,9 +170,10 @@ func newElem(tag string, args ...any) Element {
 		// which is intentional for better debugging (makes it obvious when nil values are passed).
 		switch value := arg.(type) {
 		case KV:
-			e.Attrs = fillAttrsWithKV(e.Attrs, value)
+			e.fillAttrsWithKV(value)
 		case Node:
 			e.Children = append(e.Children, value)
+
 		// Explicit string and fmt.Stringer cases for performance:
 		// fmt.Sprint() would handle these, but with overhead from type inspection and buffer allocation.
 		case string:
@@ -190,35 +191,36 @@ func newElem(tag string, args ...any) Element {
 func newVoidElem(tag string, attrs ...KV) Element {
 	e := Element{Tag: tag, IsVoid: true}
 	for _, kv := range attrs {
-		e.Attrs = fillAttrsWithKV(e.Attrs, kv)
+		e.fillAttrsWithKV(kv)
 	}
 	return e
 }
 
 // fillAttrsWithKV appends key-value attributes to the attributes slice and returns the updated slice.
-func fillAttrsWithKV(attrs []attribute, kv KV) []attribute {
-	if attrs == nil {
-		attrs = make([]attribute, 0, len(kv))
-		for k, v := range kv {
-			attrs = append(attrs, attribute{key: k, value: v})
-		}
+func (me *Element) fillAttrsWithKV(kv KV) {
+	// Two use cases:
+	//   - First occurrence (nil attrs): Allocate a slice with exact length from the KV map.
+	//     This is the common case where users pass a single KV{}.
+	//   - Subsequent calls: Use memory-efficient growth when extending the slice.
+	//     This handles the uncommon case where multiple KV{} are passed.
+	if me.Attrs == nil {
+		me.Attrs = make([]attribute, 0, len(kv))
 	} else {
-		if len(kv) > cap(attrs)-len(attrs) {
-			required := len(attrs) + len(kv)
-			newCap := 1
-			// Ensure new cap is a power of 2
-			for newCap < required {
-				newCap <<= 1
+		if len(kv) > cap(me.Attrs)-len(me.Attrs) {
+			required := len(me.Attrs) + len(kv)
+			newCap := required * 2
+			for newCap > 32 {
+				newCap = required + 8
 			}
-			newSlice := make([]attribute, len(attrs), newCap)
-			copy(newSlice, attrs)
-			attrs = newSlice
-		}
-		for k, v := range kv {
-			attrs = append(attrs, attribute{key: k, value: v})
+			newSlice := make([]attribute, len(me.Attrs), newCap)
+			copy(newSlice, me.Attrs)
+			me.Attrs = newSlice
 		}
 	}
-	return attrs
+
+	for k, v := range kv {
+		me.Attrs = append(me.Attrs, attribute{key: k, value: v})
+	}
 }
 
 // Empty creates an empty element (no tag).

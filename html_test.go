@@ -350,7 +350,8 @@ func TestElement_renderAttrs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			element := &Element{Attrs: fillAttrsWithKV(nil, tt.attrs)}
+			element := &Element{}
+			element.fillAttrsWithKV(tt.attrs)
 			var buf bytes.Buffer
 			err := element.renderAttrs(&buf)
 
