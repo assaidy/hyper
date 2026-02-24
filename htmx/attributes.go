@@ -52,8 +52,8 @@ func AttrOn(event string) string {
 
 // Swap* constants are valid values for the hx-swap attribute.
 const (
-	SwapInnerHTML   = "innerHTML"
-	SwapOuterHTML   = "outerHTML"
+	SwapInnerHtml   = "innerHTML"
+	SwapOuterHtml   = "outerHTML"
 	SwapBeforeBegin = "beforebegin"
 	SwapAfterBegin  = "afterbegin"
 	SwapBeforeEnd   = "beforeend"
