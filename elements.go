@@ -48,10 +48,10 @@ type attribute struct {
 
 // Element represents an HTML element with its attributes and children.
 type Element struct {
-	Tag      string      // HTML tag name
-	IsVoid   bool        // Whether the tag is self-closing (e.g., <br>, <img>)
-	Attrs    []attribute // HTML attributes as key-value pairs
-	Children []Node      // Child nodes
+	Tag        string      // HTML tag name
+	IsVoid     bool        // Whether the tag is self-closing (e.g., <br>, <img>)
+	Attributes []attribute // HTML attributes as key-value pairs
+	Children   []Node      // Child nodes
 }
 
 // Render generates the HTML for the element and its children to the provided writer.
@@ -133,7 +133,7 @@ func (me Element) renderChildren(buf *bytes.Buffer) error {
 }
 
 func (me Element) renderAttrs(buf *bytes.Buffer) error {
-	for _, attr := range me.Attrs {
+	for _, attr := range me.Attributes {
 		k := strings.TrimSpace(attr.key)
 		if k == "" {
 			return fmt.Errorf("empty/whitespace attribute key not allowed.")
@@ -203,23 +203,23 @@ func (me *Element) fillAttrsWithKV(kv KV) {
 	//     This is the common case where users pass a single KV{}.
 	//   - Subsequent calls: Use memory-efficient growth when extending the slice.
 	//     This handles the uncommon case where multiple KV{} are passed.
-	if me.Attrs == nil {
-		me.Attrs = make([]attribute, 0, len(kv))
+	if me.Attributes == nil {
+		me.Attributes = make([]attribute, 0, len(kv))
 	} else {
-		if len(kv) > cap(me.Attrs)-len(me.Attrs) {
-			required := len(me.Attrs) + len(kv)
+		if len(kv) > cap(me.Attributes)-len(me.Attributes) {
+			required := len(me.Attributes) + len(kv)
 			newCap := required * 2
 			for newCap > 32 {
 				newCap = required + 8
 			}
-			newSlice := make([]attribute, len(me.Attrs), newCap)
-			copy(newSlice, me.Attrs)
-			me.Attrs = newSlice
+			newSlice := make([]attribute, len(me.Attributes), newCap)
+			copy(newSlice, me.Attributes)
+			me.Attributes = newSlice
 		}
 	}
 
 	for k, v := range kv {
-		me.Attrs = append(me.Attrs, attribute{key: k, value: v})
+		me.Attributes = append(me.Attributes, attribute{key: k, value: v})
 	}
 }
 
