@@ -15,6 +15,7 @@ const (
 	AttrAsync               = "async"
 	AttrAutocapitalize      = "autocapitalize"
 	AttrAutocomplete        = "autocomplete"
+	AttrAutofocus           = "autofocus"
 	AttrAutoplay            = "autoplay"
 	AttrBackground          = "background"
 	AttrBgColor             = "bgcolor"
