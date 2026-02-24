@@ -228,10 +228,10 @@ func Empty(args ...any) Node {
 	return newElem("", args...)
 }
 
-// DoctypeHTML creates the <!DOCTYPE html> element.
+// DoctypeHtml creates the <!DOCTYPE html> element.
 //
 // https://developer.mozilla.org/en-US/docs/Glossary/Doctype
-func DoctypeHTML() Node {
+func DoctypeHtml() Node {
 	return newVoidElem("!DOCTYPE html")
 }
 

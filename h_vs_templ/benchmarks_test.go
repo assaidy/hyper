@@ -404,7 +404,7 @@ func BenchmarkRealWorld_Templ(b *testing.B) {
 func BenchmarkRealWorld_H(b *testing.B) {
 	users := getBenchmarkData()
 	page := h.Empty(
-		h.DoctypeHTML(),
+		h.DoctypeHtml(),
 		h.Html(
 			h.Head(
 				h.Meta(h.KV{"charset": "UTF-8"}),
@@ -549,7 +549,7 @@ func BenchmarkSVG_H(b *testing.B) {
 // buildRealWorldPage creates a realistic full page using many library utilities
 func buildRealWorldPage(users []User) h.Node {
 	return h.Empty(
-		h.DoctypeHTML(),
+		h.DoctypeHtml(),
 		h.Html(
 			h.Head(
 				h.Meta(h.KV{"charset": "UTF-8"}),

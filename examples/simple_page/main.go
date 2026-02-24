@@ -15,7 +15,7 @@ func main() {
 
 	// Demonstrate all utility functions in a single example
 	page := h.Empty(
-		h.DoctypeHTML(),
+		h.DoctypeHtml(),
 		h.Html(h.KV{"lang": "en"},
 			h.Head(
 				h.Meta(h.KV{"charset": "UTF-8"}),
