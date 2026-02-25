@@ -62,7 +62,7 @@ const (
 	AttrHref                = "href"
 	AttrHrefLang            = "hreflang"
 	AttrHttpEquiv           = "http-equiv"
-	AttrID                  = "id"
+	AttrId                  = "id"
 	AttrIntegrity           = "integrity"
 	AttrInputMode           = "inputmode"
 	AttrIsMap               = "ismap"
