@@ -120,8 +120,8 @@ h.Div(h.KV{h.AttrClass: "bg-gray-100 min-h-screen p-8"},
 ### With HTMX
 
 ```go
-// Include htmx library
-hx.Script()
+// Include htmx library from CDN
+h.Script(h.KV{h.AttrSrc: "https://unpkg.com/htmx.org@2.0.8"})
 
 // HTMX button that loads content
 h.Button(h.KV{
@@ -171,7 +171,7 @@ func main() {
         h.Html(h.KV{h.AttrLang: "en"},
             h.Head(
                 h.Title("Dashboard"),
-                hx.Script(),
+                h.Script(h.KV{h.AttrSrc: "https://unpkg.com/htmx.org@2.0.8"}),
                 h.Script(h.KV{h.AttrSrc: "https://cdn.tailwindcss.com"}),
             ),
             h.Body(h.KV{h.AttrClass: "bg-gray-100 p-8"},
