@@ -44,14 +44,14 @@ const (
 	AttrHxVars        = "hx-vars"
 )
 
-// AttrOn generates an hx-on attribute for inline event handlers.
+// AttrHxOn generates an hx-on attribute for inline event handlers.
 // The event parameter should be the event name (e.g., "click", "mouseover", "htmx:before-swap").
 //
 // Example:
 //
-//	AttrOn("click")            // returns "hx-on:click"
-//	AttrOn("htmx:before-swap") // returns "hx-on:htmx:before-swap"
-func AttrOn(event string) string {
+//	AttrHxOn("click")            // returns "hx-on:click"
+//	AttrHxOn("htmx:before-swap") // returns "hx-on:htmx:before-swap"
+func AttrHxOn(event string) string {
 	return "hx-on:" + event
 }
 
