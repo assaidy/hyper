@@ -126,17 +126,17 @@ h.Script(h.KV{h.AttrSrc: "https://unpkg.com/htmx.org@2.0.8"})
 // HTMX button that loads content
 h.Button(h.KV{
     h.AttrClass:     "px-4 py-2 bg-blue-500 text-white rounded",
-    hx.AttrGet:      "/api/users",
-    hx.AttrTarget:   "#users-list",
-    hx.AttrSwap:     hx.SwapOuterHtml,
+    hx.AttrHxGet:      "/api/users",
+    hx.AttrHxTarget:   "#users-list",
+    hx.AttrHxSwap:     hx.SwapOuterHtml,
 },
     "Load Users",
 )
 
 // HTMX form
 h.Form(h.KV{
-    hx.AttrPost:     "/api/submit",
-    hx.AttrTarget:   "#result",
+    hx.AttrHxPost:     "/api/submit",
+    hx.AttrHxTarget:   "#result",
     h.AttrClass:     "space-y-4",
 },
     h.Input(h.KV{
@@ -191,9 +191,9 @@ func main() {
                     // HTMX button to refresh users
                     h.Button(h.KV{
                         h.AttrClass:      "px-4 py-2 bg-blue-500 text-white rounded mt-4",
-                        hx.AttrGet:      "/api/users",
-                        hx.AttrTarget:   "#users-list",
-                        hx.AttrSwap:     hx.SwapOuterHtml,
+                        hx.AttrHxGet:      "/api/users",
+                        hx.AttrHxTarget:   "#users-list",
+                        hx.AttrHxSwap:     hx.SwapOuterHtml,
                     },
                         "Refresh Users",
                     ),
