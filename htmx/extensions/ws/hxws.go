@@ -6,22 +6,30 @@
 // See https://htmx.org/extensions/ws/ for details.
 package hxws
 
-// Attr* constants are htmx ws extension attribute names.
 const (
+	// AttrWsConnect establishes a WebSocket connection to the specified URL.
 	AttrWsConnect = "ws-connect"
-	AttrWsSend    = "ws-send"
+	// AttrWsSend sends a message to the nearest websocket when the element is triggered.
+	AttrWsSend = "ws-send"
 )
 
-// Event* constants are htmx ws extension event names.
-// Use these constants with hx.AttrOn for type-safe inline event handlers.
 const (
-	EventWsConnecting    = "htmx:ws-connecting"
-	EventWsOpen          = "htmx:ws-open"
-	EventWsClose         = "htmx:ws-close"
-	EventWsError         = "htmx:ws-error"
+	// EventWsConnecting triggered when a connection to a WebSocket endpoint is being attempted.
+	EventWsConnecting = "htmx:ws-connecting"
+	// EventWsOpen triggered when a connection to a WebSocket endpoint has been established.
+	EventWsOpen = "htmx:ws-open"
+	// EventWsClose triggered when a connection to a WebSocket endpoint has been closed.
+	EventWsClose = "htmx:ws-close"
+	// EventWsError triggered when an error occurs on the WebSocket.
+	EventWsError = "htmx:ws-error"
+	// EventWsBeforeMessage triggered when a message has just been received by a socket, before any processing occurs.
 	EventWsBeforeMessage = "htmx:ws-before-message"
-	EventWsAfterMessage  = "htmx:ws-after-message"
-	EventWsConfigSend    = "htmx:ws-config-send"
-	EventWsBeforeSend    = "htmx:ws-before-send"
-	EventWsAfterSend     = "htmx:ws-after-send"
+	// EventWsAfterMessage triggered when a message has been completely processed by htmx and all changes have been settled.
+	EventWsAfterMessage = "htmx:ws-after-message"
+	// EventWsConfigSend triggered when preparing to send a message from a ws-send element.
+	EventWsConfigSend = "htmx:ws-config-send"
+	// EventWsBeforeSend triggered just before sending a message to the WebSocket.
+	EventWsBeforeSend = "htmx:ws-before-send"
+	// EventWsAfterSend triggered just after sending a message to the WebSocket.
+	EventWsAfterSend = "htmx:ws-after-send"
 )
