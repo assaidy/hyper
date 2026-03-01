@@ -107,6 +107,18 @@ const (
 	SwapNone = "none"
 )
 
+// SwapOob generates an hx-swap-oob attribute value with a specific target.
+// The swap parameter is the swap strategy (e.g., SwapBeforeEnd, SwapInnerHtml).
+// The target parameter is a CSS selector (e.g., "#myId", "#table tbody").
+//
+// Example:
+//
+//	SwapOob(SwapBeforeEnd, "#notifications") // returns "beforeend:#notifications"
+//	SwapOob(SwapBeforeEnd, "#table tbody")   // returns "beforeend:#table tbody"
+func SwapOob(swap, target string) string {
+	return swap + ":" + target
+}
+
 const (
 	// EventAbort send this event to an element to abort a request.
 	EventAbort = "htmx:abort"
