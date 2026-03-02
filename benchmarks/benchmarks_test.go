@@ -2,6 +2,7 @@ package h_vs_templ
 
 import (
 	"bytes"
+	"html/template"
 	"testing"
 
 	"github.com/assaidy/hyper"
@@ -782,6 +783,212 @@ func BenchmarkConcurrentRealistic_RealWorld_Templ(b *testing.B) {
 		for pb.Next() {
 			var buf bytes.Buffer
 			RealWorldTempl(users).Render(ctx, &buf)
+		}
+	})
+}
+
+// ============================================================================
+// BENCHMARK: Go html/template (pre-parsed)
+// ============================================================================
+
+func BenchmarkSimpleElement_HtmlTemplate(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		simpleElementTmpl.Execute(&buf, nil)
+	}
+}
+
+func BenchmarkDeepNesting_HtmlTemplate(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		deepNestingTmpl.Execute(&buf, nil)
+	}
+}
+
+func BenchmarkManyAttributes_HtmlTemplate(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		manyAttributesTmpl.Execute(&buf, nil)
+	}
+}
+
+func BenchmarkLargeText_HtmlTemplate(b *testing.B) {
+	text := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		largeTextTmpl.Execute(&buf, text)
+	}
+}
+
+func BenchmarkList10_HtmlTemplate(b *testing.B) {
+	items := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		listTempl10Tmpl.Execute(&buf, items)
+	}
+}
+
+func BenchmarkList100_HtmlTemplate(b *testing.B) {
+	items := make([]string, 100)
+	for i := range items {
+		items[i] = "item"
+	}
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		listTempl100Tmpl.Execute(&buf, items)
+	}
+}
+
+func BenchmarkConditionals_HtmlTemplate(b *testing.B) {
+	data := ConditionalsData{First: true, Second: false, Third: true, True: true}
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		conditionalsTmpl.Execute(&buf, data)
+	}
+}
+
+func BenchmarkMixedContent_HtmlTemplate(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		mixedContentTmpl.Execute(&buf, nil)
+	}
+}
+
+func BenchmarkVoidElements_HtmlTemplate(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		voidElementsTmpl.Execute(&buf, nil)
+	}
+}
+
+func BenchmarkHTMLEscaping_HtmlTemplate(b *testing.B) {
+	content := "<script>alert('xss')</script> & more <b>bold</b>"
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		htmlEscapingTmpl.Execute(&buf, content)
+	}
+}
+
+func BenchmarkTable_HtmlTemplate(b *testing.B) {
+	rows := 10
+	rowData := make([]struct{}, rows)
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		tableTmpl.Execute(&buf, rowData)
+	}
+}
+
+func BenchmarkForm_HtmlTemplate(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		formTempl.Execute(&buf, nil)
+	}
+}
+
+func BenchmarkEmptyPage_HtmlTemplate(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		emptyPageTmpl.Execute(&buf, nil)
+	}
+}
+
+func BenchmarkRawText_HtmlTemplate(b *testing.B) {
+	html := template.HTML("<div><span>Content</span></div>")
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		rawTextTmpl.Execute(&buf, html)
+	}
+}
+
+func BenchmarkSVG_HtmlTemplate(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		svgTempl.Execute(&buf, nil)
+	}
+}
+
+func BenchmarkRealWorld_HtmlTemplate(b *testing.B) {
+	users := getBenchmarkData()
+	data := RealWorldData{Users: users}
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		realWorldTempl.Execute(&buf, data)
+	}
+}
+
+func BenchmarkSequential_RealWorld_HtmlTemplate(b *testing.B) {
+	users := getBenchmarkData()
+	data := RealWorldData{Users: users}
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		realWorldTempl.Execute(&buf, data)
+	}
+}
+
+func BenchmarkConcurrent10_RealWorld_HtmlTemplate(b *testing.B) {
+	users := getBenchmarkData()
+	data := RealWorldData{Users: users}
+	b.SetParallelism(10)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			realWorldTempl.Execute(&buf, data)
+		}
+	})
+}
+
+func BenchmarkConcurrent100_RealWorld_HtmlTemplate(b *testing.B) {
+	users := getBenchmarkData()
+	data := RealWorldData{Users: users}
+	b.SetParallelism(100)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			realWorldTempl.Execute(&buf, data)
+		}
+	})
+}
+
+func BenchmarkConcurrent1000_RealWorld_HtmlTemplate(b *testing.B) {
+	users := getBenchmarkData()
+	data := RealWorldData{Users: users}
+	b.SetParallelism(1000)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			realWorldTempl.Execute(&buf, data)
+		}
+	})
+}
+
+func BenchmarkConcurrentRealistic_RealWorld_HtmlTemplate(b *testing.B) {
+	users := getBenchmarkData()
+	data := RealWorldData{Users: users}
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var buf bytes.Buffer
+			realWorldTempl.Execute(&buf, data)
 		}
 	})
 }
