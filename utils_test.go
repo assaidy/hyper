@@ -116,31 +116,31 @@ func TestRepeat(t *testing.T) {
 	tests := []struct {
 		name     string
 		n        int
-		f        func() Node
+		f        func() HyperNode
 		expected string
 	}{
 		{
 			name:     "Repeat zero times",
 			n:        0,
-			f:        func() Node { return Div() },
+			f:        func() HyperNode { return Div() },
 			expected: "",
 		},
 		{
 			name:     "Repeat once",
 			n:        1,
-			f:        func() Node { return Div("item") },
+			f:        func() HyperNode { return Div("item") },
 			expected: "<div>item</div>",
 		},
 		{
 			name:     "Repeat multiple times",
 			n:        3,
-			f:        func() Node { return Div("item") },
+			f:        func() HyperNode { return Div("item") },
 			expected: "<div>item</div><div>item</div><div>item</div>",
 		},
 		{
 			name: "Repeat with different content",
 			n:    2,
-			f: func() Node {
+			f: func() HyperNode {
 				static := 0
 				static++
 				return Div(string(rune('a' + static)))
@@ -169,31 +169,31 @@ func TestMapSlice(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    []string
-		f        func(string) Node
+		f        func(string) HyperNode
 		expected string
 	}{
 		{
 			name:     "MapSlice empty slice",
 			input:    []string{},
-			f:        func(s string) Node { return Li(s) },
+			f:        func(s string) HyperNode { return Li(s) },
 			expected: "",
 		},
 		{
 			name:     "MapSlice single item",
 			input:    []string{"apple"},
-			f:        func(s string) Node { return Li(s) },
+			f:        func(s string) HyperNode { return Li(s) },
 			expected: "<li>apple</li>",
 		},
 		{
 			name:     "MapSlice multiple items",
 			input:    []string{"apple", "banana", "cherry"},
-			f:        func(s string) Node { return Li(s) },
+			f:        func(s string) HyperNode { return Li(s) },
 			expected: "<li>apple</li><li>banana</li><li>cherry</li>",
 		},
 		{
 			name:  "MapSlice with conditional logic",
 			input: []string{"apple", "banana"},
-			f: func(s string) Node {
+			f: func(s string) HyperNode {
 				if s == "apple" {
 					return Li(s, Span(" (popular)"))
 				}
@@ -221,7 +221,7 @@ func TestMapSlice(t *testing.T) {
 
 func TestMapSlice_Integers(t *testing.T) {
 	numbers := []int{1, 2, 3}
-	resultNode := MapSlice(numbers, func(n int) Node {
+	resultNode := MapSlice(numbers, func(n int) HyperNode {
 		return Div(string(rune('0' + n)))
 	})
 

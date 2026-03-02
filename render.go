@@ -11,21 +11,21 @@ import "io"
 //
 //	err := Render(os.Stdout, Div("Hello"))
 //	// Outputs: <div>Hello</div>
-func Render(w io.Writer, node Node) error {
+func Render(w io.Writer, node HyperNode) error {
 	return node.Render(w)
 }
 
-// Node represents any renderable HTML element or text content.
+// HyperNode represents any renderable HTML element or text content.
 //
-// The Node interface is the core abstraction that allows both HTML elements
+// The HyperNode interface is the core abstraction that allows both HTML elements
 // and text content to be treated uniformly when building and rendering HTML
 // trees. All elements created by the factory functions (Div(), P(), Svg(), etc.)
 // implement this interface.
 //
 // Example:
 //
-//	var node Node = Div("Hello")
+//	var node HyperNode = Div("Hello")
 //	err := node.Render(os.Stdout)
-type Node interface {
+type HyperNode interface {
 	Render(io.Writer) error
 }

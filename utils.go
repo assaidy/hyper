@@ -35,7 +35,7 @@ func IfElse[T any](condition bool, result, alternative T) T {
 //		If(showHeader, Header(...)),
 //		Main(...),
 //	)
-func If(condition bool, result Node) Node {
+func If(condition bool, result HyperNode) HyperNode {
 	if condition {
 		return result
 	}
@@ -51,11 +51,11 @@ func If(condition bool, result Node) Node {
 // Example:
 //
 //	Ul(
-//		Repeat(5, func() Node {
+//		Repeat(5, func() HyperNode {
 //			return Li("List item")
 //		}),
 //	)
-func Repeat(n int, f func() Node) Node {
+func Repeat(n int, f func() HyperNode) HyperNode {
 	result := newElem("")
 	for range n {
 		result.Children = append(result.Children, f())
@@ -72,11 +72,11 @@ func Repeat(n int, f func() Node) Node {
 //
 //	items := []string{"Apple", "Banana", "Cherry"}
 //	Ul(
-//		MapSlice(items, func(item string) Node {
+//		MapSlice(items, func(item string) HyperNode {
 //			return Li(item)
 //		}),
 //	)
-func MapSlice[T any](input []T, f func(T) Node) Node {
+func MapSlice[T any](input []T, f func(T) HyperNode) HyperNode {
 	result := newElem("")
 	for _, item := range input {
 		result.Children = append(result.Children, f(item))

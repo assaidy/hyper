@@ -32,7 +32,7 @@ func BenchmarkSimpleElement_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkSimpleElement_H(b *testing.B) {
+func BenchmarkSimpleElement_Hyper(b *testing.B) {
 	page := h.Div("Hello World")
 	b.ResetTimer()
 	for b.Loop() {
@@ -55,7 +55,7 @@ func BenchmarkDeepNesting_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkDeepNesting_H(b *testing.B) {
+func BenchmarkDeepNesting_Hyper(b *testing.B) {
 	page := h.Div(
 		h.Div(
 			h.Div(
@@ -88,7 +88,7 @@ func BenchmarkManyAttributes_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkManyAttributes_H(b *testing.B) {
+func BenchmarkManyAttributes_Hyper(b *testing.B) {
 	page := h.Div(h.KV{
 		"id":         "main",
 		"class":      "container wrapper",
@@ -120,7 +120,7 @@ func BenchmarkLargeText_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkLargeText_H(b *testing.B) {
+func BenchmarkLargeText_Hyper(b *testing.B) {
 	text := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 	page := h.P(text)
 	b.ResetTimer()
@@ -145,10 +145,10 @@ func BenchmarkList10_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkList10_H(b *testing.B) {
+func BenchmarkList10_Hyper(b *testing.B) {
 	items := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
 	page := h.Ul(
-		h.MapSlice(items, func(s string) h.Node {
+		h.MapSlice(items, func(s string) h.HyperNode {
 			return h.Li(s)
 		}),
 	)
@@ -177,13 +177,13 @@ func BenchmarkList100_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkList100_H(b *testing.B) {
+func BenchmarkList100_Hyper(b *testing.B) {
 	items := make([]string, 100)
 	for i := range items {
 		items[i] = "item"
 	}
 	page := h.Ul(
-		h.MapSlice(items, func(s string) h.Node {
+		h.MapSlice(items, func(s string) h.HyperNode {
 			return h.Li(s)
 		}),
 	)
@@ -208,7 +208,7 @@ func BenchmarkConditionals_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkConditionals_H(b *testing.B) {
+func BenchmarkConditionals_Hyper(b *testing.B) {
 	page := h.Div(
 		h.If(true, h.Span("First")),
 		h.If(false, h.Span("Second")),
@@ -236,7 +236,7 @@ func BenchmarkMixedContent_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkMixedContent_H(b *testing.B) {
+func BenchmarkMixedContent_Hyper(b *testing.B) {
 	page := h.Div(
 		h.H1("Title"),
 		h.P("Paragraph with ", h.Strong("bold"), " and ", h.Em("italic"), " text."),
@@ -269,7 +269,7 @@ func BenchmarkVoidElements_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkVoidElements_H(b *testing.B) {
+func BenchmarkVoidElements_Hyper(b *testing.B) {
 	page := h.Div(
 		h.Img(h.KV{"src": "image.jpg", "alt": "Image"}),
 		h.Br(),
@@ -300,7 +300,7 @@ func BenchmarkHTMLEscaping_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkHTMLEscaping_H(b *testing.B) {
+func BenchmarkHTMLEscaping_Hyper(b *testing.B) {
 	content := "<script>alert('xss')</script> & more <b>bold</b>"
 	page := h.Div(content)
 	b.ResetTimer()
@@ -325,7 +325,7 @@ func BenchmarkTable_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkTable_H(b *testing.B) {
+func BenchmarkTable_Hyper(b *testing.B) {
 	rows := 10
 	page := h.Table(
 		h.Thead(
@@ -336,7 +336,7 @@ func BenchmarkTable_H(b *testing.B) {
 			),
 		),
 		h.Tbody(
-			h.Repeat(rows, func() h.Node {
+			h.Repeat(rows, func() h.HyperNode {
 				return h.Tr(
 					h.Td("Cell 1"),
 					h.Td("Cell 2"),
@@ -366,7 +366,7 @@ func BenchmarkForm_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkForm_H(b *testing.B) {
+func BenchmarkForm_Hyper(b *testing.B) {
 	page := h.Form(h.KV{"action": "/submit", "method": "POST"},
 		h.Fieldset(
 			h.Legend("User Form"),
@@ -401,7 +401,7 @@ func BenchmarkRealWorld_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkRealWorld_H(b *testing.B) {
+func BenchmarkRealWorld_Hyper(b *testing.B) {
 	users := getBenchmarkData()
 	page := h.Empty(
 		h.DoctypeHtml(),
@@ -431,7 +431,7 @@ func BenchmarkRealWorld_H(b *testing.B) {
 								),
 							),
 							h.Tbody(
-								h.MapSlice(users, func(u User) h.Node {
+								h.MapSlice(users, func(u User) h.HyperNode {
 									return h.Tr(
 										h.Td(u.Name),
 										h.Td(h.IfElse(u.Admin, h.Strong("Admin"), h.Span("User"))),
@@ -469,7 +469,7 @@ func BenchmarkEmptyPage_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkEmptyPage_H(b *testing.B) {
+func BenchmarkEmptyPage_Hyper(b *testing.B) {
 	page := h.Html(h.Body())
 	b.ResetTimer()
 	for b.Loop() {
@@ -493,7 +493,7 @@ func BenchmarkRawText_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkRawText_H(b *testing.B) {
+func BenchmarkRawText_Hyper(b *testing.B) {
 	html := "<div><span>Content</span></div>"
 	page := h.Div(h.RawText(html))
 	b.ResetTimer()
@@ -503,7 +503,7 @@ func BenchmarkRawText_H(b *testing.B) {
 	}
 }
 
-func BenchmarkRegularString_H(b *testing.B) {
+func BenchmarkRegularString_Hyper(b *testing.B) {
 	text := "<div><span>Content</span></div>"
 	page := h.Div(text)
 	b.ResetTimer()
@@ -527,7 +527,7 @@ func BenchmarkSVG_Templ(b *testing.B) {
 	}
 }
 
-func BenchmarkSVG_H(b *testing.B) {
+func BenchmarkSVG_Hyper(b *testing.B) {
 	// NOTE: In real example all the SVG tag is copied and put inside RawText.
 	page := h.Svg(h.KV{"width": "100", "height": "100"},
 		h.RawText(`<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />`),
@@ -547,7 +547,7 @@ func BenchmarkSVG_H(b *testing.B) {
 // ============================================================================
 
 // buildRealWorldPage creates a realistic full page using many library utilities
-func buildRealWorldPage(users []User) h.Node {
+func buildRealWorldPage(users []User) h.HyperNode {
 	return h.Empty(
 		h.DoctypeHtml(),
 		h.Html(
@@ -589,7 +589,7 @@ func buildRealWorldPage(users []User) h.Node {
 									),
 								),
 								h.Tbody(
-									h.MapSlice(users, func(u User) h.Node {
+									h.MapSlice(users, func(u User) h.HyperNode {
 										return h.Tr(
 											h.Td(h.Strong("#")),
 											h.Td(u.Name),
@@ -641,9 +641,9 @@ func buildRealWorldPage(users []User) h.Node {
 	)
 }
 
-// BenchmarkSequential_RealWorld_H measures single-threaded (sequential) performance
+// BenchmarkSequential_RealWorld_Hyper measures single-threaded (sequential) performance
 // This is what you'd see in the standard benchmarks - operations per second on one CPU
-func BenchmarkSequential_RealWorld_H(b *testing.B) {
+func BenchmarkSequential_RealWorld_Hyper(b *testing.B) {
 	users := getBenchmarkData()
 	page := buildRealWorldPage(users)
 	b.ResetTimer()
@@ -653,9 +653,9 @@ func BenchmarkSequential_RealWorld_H(b *testing.B) {
 	}
 }
 
-// BenchmarkConcurrent10_RealWorld_H simulates 10 concurrent requests
+// BenchmarkConcurrent10_RealWorld_Hyper simulates 10 concurrent requests
 // Typical for a small web application under light load
-func BenchmarkConcurrent10_RealWorld_H(b *testing.B) {
+func BenchmarkConcurrent10_RealWorld_Hyper(b *testing.B) {
 	users := getBenchmarkData()
 	page := buildRealWorldPage(users)
 	b.SetParallelism(10)
@@ -668,9 +668,9 @@ func BenchmarkConcurrent10_RealWorld_H(b *testing.B) {
 	})
 }
 
-// BenchmarkConcurrent100_RealWorld_H simulates 100 concurrent requests
+// BenchmarkConcurrent100_RealWorld_Hyper simulates 100 concurrent requests
 // Typical for a medium-traffic web application
-func BenchmarkConcurrent100_RealWorld_H(b *testing.B) {
+func BenchmarkConcurrent100_RealWorld_Hyper(b *testing.B) {
 	users := getBenchmarkData()
 	page := buildRealWorldPage(users)
 	b.SetParallelism(100)
@@ -683,9 +683,9 @@ func BenchmarkConcurrent100_RealWorld_H(b *testing.B) {
 	})
 }
 
-// BenchmarkConcurrent1000_RealWorld_H simulates 1000 concurrent requests
+// BenchmarkConcurrent1000_RealWorld_Hyper simulates 1000 concurrent requests
 // High-load scenario - stress test for the library
-func BenchmarkConcurrent1000_RealWorld_H(b *testing.B) {
+func BenchmarkConcurrent1000_RealWorld_Hyper(b *testing.B) {
 	users := getBenchmarkData()
 	page := buildRealWorldPage(users)
 	b.SetParallelism(1000)
@@ -698,10 +698,10 @@ func BenchmarkConcurrent1000_RealWorld_H(b *testing.B) {
 	})
 }
 
-// BenchmarkConcurrentRealistic_RealWorld_H uses GOMAXPROCS goroutines
+// BenchmarkConcurrentRealistic_RealWorld_Hyper uses GOMAXPROCS goroutines
 // This represents the most realistic server scenario where concurrency
 // matches available CPU cores (what real servers typically use)
-func BenchmarkConcurrentRealistic_RealWorld_H(b *testing.B) {
+func BenchmarkConcurrentRealistic_RealWorld_Hyper(b *testing.B) {
 	users := getBenchmarkData()
 	page := buildRealWorldPage(users)
 	// No SetParallelism - uses default GOMAXPROCS

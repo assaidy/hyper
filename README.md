@@ -24,19 +24,19 @@ package main
 import (
     "os"
 
-    "github.com/assaidy/hyper"
+    . "github.com/assaidy/hyper"
 )
 
 func main() {
-    page := h.Empty(
-        h.DoctypeHtml(),
-        h.Html(
-            h.Head(
-                h.Title("My Page"),
+    page := Empty(
+        DoctypeHtml(),
+        Html(
+            Head(
+                Title("My Page"),
             ),
-            h.Body(
-                h.H1("Hello, World!"),
-                h.P("Auto-escaped: <script>alert('xss')</script>"),
+            Body(
+                H1("Hello, World!"),
+                P("Auto-escaped: <script>alert('xss')</script>"),
             ),
         ),
     )
@@ -53,23 +53,23 @@ func main() {
 
 ```go
 // Strings are auto-escaped
-h.Div("Hello", " ", "World")  // <div>Hello World</div>
+Div("Hello", " ", "World")  // <div>Hello World</div>
 
-h.P("<script>alert('xss')</script>")
+P("<script>alert('xss')</script>")
 // <p>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</p>
 
 // Raw HTML (not escaped. use with caution)
-h.Div(h.RawText("<svg>...</svg>")) // <svg>...</svg>
+Div(RawText("<svg>...</svg>")) // <svg>...</svg>
 
 // Numbers and booleans are auto-converted
-h.P("Count: ", 42)           // <p>Count: 42</p>
-h.P("Active: ", true)        // <p>Active: true</p>
+P("Count: ", 42)           // <p>Count: 42</p>
+P("Active: ", true)        // <p>Active: true</p>
 ```
 
 ### Attributes
 
 ```go
-h.Div(h.KV{h.AttrClass: "container", h.AttrId: "main"}, "Content")
+Div(KV{AttrClass: "container", AttrId: "main"}, "Content")
 // <div class="container" id="main">Content</div>
 ```
 
@@ -77,10 +77,10 @@ h.Div(h.KV{h.AttrClass: "container", h.AttrId: "main"}, "Content")
 
 ```go
 // Show element only if condition is true
-h.If(isLoggedIn, h.Div("Welcome back!"))
+If(isLoggedIn, Div("Welcome back!"))
 
 // Choose between two options
-h.IfElse(isAdmin, h.Div("Admin"), h.Div("User"))
+IfElse(isAdmin, Div("Admin"), Div("User"))
 ```
 
 ### Lists and Iteration
@@ -89,16 +89,16 @@ h.IfElse(isAdmin, h.Div("Admin"), h.Div("User"))
 items := []string{"Apple", "Banana"}
 
 // Map over slice
-h.Ul(
-    h.MapSlice(items, func(item string) h.Node {
-        return h.Li(item)
+Ul(
+    MapSlice(items, func(item string) HyperNode {
+        return Li(item)
     }),
 )
 
 // Repeat N times
-h.Div(
-    h.Repeat(3, func() h.Node {
-        return h.P("Repeated")
+Div(
+    Repeat(3, func() HyperNode {
+        return P("Repeated")
     }),
 )
 ```
@@ -106,11 +106,11 @@ h.Div(
 ### With Tailwind CSS
 
 ```go
-h.Div(h.KV{h.AttrClass: "bg-gray-100 min-h-screen p-8"},
-    h.Div(h.KV{h.AttrClass: "max-w-4xl mx-auto"},
-        h.H1(h.KV{h.AttrClass: "text-4xl font-bold text-gray-800"}, "Title"),
-        h.P(h.KV{h.AttrClass: "text-gray-600 mt-2"}, "Description"),
-        h.Button(h.KV{h.AttrClass: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"},
+Div(KV{AttrClass: "bg-gray-100 min-h-screen p-8"},
+    Div(KV{AttrClass: "max-w-4xl mx-auto"},
+        H1(KV{AttrClass: "text-4xl font-bold text-gray-800"}, "Title"),
+        P(KV{AttrClass: "text-gray-600 mt-2"}, "Description"),
+        Button(KV{AttrClass: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"},
             "Click Me",
         ),
     ),
@@ -121,30 +121,30 @@ h.Div(h.KV{h.AttrClass: "bg-gray-100 min-h-screen p-8"},
 
 ```go
 // Include htmx library from CDN
-h.Script(h.KV{h.AttrSrc: "https://unpkg.com/htmx.org@2.0.8"})
+Script(KV{AttrSrc: "https://unpkg.com/htmx.org@2.0.8"})
 
 // HTMX button that loads content
-h.Button(h.KV{
-    h.AttrClass:     "px-4 py-2 bg-blue-500 text-white rounded",
-    hx.AttrHxGet:      "/api/users",
-    hx.AttrHxTarget:   "#users-list",
-    hx.AttrHxSwap:     hx.SwapOuterHtml,
+Button(KV{
+    AttrClass:     "px-4 py-2 bg-blue-500 text-white rounded",
+    AttrHxGet:      "/api/users",
+    AttrHxTarget:   "#users-list",
+    AttrHxSwap:     SwapOuterHtml,
 },
     "Load Users",
 )
 
 // HTMX form
-h.Form(h.KV{
-    hx.AttrHxPost:     "/api/submit",
-    hx.AttrHxTarget:   "#result",
-    h.AttrClass:     "space-y-4",
+Form(KV{
+    AttrHxPost:     "/api/submit",
+    AttrHxTarget:   "#result",
+    AttrClass:     "space-y-4",
 },
-    h.Input(h.KV{
-        h.AttrType:  h.TypeText,
-        h.AttrName:  "message",
-        h.AttrClass: "border rounded px-3 py-2",
+    Input(KV{
+        AttrType:  TypeText,
+        AttrName:  "message",
+        AttrClass: "border rounded px-3 py-2",
     }),
-    h.Button(h.KV{h.AttrType: h.TypeSubmit, h.AttrClass: "bg-blue-500 text-white px-4 py-2 rounded"},
+    Button(KV{AttrType: TypeSubmit, AttrClass: "bg-blue-500 text-white px-4 py-2 rounded"},
         "Submit",
     ),
 )
@@ -158,50 +158,50 @@ package main
 import (
     "os"
 
-    "github.com/assaidy/hyper"
-    "github.com/assaidy/hyper/htmx"
+    . "github.com/assaidy/hyper"
+    . "github.com/assaidy/hyper/htmx"
 )
 
 func main() {
     users := []string{"Alice", "Bob", "Charlie"}
     isAdmin := true
 
-    page := h.Empty(
-        h.DoctypeHtml(),
-        h.Html(h.KV{h.AttrLang: "en"},
-            h.Head(
-                h.Title("Dashboard"),
-                h.Script(h.KV{h.AttrSrc: "https://unpkg.com/htmx.org@2.0.8"}),
-                h.Script(h.KV{h.AttrSrc: "https://cdn.tailwindcss.com"}),
+    page := Empty(
+        DoctypeHtml(),
+        Html(KV{AttrLang: "en"},
+            Head(
+                Title("Dashboard"),
+                Script(KV{AttrSrc: "https://unpkg.com/htmx.org@2.0.8"}),
+                Script(KV{AttrSrc: "https://cdn.tailwindcss.com"}),
             ),
-            h.Body(h.KV{h.AttrClass: "bg-gray-100 p-8"},
-                h.Div(h.KV{h.AttrClass: "max-w-2xl mx-auto"},
-                    h.H1(h.KV{h.AttrClass: "text-3xl font-bold mb-4"}, "Dashboard"),
+            Body(KV{AttrClass: "bg-gray-100 p-8"},
+                Div(KV{AttrClass: "max-w-2xl mx-auto"},
+                    H1(KV{AttrClass: "text-3xl font-bold mb-4"}, "Dashboard"),
                     
                     // Conditional admin panel
-                    h.If(isAdmin,
-                        h.Div(h.KV{h.AttrClass: "bg-blue-50 p-4 rounded mb-4"},
-                            h.P(h.KV{h.AttrClass: "font-semibold"}, "Admin Panel"),
+                    If(isAdmin,
+                        Div(KV{AttrClass: "bg-blue-50 p-4 rounded mb-4"},
+                            P(KV{AttrClass: "font-semibold"}, "Admin Panel"),
                         ),
                     ),
                     
                     // User count
-                    h.P("Total users: ", len(users)),
+                    P("Total users: ", len(users)),
 
                     // HTMX button to refresh users
-                    h.Button(h.KV{
-                        h.AttrClass:      "px-4 py-2 bg-blue-500 text-white rounded mt-4",
-                        hx.AttrHxGet:      "/api/users",
-                        hx.AttrHxTarget:   "#users-list",
-                        hx.AttrHxSwap:     hx.SwapOuterHtml,
+                    Button(KV{
+                        AttrClass:      "px-4 py-2 bg-blue-500 text-white rounded mt-4",
+                        AttrHxGet:      "/api/users",
+                        AttrHxTarget:   "#users-list",
+                        AttrHxSwap:     SwapOuterHtml,
                     },
                         "Refresh Users",
                     ),
                     
                     // User list
-                    h.Ul(h.KV{h.AttrClass: "space-y-2 mt-4", h.AttrId: "users-list"},
-                        h.MapSlice(users, func(name string) h.Node {
-                            return h.Li(h.KV{h.AttrClass: "p-2 bg-white rounded shadow"},
+                    Ul(KV{AttrClass: "space-y-2 mt-4", AttrId: "users-list"},
+                        MapSlice(users, func(name string) HyperNode {
+                            return Li(KV{AttrClass: "p-2 bg-white rounded shadow"},
                                 name,
                             )
                         }),

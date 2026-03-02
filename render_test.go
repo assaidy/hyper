@@ -9,7 +9,7 @@ import (
 func TestRender(t *testing.T) {
 	tests := []struct {
 		name     string
-		node     Node
+		node     HyperNode
 		expected string
 		wantErr  bool
 	}{
@@ -198,10 +198,10 @@ func BenchmarkRender_DensePage(b *testing.B) {
 		),
 	)
 
-	b.ResetTimer()
+	
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		var buf bytes.Buffer
 		err := Render(&buf, node)
 		if err != nil {
