@@ -14,22 +14,22 @@ const (
 )
 
 const (
-	// EventWsConnecting triggered when a connection to a WebSocket endpoint is being attempted.
-	EventWsConnecting = "htmx:ws-connecting"
-	// EventWsOpen triggered when a connection to a WebSocket endpoint has been established.
-	EventWsOpen = "htmx:ws-open"
-	// EventWsClose triggered when a connection to a WebSocket endpoint has been closed.
-	EventWsClose = "htmx:ws-close"
-	// EventWsError triggered when an error occurs on the WebSocket.
-	EventWsError = "htmx:ws-error"
-	// EventWsBeforeMessage triggered when a message has just been received by a socket, before any processing occurs.
-	EventWsBeforeMessage = "htmx:ws-before-message"
-	// EventWsAfterMessage triggered when a message has been completely processed by htmx and all changes have been settled.
-	EventWsAfterMessage = "htmx:ws-after-message"
-	// EventWsConfigSend triggered when preparing to send a message from a ws-send element.
-	EventWsConfigSend = "htmx:ws-config-send"
-	// EventWsBeforeSend triggered just before sending a message to the WebSocket.
-	EventWsBeforeSend = "htmx:ws-before-send"
-	// EventWsAfterSend triggered just after sending a message to the WebSocket.
-	EventWsAfterSend = "htmx:ws-after-send"
+	// EventHtmxWsConnecting triggered when a connection to a WebSocket endpoint is being attempted.
+	EventHtmxWsConnecting = "htmx:ws-connecting"
+	// EventHtmxWsOpen triggered when a connection to a WebSocket endpoint has been established.
+	EventHtmxWsOpen = "htmx:ws-open"
+	// EventHtmxWsClose triggered when a connection to a WebSocket endpoint has been closed.
+	EventHtmxWsClose = "htmx:ws-close"
+	// EventHtmxWsError triggered when an error occurs on the WebSocket.
+	EventHtmxWsError = "htmx:ws-error"
+	// EventHtmxWsBeforeMessage triggered when a message has just been received by a socket, before any processing occurs.
+	EventHtmxWsBeforeMessage = "htmx:ws-before-message"
+	// EventHtmxWsAfterMessage triggered when a message has been completely processed by htmx and all changes have been settled.
+	EventHtmxWsAfterMessage = "htmx:ws-after-message"
+	// EventHtmxWsConfigSend triggered when preparing to send a message from a ws-send element.
+	EventHtmxWsConfigSend = "htmx:ws-config-send"
+	// EventHtmxWsBeforeSend triggered just before sending a message to the WebSocket.
+	EventHtmxWsBeforeSend = "htmx:ws-before-send"
+	// EventHtmxWsAfterSend triggered just after sending a message to the WebSocket.
+	EventHtmxWsAfterSend = "htmx:ws-after-send"
 )

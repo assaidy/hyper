@@ -120,100 +120,100 @@ func SwapOob(swap, target string) string {
 }
 
 const (
-	// EventAbort send this event to an element to abort a request.
-	EventAbort = "htmx:abort"
-	// EventAfterOnLoad triggered after an AJAX request has completed processing a successful response.
-	EventAfterOnLoad = "htmx:after-on-load"
-	// EventAfterProcessNode triggered after htmx has initialized a node.
-	EventAfterProcessNode = "htmx:after-process-node"
-	// EventAfterRequest triggered after an AJAX request has completed.
-	EventAfterRequest = "htmx:after-request"
-	// EventAfterSettle triggered after the DOM has settled.
-	EventAfterSettle = "htmx:after-settle"
-	// EventAfterSwap triggered after new content has been swapped in.
-	EventAfterSwap = "htmx:after-swap"
-	// EventBeforeCleanupElement triggered before htmx disables an element or removes it from the DOM.
-	EventBeforeCleanupElement = "htmx:before-cleanup-element"
-	// EventBeforeOnLoad triggered before any response processing occurs.
-	EventBeforeOnLoad = "htmx:before-on-load"
-	// EventBeforeProcessNode triggered before htmx initializes a node.
-	EventBeforeProcessNode = "htmx:before-process-node"
-	// EventBeforeRequest triggered before an AJAX request is made.
-	EventBeforeRequest = "htmx:before-request"
-	// EventBeforeSend triggered just before an ajax request is sent.
-	EventBeforeSend = "htmx:before-send"
-	// EventBeforeSettle triggered before the DOM settles.
-	EventBeforeSettle = "htmx:before-settle"
-	// EventBeforeSwap triggered before a swap is done, allows you to configure the swap.
-	EventBeforeSwap = "htmx:before-swap"
-	// EventBeforeTransition triggered before the View Transition wrapped swap occurs.
-	EventBeforeTransition = "htmx:before-transition"
-	// EventBeforeHistorySave triggered before content is saved to the history cache.
-	EventBeforeHistorySave = "htmx:before-history-save"
-	// EventConfigRequest triggered before the request, allows you to customize parameters, headers.
-	EventConfigRequest = "htmx:config-request"
-	// EventConfirm triggered after a trigger occurs on an element, allows you to cancel (or delay) issuing the AJAX request.
-	EventConfirm = "htmx:confirm"
-	// EventHistoryCacheError triggered on an error during cache writing.
-	EventHistoryCacheError = "htmx:history-cache-error"
-	// EventHistoryCacheHit triggered on a cache hit in the history subsystem.
-	EventHistoryCacheHit = "htmx:history-cache-hit"
-	// EventHistoryCacheMiss triggered on a cache miss in the history subsystem.
-	EventHistoryCacheMiss = "htmx:history-cache-miss"
-	// EventHistoryCacheMissError triggered on an unsuccessful remote retrieval.
-	EventHistoryCacheMissError = "htmx:history-cache-miss-error"
-	// EventHistoryCacheMissLoad triggered on a successful remote retrieval.
-	EventHistoryCacheMissLoad = "htmx:history-cache-miss-load"
-	// EventHistoryRestore triggered when htmx handles a history restoration action.
-	EventHistoryRestore = "htmx:history-restore"
-	// EventLoad triggered when new content is added to the DOM.
-	EventLoad = "htmx:load"
-	// EventNoSseSourceError triggered when an element refers to a SSE event in its trigger, but no parent SSE source has been defined.
-	EventNoSseSourceError = "htmx:no-sse-source-error"
-	// EventOnLoadError triggered when an exception occurs during the onLoad handling in htmx.
-	EventOnLoadError = "htmx:on-load-error"
-	// EventOobAfterSwap triggered after an out of band element has been swapped in.
-	EventOobAfterSwap = "htmx:oob-after-swap"
-	// EventOobBeforeSwap triggered before an out of band element swap is done, allows you to configure the swap.
-	EventOobBeforeSwap = "htmx:oob-before-swap"
-	// EventOobErrorNoTarget triggered when an out of band element does not have a matching ID in the current DOM.
-	EventOobErrorNoTarget = "htmx:oob-error-no-target"
-	// EventPrompt triggered after a prompt is shown.
-	EventPrompt = "htmx:prompt"
-	// EventPushedIntoHistory triggered after a url is pushed into history.
-	EventPushedIntoHistory = "htmx:pushed-into-history"
-	// EventReplacedInHistory triggered after a url is replaced in history.
-	EventReplacedInHistory = "htmx:replaced-in-history"
-	// EventResponseError triggered when an HTTP response error (non-200 or 300 response code) occurs.
-	EventResponseError = "htmx:response-error"
-	// EventSendAbort triggered when a request is aborted.
-	EventSendAbort = "htmx:send-abort"
-	// EventSendError triggered when a network error prevents an HTTP request from happening.
-	EventSendError = "htmx:send-error"
-	// EventSseError triggered when an error occurs with a SSE source.
-	EventSseError = "htmx:sse-error"
-	// EventSseOpen triggered when a SSE source is opened.
-	EventSseOpen = "htmx:sse-open"
-	// EventSseMessage triggered when a message is received from a SSE source.
-	EventSseMessage = "htmx:sse-message"
-	// EventSwapError triggered when an error occurs during the swap phase.
-	EventSwapError = "htmx:swap-error"
-	// EventTargetError triggered when an invalid target is specified.
-	EventTargetError = "htmx:target-error"
-	// EventTimeout triggered when a request timeout occurs.
-	EventTimeout = "htmx:timeout"
-	// EventValidationValidate triggered before an element is validated.
-	EventValidationValidate = "htmx:validation:validate"
-	// EventValidationFailed triggered when an element fails validation.
-	EventValidationFailed = "htmx:validation:failed"
-	// EventValidationHalted triggered when a request is halted due to validation errors.
-	EventValidationHalted = "htmx:validation:halted"
-	// EventXhrAbort triggered when an ajax request aborts.
-	EventXhrAbort = "htmx:xhr:abort"
-	// EventXhrLoadend triggered when an ajax request ends.
-	EventXhrLoadend = "htmx:xhr:loadend"
-	// EventXhrLoadstart triggered when an ajax request starts.
-	EventXhrLoadstart = "htmx:xhr:loadstart"
-	// EventXhrProgress triggered periodically during an ajax request that supports progress events.
-	EventXhrProgress = "htmx:xhr:progress"
+	// EventHtmxAbort send this event to an element to abort a request.
+	EventHtmxAbort = "htmx:abort"
+	// EventHtmxAfterOnLoad triggered after an AJAX request has completed processing a successful response.
+	EventHtmxAfterOnLoad = "htmx:after-on-load"
+	// EventHtmxAfterProcessNode triggered after htmx has initialized a node.
+	EventHtmxAfterProcessNode = "htmx:after-process-node"
+	// EventHtmxAfterRequest triggered after an AJAX request has completed.
+	EventHtmxAfterRequest = "htmx:after-request"
+	// EventHtmxAfterSettle triggered after the DOM has settled.
+	EventHtmxAfterSettle = "htmx:after-settle"
+	// EventHtmxAfterSwap triggered after new content has been swapped in.
+	EventHtmxAfterSwap = "htmx:after-swap"
+	// EventHtmxBeforeCleanupElement triggered before htmx disables an element or removes it from the DOM.
+	EventHtmxBeforeCleanupElement = "htmx:before-cleanup-element"
+	// EventHtmxBeforeOnLoad triggered before any response processing occurs.
+	EventHtmxBeforeOnLoad = "htmx:before-on-load"
+	// EventHtmxBeforeProcessNode triggered before htmx initializes a node.
+	EventHtmxBeforeProcessNode = "htmx:before-process-node"
+	// EventHtmxBeforeRequest triggered before an AJAX request is made.
+	EventHtmxBeforeRequest = "htmx:before-request"
+	// EventHtmxBeforeSend triggered just before an ajax request is sent.
+	EventHtmxBeforeSend = "htmx:before-send"
+	// EventHtmxBeforeSettle triggered before the DOM settles.
+	EventHtmxBeforeSettle = "htmx:before-settle"
+	// EventHtmxBeforeSwap triggered before a swap is done, allows you to configure the swap.
+	EventHtmxBeforeSwap = "htmx:before-swap"
+	// EventHtmxBeforeTransition triggered before the View Transition wrapped swap occurs.
+	EventHtmxBeforeTransition = "htmx:before-transition"
+	// EventHtmxBeforeHistorySave triggered before content is saved to the history cache.
+	EventHtmxBeforeHistorySave = "htmx:before-history-save"
+	// EventHtmxConfigRequest triggered before the request, allows you to customize parameters, headers.
+	EventHtmxConfigRequest = "htmx:config-request"
+	// EventHtmxConfirm triggered after a trigger occurs on an element, allows you to cancel (or delay) issuing the AJAX request.
+	EventHtmxConfirm = "htmx:confirm"
+	// EventHtmxHistoryCacheError triggered on an error during cache writing.
+	EventHtmxHistoryCacheError = "htmx:history-cache-error"
+	// EventHtmxHistoryCacheHit triggered on a cache hit in the history subsystem.
+	EventHtmxHistoryCacheHit = "htmx:history-cache-hit"
+	// EventHtmxHistoryCacheMiss triggered on a cache miss in the history subsystem.
+	EventHtmxHistoryCacheMiss = "htmx:history-cache-miss"
+	// EventHtmxHistoryCacheMissError triggered on an unsuccessful remote retrieval.
+	EventHtmxHistoryCacheMissError = "htmx:history-cache-miss-error"
+	// EventHtmxHistoryCacheMissLoad triggered on a successful remote retrieval.
+	EventHtmxHistoryCacheMissLoad = "htmx:history-cache-miss-load"
+	// EventHtmxHistoryRestore triggered when htmx handles a history restoration action.
+	EventHtmxHistoryRestore = "htmx:history-restore"
+	// EventHtmxLoad triggered when new content is added to the DOM.
+	EventHtmxLoad = "htmx:load"
+	// EventHtmxNoSseSourceError triggered when an element refers to a SSE event in its trigger, but no parent SSE source has been defined.
+	EventHtmxNoSseSourceError = "htmx:no-sse-source-error"
+	// EventHtmxOnLoadError triggered when an exception occurs during the onLoad handling in htmx.
+	EventHtmxOnLoadError = "htmx:on-load-error"
+	// EventHtmxOobAfterSwap triggered after an out of band element has been swapped in.
+	EventHtmxOobAfterSwap = "htmx:oob-after-swap"
+	// EventHtmxOobBeforeSwap triggered before an out of band element swap is done, allows you to configure the swap.
+	EventHtmxOobBeforeSwap = "htmx:oob-before-swap"
+	// EventHtmxOobErrorNoTarget triggered when an out of band element does not have a matching ID in the current DOM.
+	EventHtmxOobErrorNoTarget = "htmx:oob-error-no-target"
+	// EventHtmxPrompt triggered after a prompt is shown.
+	EventHtmxPrompt = "htmx:prompt"
+	// EventHtmxPushedIntoHistory triggered after a url is pushed into history.
+	EventHtmxPushedIntoHistory = "htmx:pushed-into-history"
+	// EventHtmxReplacedInHistory triggered after a url is replaced in history.
+	EventHtmxReplacedInHistory = "htmx:replaced-in-history"
+	// EventHtmxResponseError triggered when an HTTP response error (non-200 or 300 response code) occurs.
+	EventHtmxResponseError = "htmx:response-error"
+	// EventHtmxSendAbort triggered when a request is aborted.
+	EventHtmxSendAbort = "htmx:send-abort"
+	// EventHtmxSendError triggered when a network error prevents an HTTP request from happening.
+	EventHtmxSendError = "htmx:send-error"
+	// EventHtmxSseError triggered when an error occurs with a SSE source.
+	EventHtmxSseError = "htmx:sse-error"
+	// EventHtmxSseOpen triggered when a SSE source is opened.
+	EventHtmxSseOpen = "htmx:sse-open"
+	// EventHtmxSseMessage triggered when a message is received from a SSE source.
+	EventHtmxSseMessage = "htmx:sse-message"
+	// EventHtmxSwapError triggered when an error occurs during the swap phase.
+	EventHtmxSwapError = "htmx:swap-error"
+	// EventHtmxTargetError triggered when an invalid target is specified.
+	EventHtmxTargetError = "htmx:target-error"
+	// EventHtmxTimeout triggered when a request timeout occurs.
+	EventHtmxTimeout = "htmx:timeout"
+	// EventHtmxValidationValidate triggered before an element is validated.
+	EventHtmxValidationValidate = "htmx:validation:validate"
+	// EventHtmxValidationFailed triggered when an element fails validation.
+	EventHtmxValidationFailed = "htmx:validation:failed"
+	// EventHtmxValidationHalted triggered when a request is halted due to validation errors.
+	EventHtmxValidationHalted = "htmx:validation:halted"
+	// EventHtmxXhrAbort triggered when an ajax request aborts.
+	EventHtmxXhrAbort = "htmx:xhr:abort"
+	// EventHtmxXhrLoadend triggered when an ajax request ends.
+	EventHtmxXhrLoadend = "htmx:xhr:loadend"
+	// EventHtmxXhrLoadstart triggered when an ajax request starts.
+	EventHtmxXhrLoadstart = "htmx:xhr:loadstart"
+	// EventHtmxXhrProgress triggered periodically during an ajax request that supports progress events.
+	EventHtmxXhrProgress = "htmx:xhr:progress"
 )
