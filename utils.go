@@ -8,11 +8,11 @@ package h
 //
 // Example:
 //
-//	div := Div(KV{"class": IfElse(isActive, "active", "inactive")})
+//	div := DIV(KV{"class": IfElse(isActive, "active", "inactive")})
 //
 //	Body(
 //		IfElse(isAdmin,
-//			Div("Admin content"),
+//			DIV("Admin content"),
 //			P("Regular user content"),
 //		),
 //	)
@@ -32,14 +32,14 @@ func IfElse[T any](condition bool, result, alternative T) T {
 // Example:
 //
 //	Body(
-//		If(showHeader, Header(...)),
-//		Main(...),
+//		If(showHeader, HEADER(...)),
+//		MAIN(...),
 //	)
 func If(condition bool, result HyperNode) HyperNode {
 	if condition {
 		return result
 	}
-	return Empty()
+	return EMPTY()
 }
 
 // Repeat generates multiple Nodes by calling a function n times.
@@ -52,18 +52,19 @@ func If(condition bool, result HyperNode) HyperNode {
 //
 //	Ul(
 //		Repeat(5, func() HyperNode {
-//			return Li("List item")
+//			return LI("List item")
 //		}),
 //	)
 func Repeat(n int, f func() HyperNode) HyperNode {
 	result := newElem("")
+	result.Children = make([]HyperNode, 0, n)
 	for range n {
 		result.Children = append(result.Children, f())
 	}
 	return result
 }
 
-// MapSlice transforms a slice of items into Nodes by applying a function to each element.
+// Range transforms a slice of items into Nodes by applying a function to each element.
 //
 // Each element in the input slice is transformed using the provided function, and
 // all resulting Nodes are aggregated into a single container Node.
@@ -71,13 +72,14 @@ func Repeat(n int, f func() HyperNode) HyperNode {
 // Example:
 //
 //	items := []string{"Apple", "Banana", "Cherry"}
-//	Ul(
-//		MapSlice(items, func(item string) HyperNode {
-//			return Li(item)
+//	UL(
+//		Range(items, func(item string) HyperNode {
+//			return LI(item)
 //		}),
 //	)
-func MapSlice[T any](input []T, f func(T) HyperNode) HyperNode {
+func Range[T any](input []T, f func(T) HyperNode) HyperNode {
 	result := newElem("")
+	result.Children = make([]HyperNode, 0, len(input))
 	for _, item := range input {
 		result.Children = append(result.Children, f(item))
 	}

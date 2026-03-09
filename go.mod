@@ -1,4 +1,4 @@
-module github.com/assaidy/hyper
+module github.com/assaidy/hyper/v2
 
 go 1.25.5
 

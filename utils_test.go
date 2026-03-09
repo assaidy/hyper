@@ -40,7 +40,7 @@ func TestIfElse(t *testing.T) {
 }
 
 func TestIfElse_Nodes(t *testing.T) {
-	trueNode := Div("true")
+	trueNode := DIV("true")
 	falseNode := P("false")
 
 	tests := []struct {
@@ -77,7 +77,7 @@ func TestIfElse_Nodes(t *testing.T) {
 }
 
 func TestIf(t *testing.T) {
-	node := Div("content")
+	node := DIV("content")
 
 	tests := []struct {
 		name      string
@@ -122,19 +122,19 @@ func TestRepeat(t *testing.T) {
 		{
 			name:     "Repeat zero times",
 			n:        0,
-			f:        func() HyperNode { return Div() },
+			f:        func() HyperNode { return DIV() },
 			expected: "",
 		},
 		{
 			name:     "Repeat once",
 			n:        1,
-			f:        func() HyperNode { return Div("item") },
+			f:        func() HyperNode { return DIV("item") },
 			expected: "<div>item</div>",
 		},
 		{
 			name:     "Repeat multiple times",
 			n:        3,
-			f:        func() HyperNode { return Div("item") },
+			f:        func() HyperNode { return DIV("item") },
 			expected: "<div>item</div><div>item</div><div>item</div>",
 		},
 		{
@@ -143,7 +143,7 @@ func TestRepeat(t *testing.T) {
 			f: func() HyperNode {
 				static := 0
 				static++
-				return Div(string(rune('a' + static)))
+				return DIV(string(rune('a' + static)))
 			},
 			expected: "<div>b</div><div>b</div>",
 		},
@@ -175,19 +175,19 @@ func TestMapSlice(t *testing.T) {
 		{
 			name:     "MapSlice empty slice",
 			input:    []string{},
-			f:        func(s string) HyperNode { return Li(s) },
+			f:        func(s string) HyperNode { return LI(s) },
 			expected: "",
 		},
 		{
 			name:     "MapSlice single item",
 			input:    []string{"apple"},
-			f:        func(s string) HyperNode { return Li(s) },
+			f:        func(s string) HyperNode { return LI(s) },
 			expected: "<li>apple</li>",
 		},
 		{
 			name:     "MapSlice multiple items",
 			input:    []string{"apple", "banana", "cherry"},
-			f:        func(s string) HyperNode { return Li(s) },
+			f:        func(s string) HyperNode { return LI(s) },
 			expected: "<li>apple</li><li>banana</li><li>cherry</li>",
 		},
 		{
@@ -195,9 +195,9 @@ func TestMapSlice(t *testing.T) {
 			input: []string{"apple", "banana"},
 			f: func(s string) HyperNode {
 				if s == "apple" {
-					return Li(s, Span(" (popular)"))
+					return LI(s, SPAN(" (popular)"))
 				}
-				return Li(s)
+				return LI(s)
 			},
 			expected: "<li>apple<span> (popular)</span></li><li>banana</li>",
 		},
@@ -205,7 +205,7 @@ func TestMapSlice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resultNode := MapSlice(tt.input, tt.f)
+			resultNode := Range(tt.input, tt.f)
 			var buf bytes.Buffer
 			err := Render(&buf, resultNode)
 			if err != nil {
@@ -221,8 +221,8 @@ func TestMapSlice(t *testing.T) {
 
 func TestMapSlice_Integers(t *testing.T) {
 	numbers := []int{1, 2, 3}
-	resultNode := MapSlice(numbers, func(n int) HyperNode {
-		return Div(string(rune('0' + n)))
+	resultNode := Range(numbers, func(n int) HyperNode {
+		return DIV(string(rune('0' + n)))
 	})
 
 	var buf bytes.Buffer

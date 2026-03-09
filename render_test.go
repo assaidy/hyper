@@ -15,31 +15,31 @@ func TestRender(t *testing.T) {
 	}{
 		{
 			name:     "Simple text in element",
-			node:     Div("Hello World"),
+			node:     DIV("Hello World"),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Simple element",
-			node:     Div(),
+			node:     DIV(),
 			expected: "<div></div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Element with children",
-			node:     Div("Hello", P("World")),
+			node:     DIV("Hello", P("World")),
 			expected: "<div>Hello<p>World</p></div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Void element",
-			node:     Br(),
+			node:     BR(),
 			expected: "<br>",
 			wantErr:  false,
 		},
 		{
 			name:     "Empty element with children",
-			node:     Empty("test"),
+			node:     EMPTY("test"),
 			expected: "test",
 			wantErr:  false,
 		},
@@ -64,7 +64,7 @@ func TestRender(t *testing.T) {
 
 func TestRender_ErrorHandling(t *testing.T) {
 	// Test with a node that will cause an error during rendering
-	element := Div(KV{"invalid": nil})
+	element := DIV(KV{"invalid": nil})
 
 	var buf bytes.Buffer
 	err := Render(&buf, element)
@@ -77,7 +77,7 @@ func TestRender_ErrorHandling(t *testing.T) {
 func TestRender_WriteError(t *testing.T) {
 	// Create a writer that will return an error on write
 	errorWriter := &errorWriter{}
-	node := Div("test")
+	node := DIV("test")
 
 	err := Render(errorWriter, node)
 	if err == nil {
@@ -106,17 +106,17 @@ func (e *writeError) Error() string {
 
 func TestRender_ComplexStructure(t *testing.T) {
 	// Test with a complex nested structure to ensure it handles correctly
-	node := Html(KV{"lang": "en"},
-		Head(
-			Title("Test Page"),
+	node := HTML(KV{"lang": "en"},
+		HEAD(
+			TITLE("Test Page"),
 		),
-		Body(
-			Div(KV{"class": "container"},
+		BODY(
+			DIV(KV{"class": "container"},
 				H1("Welcome"),
 				P("This is a test."),
-				Ul(
-					Li("Item 1"),
-					Li("Item 2"),
+				UL(
+					LI("Item 1"),
+					LI("Item 2"),
 				),
 			),
 		),
@@ -139,45 +139,45 @@ func TestRender_ComplexStructure(t *testing.T) {
 
 func BenchmarkRender_DensePage(b *testing.B) {
 	// Create a dense page with many nested elements and attributes
-	node := Html(KV{"lang": "en", "data-theme": "light"},
-		Head(
-			Meta(KV{"charset": "utf-8"}),
-			Meta(KV{"name": "viewport", "content": "width=device-width, initial-scale=1"}),
-			Title("Dense Page Benchmark"),
-			Style(KV{"type": "text/css"}, "body{margin:0;padding:0}"),
-			Script(KV{"src": "/app.js", "defer": true}),
+	node := HTML(KV{"lang": "en", "data-theme": "light"},
+		HEAD(
+			META(KV{"charset": "utf-8"}),
+			META(KV{"name": "viewport", "content": "width=device-width, initial-scale=1"}),
+			TITLE("Dense Page Benchmark"),
+			STYLE(KV{"type": "text/css"}, "body{margin:0;padding:0}"),
+			SCRIPT(KV{"src": "/app.js", "defer": true}),
 		),
-		Body(
-			Header(KV{"class": "header", "role": "banner"},
-				Nav(KV{"class": "navigation", "aria-label": "main"},
-					Ul(
-						Li(A(KV{"href": "#home"}, "Home")),
-						Li(A(KV{"href": "#about"}, "About")),
-						Li(A(KV{"href": "#contact"})),
+		BODY(
+			HEADER(KV{"class": "header", "role": "banner"},
+				NAV(KV{"class": "navigation", "aria-label": "main"},
+					UL(
+						LI(A(KV{"href": "#home"}, "Home")),
+						LI(A(KV{"href": "#about"}, "About")),
+						LI(A(KV{"href": "#contact"})),
 					),
-					Main(KV{"class": "main-content", "role": "main"},
-						Section(KV{"class": "hero", "id": "hero"},
-							Div(KV{"class": "container"},
+					MAIN(KV{"class": "main-content", "role": "main"},
+						SECTION(KV{"class": "hero", "id": "hero"},
+							DIV(KV{"class": "container"},
 								H1("Welcome to Our Site"),
 								P("This is a dense page for benchmarking purposes."),
-								Button(KV{"class": "btn btn-primary", "type": "button"}, "Get Started"),
+								BUTTON(KV{"class": "btn btn-primary", "type": "button"}, "Get Started"),
 							),
 						),
-						Section(KV{"class": "features", "id": "features"},
-							Div(KV{"class": "container"},
+						SECTION(KV{"class": "features", "id": "features"},
+							DIV(KV{"class": "container"},
 								H2("Features"),
-								Div(KV{"class": "grid"},
-									Div(KV{"class": "card"},
+								DIV(KV{"class": "grid"},
+									DIV(KV{"class": "card"},
 										H3("Feature 1"),
 										P("Description of feature 1 with lots of content."),
 										A(KV{"href": "#", "class": "learn-more"}, "Learn More"),
 									),
-									Div(KV{"class": "card"},
+									DIV(KV{"class": "card"},
 										H3("Feature 2"),
 										P("Description of feature 2 with lots of content."),
 										A(KV{"href": "#", "class": "learn-more"}, "Learn More"),
 									),
-									Div(KV{"class": "card"},
+									DIV(KV{"class": "card"},
 										H3("Feature 3"),
 										P("Description of feature 3 with lots of content."),
 										A(KV{"href": "#", "class": "learn-more"}, "Learn More"),
@@ -186,10 +186,10 @@ func BenchmarkRender_DensePage(b *testing.B) {
 							),
 						),
 					),
-					Footer(KV{"class": "footer", "role": "contentinfo"},
-						Div(KV{"class": "container"},
+					FOOTER(KV{"class": "footer", "role": "contentinfo"},
+						DIV(KV{"class": "container"},
 							P("© 2024 Dense Page. All rights reserved."),
-							Div(KV{"class": "links"},
+							DIV(KV{"class": "links"},
 								A(KV{"href": "#privacy"}, "Privacy")),
 							A(KV{"href": "#terms"}, "Terms")),
 					),

@@ -133,20 +133,20 @@ func TestElement_Render(t *testing.T) {
 	}{
 		{
 			name:     "Simple div",
-			element:  Div(),
+			element:  DIV(),
 			expected: "<div></div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Div with single attribute",
-			element:  Div(KV{"class": "container"}),
+			element:  DIV(KV{"class": "container"}),
 			expected: `<div class="container"></div>`,
 			wantErr:  false,
 		},
 		{
 			name: "Div with text child (auto-escaped string)",
 			element: func() HyperNode {
-				return Div("Hello World")
+				return DIV("Hello World")
 			}(),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
@@ -154,7 +154,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with multiple string children",
 			element: func() HyperNode {
-				return Div("Hello", " ", "World")
+				return DIV("Hello", " ", "World")
 			}(),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
@@ -162,7 +162,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with auto-escaped HTML string",
 			element: func() HyperNode {
-				return Div("<script>alert('xss')</script>")
+				return DIV("<script>alert('xss')</script>")
 			}(),
 			expected: "<div>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</div>",
 			wantErr:  false,
@@ -170,7 +170,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with RawText (unescaped)",
 			element: func() HyperNode {
-				return Div(RawText("<script>alert('xss')</script>"))
+				return DIV(RawText("<script>alert('xss')</script>"))
 			}(),
 			expected: "<div><script>alert('xss')</script></div>",
 			wantErr:  false,
@@ -178,53 +178,53 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Nested elements with strings",
 			element: func() HyperNode {
-				return Div(P("Hello"))
+				return DIV(P("Hello"))
 			}(),
 			expected: "<div><p>Hello</p></div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Void element (br)",
-			element:  Br(),
+			element:  BR(),
 			expected: "<br>",
 			wantErr:  false,
 		},
 		{
 			name:     "Void element with single attribute (img)",
-			element:  Img(KV{"src": "test.jpg"}),
+			element:  IMG(KV{"src": "test.jpg"}),
 			expected: `<img src="test.jpg">`,
 			wantErr:  false,
 		},
 		{
 			name:     "Empty element",
-			element:  Empty(),
+			element:  EMPTY(),
 			expected: "",
 			wantErr:  false,
 		},
 		{
 			name: "Empty element with string children",
 			element: func() HyperNode {
-				return Empty("Hello")
+				return EMPTY("Hello")
 			}(),
 			expected: "Hello",
 			wantErr:  false,
 		},
 		{
 			name:     "Boolean attribute true",
-			element:  Div(KV{"hidden": true}),
+			element:  DIV(KV{"hidden": true}),
 			expected: `<div hidden></div>`,
 			wantErr:  false,
 		},
 		{
 			name:     "Boolean attribute false",
-			element:  Div(KV{"hidden": false}),
+			element:  DIV(KV{"hidden": false}),
 			expected: `<div></div>`,
 			wantErr:  false,
 		},
 		{
 			name: "Div with integer (auto-converted)",
 			element: func() HyperNode {
-				return Div(42)
+				return DIV(42)
 			}(),
 			expected: "<div>42</div>",
 			wantErr:  false,
@@ -232,7 +232,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with boolean (auto-converted)",
 			element: func() HyperNode {
-				return Div(true)
+				return DIV(true)
 			}(),
 			expected: "<div>true</div>",
 			wantErr:  false,
@@ -240,7 +240,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with fmt.Stringer (auto-converted)",
 			element: func() HyperNode {
-				return Div(stringerType("hello from stringer"))
+				return DIV(stringerType("hello from stringer"))
 			}(),
 			expected: "<div>hello from stringer</div>",
 			wantErr:  false,
@@ -248,7 +248,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with mixed types",
 			element: func() HyperNode {
-				return Div("Count: ", 42, " Active: ", true)
+				return DIV("Count: ", 42, " Active: ", true)
 			}(),
 			expected: "<div>Count: 42 Active: true</div>",
 			wantErr:  false,
@@ -257,7 +257,7 @@ func TestElement_Render(t *testing.T) {
 			name: "Div with len() result (auto-converted)",
 			element: func() HyperNode {
 				items := []string{"a", "b", "c"}
-				return Div("Total: ", len(items))
+				return DIV("Total: ", len(items))
 			}(),
 			expected: "<div>Total: 3</div>",
 			wantErr:  false,
