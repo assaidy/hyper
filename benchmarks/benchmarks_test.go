@@ -404,7 +404,7 @@ func BenchmarkRealWorld_Templ(b *testing.B) {
 
 func BenchmarkRealWorld_Hyper(b *testing.B) {
 	users := getBenchmarkData()
-	page := h.EMPTY(
+	page := h.Group(
 		h.DOCTYPE(),
 		h.HTML(
 			h.HEAD(
@@ -529,7 +529,7 @@ func BenchmarkSVG_Templ(b *testing.B) {
 }
 
 func BenchmarkSVG_Hyper(b *testing.B) {
-	// NOTE: In real example all the SVG tag is copied and put inside RawText.
+	// In real example all the SVG tag is copied and put inside RawText.
 	page := h.SVG(h.KV{"width": "100", "height": "100"},
 		h.RawText(`<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />`),
 	)
@@ -549,7 +549,7 @@ func BenchmarkSVG_Hyper(b *testing.B) {
 
 // buildRealWorldPage creates a realistic full page using many library utilities
 func buildRealWorldPage(users []User) h.HyperNode {
-	return h.EMPTY(
+	return h.Group(
 		h.DOCTYPE(),
 		h.HTML(
 			h.HEAD(

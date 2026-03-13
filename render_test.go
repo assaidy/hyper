@@ -39,7 +39,7 @@ func TestRender(t *testing.T) {
 		},
 		{
 			name:     "Empty element with children",
-			node:     EMPTY("test"),
+			node:     Group("test"),
 			expected: "test",
 			wantErr:  false,
 		},

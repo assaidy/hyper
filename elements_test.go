@@ -197,14 +197,14 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name:     "Empty element",
-			element:  EMPTY(),
+			element:  Group(),
 			expected: "",
 			wantErr:  false,
 		},
 		{
 			name: "Empty element with string children",
 			element: func() HyperNode {
-				return EMPTY("Hello")
+				return Group("Hello")
 			}(),
 			expected: "Hello",
 			wantErr:  false,

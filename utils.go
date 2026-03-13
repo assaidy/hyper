@@ -8,12 +8,10 @@ package h
 //
 // Example:
 //
-//	div := DIV(KV{"class": IfElse(isActive, "active", "inactive")})
-//
-//	Body(
+//	BODY()(
 //		IfElse(isAdmin,
-//			DIV("Admin content"),
-//			P("Regular user content"),
+//			DIV()("Admin content"),
+//			P()("Regular user content"),
 //		),
 //	)
 func IfElse[T any](condition bool, result, alternative T) T {
@@ -31,15 +29,15 @@ func IfElse[T any](condition bool, result, alternative T) T {
 //
 // Example:
 //
-//	Body(
-//		If(showHeader, HEADER(...)),
-//		MAIN(...),
+//	BODY()(
+//		If(showHeader, HEADER()(...)),
+//		MAIN()(...),
 //	)
 func If(condition bool, result HyperNode) HyperNode {
 	if condition {
 		return result
 	}
-	return EMPTY()
+	return Group()
 }
 
 // Repeat generates multiple Nodes by calling a function n times.
@@ -50,14 +48,13 @@ func If(condition bool, result HyperNode) HyperNode {
 //
 // Example:
 //
-//	Ul(
+//	UL()(
 //		Repeat(5, func() HyperNode {
-//			return LI("List item")
+//			return LI()("List item")
 //		}),
 //	)
 func Repeat(n int, f func() HyperNode) HyperNode {
-	result := newElem("")
-	result.Children = make([]HyperNode, 0, n)
+	result := Element{Tag: "", Children: make([]HyperNode, 0, n)}
 	for range n {
 		result.Children = append(result.Children, f())
 	}
@@ -72,16 +69,27 @@ func Repeat(n int, f func() HyperNode) HyperNode {
 // Example:
 //
 //	items := []string{"Apple", "Banana", "Cherry"}
-//	UL(
+//	UL()(
 //		Range(items, func(item string) HyperNode {
-//			return LI(item)
+//			return LI()(item)
 //		}),
 //	)
 func Range[T any](input []T, f func(T) HyperNode) HyperNode {
-	result := newElem("")
-	result.Children = make([]HyperNode, 0, len(input))
+	result := Element{Tag: "", Children: make([]HyperNode, 0, len(input))}
 	for _, item := range input {
 		result.Children = append(result.Children, f(item))
 	}
 	return result
+}
+
+// Group groups multiple children without wrapping them in a tag.
+// It creates a container Element with an empty Tag, which renders only its children.
+//
+// Example:
+//
+//	Group(P()("Item 1"), H1()("Item 2"), "Item 3")
+func Group(children ...any) HyperNode {
+	element := Element{Tag: ""}
+	InsertChildren(&element, children...)
+	return element
 }

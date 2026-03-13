@@ -9,8 +9,7 @@ import "io"
 //
 // Example:
 //
-//	err := Render(os.Stdout, Div("Hello"))
-//	// Outputs: <div>Hello</div>
+//	err := Render(os.Stdout, DIV()("Hello")) // Outputs: <div>Hello</div>
 func Render(w io.Writer, node HyperNode) error {
 	return node.Render(w)
 }
@@ -19,12 +18,12 @@ func Render(w io.Writer, node HyperNode) error {
 //
 // The HyperNode interface is the core abstraction that allows both HTML elements
 // and text content to be treated uniformly when building and rendering HTML
-// trees. All elements created by the factory functions (Div(), P(), Svg(), etc.)
+// trees. All elements created by the factory functions (DIV(), P(), SVG(), etc.)
 // implement this interface.
 //
 // Example:
 //
-//	var node HyperNode = Div("Hello")
+//	var node HyperNode = DIV()("Hello")
 //	err := node.Render(os.Stdout)
 type HyperNode interface {
 	Render(io.Writer) error
