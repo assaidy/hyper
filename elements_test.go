@@ -133,20 +133,20 @@ func TestElement_Render(t *testing.T) {
 	}{
 		{
 			name:     "Simple div",
-			element:  DIV(),
+			element:  DIV()(),
 			expected: "<div></div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Div with single attribute",
-			element:  DIV(KV{"class": "container"}),
+			element:  DIV(AttrClass("container"))(),
 			expected: `<div class="container"></div>`,
 			wantErr:  false,
 		},
 		{
 			name: "Div with text child (auto-escaped string)",
 			element: func() HyperNode {
-				return DIV("Hello World")
+				return DIV()("Hello World")
 			}(),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
@@ -154,7 +154,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with multiple string children",
 			element: func() HyperNode {
-				return DIV("Hello", " ", "World")
+				return DIV()("Hello", " ", "World")
 			}(),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
@@ -162,7 +162,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with auto-escaped HTML string",
 			element: func() HyperNode {
-				return DIV("<script>alert('xss')</script>")
+				return DIV()("<script>alert('xss')</script>")
 			}(),
 			expected: "<div>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</div>",
 			wantErr:  false,
@@ -170,7 +170,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with RawText (unescaped)",
 			element: func() HyperNode {
-				return DIV(RawText("<script>alert('xss')</script>"))
+				return DIV()(RawText("<script>alert('xss')</script>"))
 			}(),
 			expected: "<div><script>alert('xss')</script></div>",
 			wantErr:  false,
@@ -178,7 +178,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Nested elements with strings",
 			element: func() HyperNode {
-				return DIV(P("Hello"))
+				return DIV()(P()("Hello"))
 			}(),
 			expected: "<div><p>Hello</p></div>",
 			wantErr:  false,
@@ -191,7 +191,7 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name:     "Void element with single attribute (img)",
-			element:  IMG(KV{"src": "test.jpg"}),
+			element:  IMG(AttrSrc("test.jpg")),
 			expected: `<img src="test.jpg">`,
 			wantErr:  false,
 		},
@@ -211,20 +211,20 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name:     "Boolean attribute true",
-			element:  DIV(KV{"hidden": true}),
+			element:  DIV(Attr("hidden", true))(),
 			expected: `<div hidden></div>`,
 			wantErr:  false,
 		},
 		{
 			name:     "Boolean attribute false",
-			element:  DIV(KV{"hidden": false}),
+			element:  DIV(Attr("hidden", false))(),
 			expected: `<div></div>`,
 			wantErr:  false,
 		},
 		{
 			name: "Div with integer (auto-converted)",
 			element: func() HyperNode {
-				return DIV(42)
+				return DIV()(42)
 			}(),
 			expected: "<div>42</div>",
 			wantErr:  false,
@@ -232,7 +232,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with boolean (auto-converted)",
 			element: func() HyperNode {
-				return DIV(true)
+				return DIV()(true)
 			}(),
 			expected: "<div>true</div>",
 			wantErr:  false,
@@ -240,7 +240,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with fmt.Stringer (auto-converted)",
 			element: func() HyperNode {
-				return DIV(stringerType("hello from stringer"))
+				return DIV()(stringerType("hello from stringer"))
 			}(),
 			expected: "<div>hello from stringer</div>",
 			wantErr:  false,
@@ -248,7 +248,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with mixed types",
 			element: func() HyperNode {
-				return DIV("Count: ", 42, " Active: ", true)
+				return DIV()("Count: ", 42, " Active: ", true)
 			}(),
 			expected: "<div>Count: 42 Active: true</div>",
 			wantErr:  false,
@@ -257,7 +257,7 @@ func TestElement_Render(t *testing.T) {
 			name: "Div with len() result (auto-converted)",
 			element: func() HyperNode {
 				items := []string{"a", "b", "c"}
-				return DIV("Total: ", len(items))
+				return DIV()("Total: ", len(items))
 			}(),
 			expected: "<div>Total: 3</div>",
 			wantErr:  false,
@@ -282,67 +282,61 @@ func TestElement_Render(t *testing.T) {
 func TestElement_renderAttrs(t *testing.T) {
 	tests := []struct {
 		name      string
-		attrs     KV
+		attrs     []Attribute
 		expected  string
 		expectErr bool
 	}{
 		{
 			name:      "Single string attribute",
-			attrs:     KV{"class": "test"},
+			attrs:     []Attribute{AttrClass("test")},
 			expected:  ` class="test"`,
 			expectErr: false,
 		},
 		{
-			name:      "Boolean attributes",
-			attrs:     KV{"hidden": true, "disabled": false},
+			name:      "Boolean attributes - true",
+			attrs:     []Attribute{BooleanAttribute{Key: "hidden", IsActive: true}},
 			expected:  ` hidden`,
 			expectErr: false,
 		},
 		{
-			name:      "Nil value",
-			attrs:     KV{"test": nil},
+			name:      "Boolean attributes - false (not rendered)",
+			attrs:     []Attribute{BooleanAttribute{Key: "disabled", IsActive: false}},
 			expected:  "",
-			expectErr: true,
-		},
-		{
-			name:      "Invalid value type",
-			attrs:     KV{"test": 123},
-			expected:  "",
-			expectErr: true,
+			expectErr: false,
 		},
 		{
 			name:      "Empty key",
-			attrs:     KV{"": "value"},
+			attrs:     []Attribute{PairAttribute{Key: "", Value: "value"}},
 			expected:  "",
 			expectErr: true,
 		},
 		{
 			name:      "Whitespace key",
-			attrs:     KV{"   ": "value"},
+			attrs:     []Attribute{PairAttribute{Key: "   ", Value: "value"}},
 			expected:  "",
 			expectErr: true,
 		},
 		{
 			name:      "Key with HTML escaping",
-			attrs:     KV{"data-value": "<script>"},
+			attrs:     []Attribute{PairAttribute{Key: "data-value", Value: "<script>"}},
 			expected:  ` data-value="<script>"`,
 			expectErr: false,
 		},
 		{
 			name:      "Value with quotes",
-			attrs:     KV{"title": `name is "Ahmad"`},
+			attrs:     []Attribute{PairAttribute{Key: "title", Value: `name is "Ahmad"`}},
 			expected:  ` title="name is &quot;Ahmad&quot;"`,
 			expectErr: false,
 		},
 		{
 			name:      "Key needing escaping",
-			attrs:     KV{`"> <script>alert(1)</script>`: "value"},
+			attrs:     []Attribute{PairAttribute{Key: `"> <script>alert(1)</script>`, Value: "value"}},
 			expected:  ` &#34;&gt; &lt;script&gt;alert(1)&lt;/script&gt;="value"`,
 			expectErr: false,
 		},
 		{
 			name:      "Boolean key needing escaping",
-			attrs:     KV{`"> <script>alert(1)</script>`: true},
+			attrs:     []Attribute{BooleanAttribute{Key: `"> <script>alert(1)</script>`, IsActive: true}},
 			expected:  ` &#34;&gt; &lt;script&gt;alert(1)&lt;/script&gt;`,
 			expectErr: false,
 		},
@@ -350,8 +344,7 @@ func TestElement_renderAttrs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			element := &Element{}
-			element.fillAttrsWithKV(tt.attrs)
+			element := &Element{Attributes: tt.attrs}
 			var buf bytes.Buffer
 			err := element.renderAttrs(&buf)
 

@@ -28,150 +28,42 @@ import (
 )
 
 func main() {
-    page := EMPTY(
-        DOCTYPE(),
-        HTML(
-            HEAD(
-                TITLE("My Page"),
-            ),
-            BODY(
-                H1("Hello, World!"),
-                P("Auto-escaped: <script>alert('xss')</script>"),
-            ),
-        ),
-    )
-    
-    if err := page.Render(os.Stdout); err != nil {
-        panic(err)
-    }
-}
-```
-
-## Usage
-
-### Basic Elements
-
-```go
-// Strings are auto-escaped
-DIV("Hello", " ", "World")  // <div>Hello World</div>
-
-P("<script>alert('xss')</script>")
-// <p>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</p>
-
-// Raw HTML (not escaped. use with caution)
-DIV(RawText("<svg>...</svg>")) // <svg>...</svg>
-
-// Numbers and booleans are auto-converted
-P("Count: ", 42)           // <p>Count: 42</p>
-P("Active: ", true)        // <p>Active: true</p>
-```
-
-### Attributes
-
-```go
-DIV(KV{AttrClass: "container", AttrID: "main"}, "Content")
-// <div class="container" id="main">Content</div>
-```
-
-### Conditional Rendering
-
-```go
-// Show element only if condition is true
-If(isLoggedIn, DIV("Welcome back!"))
-
-// Choose between two options
-IfElse(isAdmin, DIV("Admin"), DIV("User"))
-```
-
-### Lists and Iteration
-
-```go
-items := []string{"Apple", "Banana"}
-
-// Map over slice
-UL(
-    Range(items, func(item string) HyperNode {
-        return LI(item)
-    }),
-)
-
-// Repeat N times
-DIV(
-    Repeat(3, func() HyperNode {
-        return P("Repeated")
-    }),
-)
-```
-
-### With Tailwind CSS
-
-```go
-DIV(KV{AttrClass: "bg-gray-100 min-h-screen p-8"},
-    DIV(KV{AttrClass: "max-w-4xl mx-auto"},
-        H1(KV{AttrClass: "text-4xl font-bold text-gray-800"}, "Title"),
-        P(KV{AttrClass: "text-gray-600 mt-2"}, "Description"),
-        BUTTON(KV{AttrClass: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"},
-            "Click Me",
-        ),
-    ),
-)
-```
-
-### Complete Example
-
-```go
-package main
-
-import (
-    "os"
-
-    . "github.com/assaidy/hyper/v2"
-)
-
-func main() {
     users := []string{"Alice", "Bob", "Charlie"}
     isAdmin := true
 
-    page := EMPTY(
+    page := Group(
         DOCTYPE(),
-        HTML(KV{AttrLang: "en"},
-            HEAD(
-                TITLE("Dashboard"),
-                SCRIPT(KV{AttrSrc: "https://cdn.tailwindcss.com"}),
+        HTML(AttrLang("en"))(
+            HEAD()(
+                TITLE()("Dashboard"),
+                SCRIPT(AttrSrc("https://cdn.tailwindcss.com")),
             ),
-            BODY(KV{AttrClass: "bg-gray-100 p-8"},
-                DIV(KV{AttrClass: "max-w-2xl mx-auto"},
-                    H1(KV{AttrClass: "text-3xl font-bold mb-4"}, "Dashboard"),
+            BODY(AttrClass("bg-gray-100 p-8"))(
+                DIV(AttrClass("max-w-2xl mx-auto"))(
+                    H1(AttrClass("text-3xl font-bold mb-4"))("Dashboard"),
                     
                     // Conditional admin panel
                     If(isAdmin,
-                        DIV(KV{AttrClass: "bg-blue-50 p-4 rounded mb-4"},
-                            P(KV{AttrClass: "font-semibold"}, "Admin Panel"),
+                        DIV(AttrClass("bg-blue-50 p-4 rounded mb-4"))(
+                            P(AttrClass("font-semibold"))("Admin Panel"),
                         ),
                     ),
                     
                     // User count
-                    P("Total users: ", len(users)),
+                    P()("Total users: ", len(users)),
 
                     // Standard form submission to refresh users
-                    FORM(KV{
-                        AttrMethod: MethodPost,
-                        AttrAction: "/api/users/refresh",
-                    },
-                        BUTTON(KV{
-                            AttrClass: "px-4 py-2 bg-blue-500 text-white rounded mt-4",
-                            AttrType:  TypeSubmit,
-                        },
-                            "Refresh Users",
-                        ),
+                    FORM(AttrMethod(MethodPost), AttrAction("/api/users/refresh"))(
+                        BUTTON(
+                            AttrClass("px-4 py-2 bg-blue-500 text-white rounded mt-4"),
+                            AttrType(TypeSubmit),
+                        )("Refresh Users"),
                     ),
                     
                     // User list
-                    UL(KV{AttrClass: "space-y-2 mt-4", AttrID: "users-list"},
+                    UL(AttrClass("space-y-2 mt-4"), AttrID("users-list"))(
                         Range(users, func(name string) HyperNode {
-                            return LI(KV{AttrClass: "p-2 bg-white rounded shadow"},
-                                name,
-                            )
+                            return LI(AttrClass("p-2 bg-white rounded shadow"))(name)
                         }),
                     ),
                 ),
@@ -183,4 +75,118 @@ func main() {
         panic(err)
     }
 }
+```
+
+## API Explained
+
+All HTML element functions use **ALL_CAPS** names (DIV, P, H1, etc.) to avoid conflicts with standard library types and functions.
+
+### Element Constructor Pattern
+
+Elements follow a consistent pattern for attribute and child handling:
+
+```go
+ELEMENT(attrs)(children)
+```
+
+```go
+// No attributes, no children
+DIV()()
+
+// With attributes, no children  
+DIV(AttrClass("container"))()
+
+// No attributes, with children
+DIV()("Hello")
+
+// With attributes and children
+DIV(AttrClass("container"))("Hello")
+```
+
+Void elements (self-closing tags like `<br>`, `<img>`, `<input>`) cannot have children, so they only have one set of parentheses:
+
+```go
+BR()                              // <br>
+IMG(AttrSrc("image.jpg"))        // <img src="image.jpg">
+INPUT(AttrType("text"))          // <input type="text">
+```
+
+### Attributes
+Use `Attr(key, value)` for any attribute:
+- `key` is a string (the attribute name)
+- `value` can be a `string` (creates `key="value"`) or `bool` (creates `key` when true, omitted when false)
+
+Alternatively, use specific attribute functions for common attributes:
+
+```go
+// Using Attr function
+DIV(Attr("class", "container"), Attr("id", "main"))("Content")
+// <div class="container" id="main">Content</div>
+
+// Using specific attribute functions (recommended for clarity)
+DIV(AttrClass("container"), AttrID("main"))("Content")
+// <div class="container" id="main">Content</div>
+
+// Boolean attributes (present when true, absent when false)
+INPUT(AttrDisabled(true))   // <input disabled>
+INPUT(AttrDisabled(false))  // <input>
+```
+
+### Children
+The second set of parentheses accepts children. It accepts `HyperNode` values, strings (converted to `Text`), and other values (converted to `Text` via fmt.Sprint).
+
+```go
+// Strings are auto-escaped
+DIV()("Hello", " ", "World")  // <div>Hello World</div>
+
+P()("<script>alert('xss')</script>")
+// <p>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</p>
+
+// Raw HTML (not escaped. use with caution)
+DIV()(RawText("<svg>...</svg>")) // <svg>...</svg>
+
+// Numbers and booleans are auto-converted
+P()("Count: ", 42)           // <p>Count: 42</p>
+P()("Active: ", true)        // <p>Active: true</p>
+```
+
+### Conditional Rendering
+
+```go
+// Show element only if condition is true
+If(isLoggedIn, DIV()("Welcome back!"))
+
+// Choose between two options
+IfElse(isAdmin, DIV()("Admin"), DIV()("User"))
+```
+
+### Lists and Iteration
+
+```go
+items := []string{"Apple", "Banana"}
+
+// Map over slice
+UL()(
+    Range(items, func(item string) HyperNode {
+        return LI()(item)
+    }),
+)
+
+// Repeat N times
+DIV()(
+    Repeat(3, func() HyperNode {
+        return P()("Repeated")
+    }),
+)
+```
+
+### Grouping
+Use `Group()` to group multiple children without wrapping them in a tag. This is useful for fragments that don't have a common ancestor:
+
+```go
+Group(
+    H1()("Title"),
+    P()("Description"),
+)
+// Renders: <h1>Title</h1><p>Description</p>
 ```

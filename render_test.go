@@ -15,19 +15,19 @@ func TestRender(t *testing.T) {
 	}{
 		{
 			name:     "Simple text in element",
-			node:     DIV("Hello World"),
+			node:     DIV()("Hello World"),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Simple element",
-			node:     DIV(),
+			node:     DIV()(),
 			expected: "<div></div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Element with children",
-			node:     DIV("Hello", P("World")),
+			node:     DIV()("Hello", P()("World")),
 			expected: "<div>Hello<p>World</p></div>",
 			wantErr:  false,
 		},
@@ -62,22 +62,9 @@ func TestRender(t *testing.T) {
 	}
 }
 
-func TestRender_ErrorHandling(t *testing.T) {
-	// Test with a node that will cause an error during rendering
-	element := DIV(KV{"invalid": nil})
-
-	var buf bytes.Buffer
-	err := Render(&buf, element)
-
-	if err == nil {
-		t.Error("Render() should return error for invalid attribute")
-	}
-}
-
 func TestRender_WriteError(t *testing.T) {
-	// Create a writer that will return an error on write
 	errorWriter := &errorWriter{}
-	node := DIV("test")
+	node := DIV()("test")
 
 	err := Render(errorWriter, node)
 	if err == nil {
@@ -89,7 +76,6 @@ func TestRender_WriteError(t *testing.T) {
 	}
 }
 
-// errorWriter is a test helper that always returns an error on Write
 type errorWriter struct{}
 
 func (w *errorWriter) Write(p []byte) (n int, error error) {
@@ -105,18 +91,17 @@ func (e *writeError) Error() string {
 }
 
 func TestRender_ComplexStructure(t *testing.T) {
-	// Test with a complex nested structure to ensure it handles correctly
-	node := HTML(KV{"lang": "en"},
-		HEAD(
-			TITLE("Test Page"),
+	node := HTML(AttrLang("en"))(
+		HEAD()(
+			TITLE()("Test Page"),
 		),
-		BODY(
-			DIV(KV{"class": "container"},
-				H1("Welcome"),
-				P("This is a test."),
-				UL(
-					LI("Item 1"),
-					LI("Item 2"),
+		BODY()(
+			DIV(AttrClass("container"))(
+				H1()("Welcome"),
+				P()("This is a test."),
+				UL()(
+					LI()("Item 1"),
+					LI()("Item 2"),
 				),
 			),
 		),
@@ -138,67 +123,67 @@ func TestRender_ComplexStructure(t *testing.T) {
 }
 
 func BenchmarkRender_DensePage(b *testing.B) {
-	// Create a dense page with many nested elements and attributes
-	node := HTML(KV{"lang": "en", "data-theme": "light"},
-		HEAD(
-			META(KV{"charset": "utf-8"}),
-			META(KV{"name": "viewport", "content": "width=device-width, initial-scale=1"}),
-			TITLE("Dense Page Benchmark"),
-			STYLE(KV{"type": "text/css"}, "body{margin:0;padding:0}"),
-			SCRIPT(KV{"src": "/app.js", "defer": true}),
+	node := HTML(Attr("lang", "en"), Attr("data-theme", "light"))(
+		HEAD()(
+			META(AttrCharset("utf-8")),
+			META(AttrName("viewport"), Attr("content", "width=device-width, initial-scale=1")),
+			TITLE()("Dense Page Benchmark"),
+			STYLE(AttrType("text/css"))("body{margin:0;padding:0}"),
+			SCRIPT(AttrSrc("/app.js"), AttrDefer(true)),
 		),
-		BODY(
-			HEADER(KV{"class": "header", "role": "banner"},
-				NAV(KV{"class": "navigation", "aria-label": "main"},
-					UL(
-						LI(A(KV{"href": "#home"}, "Home")),
-						LI(A(KV{"href": "#about"}, "About")),
-						LI(A(KV{"href": "#contact"})),
+		BODY()(
+			HEADER(AttrClass("header"), AttrRole("banner"))(
+				NAV(AttrClass("navigation"), Attr("aria-label", "main"))(
+					UL()(
+						LI()(A(AttrHref("#home"))("Home")),
+						LI()(A(AttrHref("#about"))("About")),
+						LI()(A(AttrHref("#contact"))()),
 					),
-					MAIN(KV{"class": "main-content", "role": "main"},
-						SECTION(KV{"class": "hero", "id": "hero"},
-							DIV(KV{"class": "container"},
-								H1("Welcome to Our Site"),
-								P("This is a dense page for benchmarking purposes."),
-								BUTTON(KV{"class": "btn btn-primary", "type": "button"}, "Get Started"),
+					MAIN(AttrClass("main-content"), AttrRole("main"))(
+						SECTION(AttrClass("hero"), AttrID("hero"))(
+							DIV(AttrClass("container"))(
+								H1()("Welcome to Our Site"),
+								P()("This is a dense page for benchmarking purposes."),
+								BUTTON(AttrClass("btn btn-primary"), AttrType("button"))("Get Started"),
 							),
 						),
-						SECTION(KV{"class": "features", "id": "features"},
-							DIV(KV{"class": "container"},
-								H2("Features"),
-								DIV(KV{"class": "grid"},
-									DIV(KV{"class": "card"},
-										H3("Feature 1"),
-										P("Description of feature 1 with lots of content."),
-										A(KV{"href": "#", "class": "learn-more"}, "Learn More"),
+						SECTION(AttrClass("features"), AttrID("features"))(
+							DIV(AttrClass("container"))(
+								H2()("Features"),
+								DIV(AttrClass("grid"))(
+									DIV(AttrClass("card"))(
+										H3()("Feature 1"),
+										P()("Description of feature 1 with lots of content."),
+										A(AttrHref("#"), AttrClass("learn-more"))("Learn More"),
 									),
-									DIV(KV{"class": "card"},
-										H3("Feature 2"),
-										P("Description of feature 2 with lots of content."),
-										A(KV{"href": "#", "class": "learn-more"}, "Learn More"),
+									DIV(AttrClass("card"))(
+										H3()("Feature 2"),
+										P()("Description of feature 2 with lots of content."),
+										A(AttrHref("#"), AttrClass("learn-more"))("Learn More"),
 									),
-									DIV(KV{"class": "card"},
-										H3("Feature 3"),
-										P("Description of feature 3 with lots of content."),
-										A(KV{"href": "#", "class": "learn-more"}, "Learn More"),
+									DIV(AttrClass("card"))(
+										H3()("Feature 3"),
+										P()("Description of feature 3 with lots of content."),
+										A(AttrHref("#"), AttrClass("learn-more"))("Learn More"),
 									),
 								),
 							),
 						),
 					),
-					FOOTER(KV{"class": "footer", "role": "contentinfo"},
-						DIV(KV{"class": "container"},
-							P("© 2024 Dense Page. All rights reserved."),
-							DIV(KV{"class": "links"},
-								A(KV{"href": "#privacy"}, "Privacy")),
-							A(KV{"href": "#terms"}, "Terms")),
+					FOOTER(AttrClass("footer"), AttrRole("contentinfo"))(
+						DIV(AttrClass("container"))(
+							P()("© 2024 Dense Page. All rights reserved."),
+							DIV(AttrClass("links"))(
+								A(AttrHref("#privacy"))("Privacy"),
+							),
+							A(AttrHref("#terms"))("Terms"),
+						),
 					),
 				),
 			),
 		),
 	)
 
-	
 	b.ReportAllocs()
 
 	for b.Loop() {

@@ -34,7 +34,7 @@ func BenchmarkSimpleElement_Templ(b *testing.B) {
 }
 
 func BenchmarkSimpleElement_Hyper(b *testing.B) {
-	page := h.DIV("Hello World")
+	page := h.DIV()("Hello World")
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
@@ -57,12 +57,12 @@ func BenchmarkDeepNesting_Templ(b *testing.B) {
 }
 
 func BenchmarkDeepNesting_Hyper(b *testing.B) {
-	page := h.DIV(
-		h.DIV(
-			h.DIV(
-				h.DIV(
-					h.DIV(
-						h.P("Deep content"),
+	page := h.DIV()(
+		h.DIV()(
+			h.DIV()(
+				h.DIV()(
+					h.DIV()(
+						h.P()("Deep content"),
 					),
 				),
 			),
@@ -90,15 +90,15 @@ func BenchmarkManyAttributes_Templ(b *testing.B) {
 }
 
 func BenchmarkManyAttributes_Hyper(b *testing.B) {
-	page := h.DIV(h.KV{
-		"id":         "main",
-		"class":      "container wrapper",
-		"data-role":  "content",
-		"data-value": "12345",
-		"aria-label": "Main content",
-		"hidden":     true,
-		"disabled":   false,
-	})
+	page := h.DIV(
+		h.Attr("id", "main"),
+		h.Attr("class", "container wrapper"),
+		h.Attr("data-role", "content"),
+		h.Attr("data-value", "12345"),
+		h.Attr("aria-label", "Main content"),
+		h.Attr("hidden", true),
+		h.Attr("disabled", false),
+	)()
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
@@ -123,7 +123,7 @@ func BenchmarkLargeText_Templ(b *testing.B) {
 
 func BenchmarkLargeText_Hyper(b *testing.B) {
 	text := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-	page := h.P(text)
+	page := h.P()(text)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
@@ -148,9 +148,9 @@ func BenchmarkList10_Templ(b *testing.B) {
 
 func BenchmarkList10_Hyper(b *testing.B) {
 	items := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
-	page := h.UL(
+	page := h.UL()(
 		h.Range(items, func(s string) h.HyperNode {
-			return h.LI(s)
+			return h.LI()(s)
 		}),
 	)
 	b.ResetTimer()
@@ -183,9 +183,9 @@ func BenchmarkList100_Hyper(b *testing.B) {
 	for i := range items {
 		items[i] = "item"
 	}
-	page := h.UL(
+	page := h.UL()(
 		h.Range(items, func(s string) h.HyperNode {
-			return h.LI(s)
+			return h.LI()(s)
 		}),
 	)
 	b.ResetTimer()
@@ -210,11 +210,11 @@ func BenchmarkConditionals_Templ(b *testing.B) {
 }
 
 func BenchmarkConditionals_Hyper(b *testing.B) {
-	page := h.DIV(
-		h.If(true, h.SPAN("First")),
-		h.If(false, h.SPAN("Second")),
-		h.If(true, h.SPAN("Third")),
-		h.IfElse(true, h.STRONG("True"), h.EM("False")),
+	page := h.DIV()(
+		h.If(true, h.SPAN()("First")),
+		h.If(false, h.SPAN()("Second")),
+		h.If(true, h.SPAN()("Third")),
+		h.IfElse(true, h.STRONG()("True"), h.EM()("False")),
 	)
 	b.ResetTimer()
 	for b.Loop() {
@@ -238,15 +238,15 @@ func BenchmarkMixedContent_Templ(b *testing.B) {
 }
 
 func BenchmarkMixedContent_Hyper(b *testing.B) {
-	page := h.DIV(
-		h.H1("Title"),
-		h.P("Paragraph with ", h.STRONG("bold"), " and ", h.EM("italic"), " text."),
-		h.UL(
-			h.LI("Item 1"),
-			h.LI(h.A(h.KV{"href": "#"}, "Link")),
+	page := h.DIV()(
+		h.H1()("Title"),
+		h.P()("Paragraph with ", h.STRONG()("bold"), " and ", h.EM()("italic"), " text."),
+		h.UL()(
+			h.LI()("Item 1"),
+			h.LI()(h.A(h.AttrHref("#"))("Link")),
 		),
-		h.DIV(h.KV{"class": "footer"},
-			h.SMALL("Copyright 2024"),
+		h.DIV(h.AttrClass("footer"))(
+			h.SMALL()("Copyright 2024"),
 		),
 	)
 	b.ResetTimer()
@@ -271,13 +271,13 @@ func BenchmarkVoidElements_Templ(b *testing.B) {
 }
 
 func BenchmarkVoidElements_Hyper(b *testing.B) {
-	page := h.DIV(
-		h.IMG(h.KV{"src": "image.jpg", "alt": "Image"}),
+	page := h.DIV()(
+		h.IMG(h.AttrSrc("image.jpg"), h.AttrAlt("Image")),
 		h.BR(),
 		h.HR(),
-		h.INPUT(h.KV{"type": "text", "value": "input"}),
-		h.META(h.KV{"charset": "UTF-8"}),
-		h.LINK(h.KV{"rel": "stylesheet", "href": "style.css"}),
+		h.INPUT(h.AttrType("text"), h.AttrValue("input")),
+		h.META(h.AttrCharset("UTF-8")),
+		h.LINK(h.AttrRel("stylesheet"), h.AttrHref("style.css")),
 	)
 	b.ResetTimer()
 	for b.Loop() {
@@ -303,7 +303,7 @@ func BenchmarkHTMLEscaping_Templ(b *testing.B) {
 
 func BenchmarkHTMLEscaping_Hyper(b *testing.B) {
 	content := "<script>alert('xss')</script> & more <b>bold</b>"
-	page := h.DIV(content)
+	page := h.DIV()(content)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
@@ -328,20 +328,20 @@ func BenchmarkTable_Templ(b *testing.B) {
 
 func BenchmarkTable_Hyper(b *testing.B) {
 	rows := 10
-	page := h.TABLE(
-		h.THEAD(
-			h.TR(
-				h.TH("Name"),
-				h.TH("Value"),
-				h.TH("Action"),
+	page := h.TABLE()(
+		h.THEAD()(
+			h.TR()(
+				h.TH()("Name"),
+				h.TH()("Value"),
+				h.TH()("Action"),
 			),
 		),
-		h.TBODY(
+		h.TBODY()(
 			h.Repeat(rows, func() h.HyperNode {
-				return h.TR(
-					h.TD("Cell 1"),
-					h.TD("Cell 2"),
-					h.TD(h.BUTTON("Click")),
+				return h.TR()(
+					h.TD()("Cell 1"),
+					h.TD()("Cell 2"),
+					h.TD()(h.BUTTON()("Click")),
 				)
 			}),
 		),
@@ -368,16 +368,16 @@ func BenchmarkForm_Templ(b *testing.B) {
 }
 
 func BenchmarkForm_Hyper(b *testing.B) {
-	page := h.FORM(h.KV{"action": "/submit", "method": "POST"},
-		h.FIELDSET(
-			h.LEGEND("User Form"),
-			h.LABEL(h.KV{"for": "name"}, "Name:"),
-			h.INPUT(h.KV{"type": "text", "id": "name", "name": "name"}),
+	page := h.FORM(h.AttrAction("/submit"), h.AttrMethod("POST"))(
+		h.FIELDSET()(
+			h.LEGEND()("User Form"),
+			h.LABEL(h.Attr("for", "name"))("Name:"),
+			h.INPUT(h.AttrType("text"), h.AttrID("name"), h.AttrName("name")),
 			h.BR(),
-			h.LABEL(h.KV{"for": "email"}, "Email:"),
-			h.INPUT(h.KV{"type": "email", "id": "email", "name": "email"}),
+			h.LABEL(h.Attr("for", "email"))("Email:"),
+			h.INPUT(h.AttrType("email"), h.AttrID("email"), h.AttrName("email")),
 			h.BR(),
-			h.BUTTON(h.KV{"type": "submit"}, "Submit"),
+			h.BUTTON(h.AttrType("submit"))("Submit"),
 		),
 	)
 	b.ResetTimer()
@@ -406,45 +406,45 @@ func BenchmarkRealWorld_Hyper(b *testing.B) {
 	users := getBenchmarkData()
 	page := h.Group(
 		h.DOCTYPE(),
-		h.HTML(
-			h.HEAD(
-				h.META(h.KV{"charset": "UTF-8"}),
-				h.TITLE(h.RawText("User Dashboard")),
-				h.LINK(h.KV{"rel": "stylesheet", "href": "/style.css"}),
+		h.HTML()(
+			h.HEAD()(
+				h.META(h.AttrCharset("UTF-8")),
+				h.TITLE()(h.RawText("User Dashboard")),
+				h.LINK(h.AttrRel("stylesheet"), h.AttrHref("/style.css")),
 			),
-			h.BODY(
-				h.HEADER(
-					h.H1("User Dashboard"),
-					h.NAV(
-						h.A(h.KV{"href": "/"}, "Home"),
-						h.A(h.KV{"href": "/users"}, "Users"),
-						h.A(h.KV{"href": "/settings"}, "Settings"),
+			h.BODY()(
+				h.HEADER()(
+					h.H1()("User Dashboard"),
+					h.NAV()(
+						h.A(h.AttrHref("/"))("Home"),
+						h.A(h.AttrHref("/users"))("Users"),
+						h.A(h.AttrHref("/settings"))("Settings"),
 					),
 				),
-				h.MAIN(
-					h.H2("Users"),
+				h.MAIN()(
+					h.H2()("Users"),
 					h.If(len(users) > 0,
-						h.TABLE(
-							h.THEAD(
-								h.TR(
-									h.TH("Name"),
-									h.TH("Role"),
+						h.TABLE()(
+							h.THEAD()(
+								h.TR()(
+									h.TH()("Name"),
+									h.TH()("Role"),
 								),
 							),
-							h.TBODY(
+							h.TBODY()(
 								h.Range(users, func(u User) h.HyperNode {
-									return h.TR(
-										h.TD(u.Name),
-										h.TD(h.IfElse(u.Admin, h.STRONG("Admin"), h.SPAN("User"))),
+									return h.TR()(
+										h.TD()(u.Name),
+										h.TD()(h.IfElse(u.Admin, h.STRONG()("Admin"), h.SPAN()("User"))),
 									)
 								}),
 							),
 						),
 					),
-					h.If(len(users) == 0, h.P("No users found.")),
+					h.If(len(users) == 0, h.P()("No users found.")),
 				),
-				h.FOOTER(
-					h.P("© 2024 Company"),
+				h.FOOTER()(
+					h.P()("© 2024 Company"),
 				),
 			),
 		),
@@ -471,7 +471,7 @@ func BenchmarkEmptyPage_Templ(b *testing.B) {
 }
 
 func BenchmarkEmptyPage_Hyper(b *testing.B) {
-	page := h.HTML(h.BODY())
+	page := h.HTML()(h.BODY()())
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
@@ -496,7 +496,7 @@ func BenchmarkRawText_Templ(b *testing.B) {
 
 func BenchmarkRawText_Hyper(b *testing.B) {
 	html := "<div><span>Content</span></div>"
-	page := h.DIV(h.RawText(html))
+	page := h.DIV()(h.RawText(html))
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
@@ -506,7 +506,7 @@ func BenchmarkRawText_Hyper(b *testing.B) {
 
 func BenchmarkRegularString_Hyper(b *testing.B) {
 	text := "<div><span>Content</span></div>"
-	page := h.DIV(text)
+	page := h.DIV()(text)
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
@@ -529,8 +529,7 @@ func BenchmarkSVG_Templ(b *testing.B) {
 }
 
 func BenchmarkSVG_Hyper(b *testing.B) {
-	// In real example all the SVG tag is copied and put inside RawText.
-	page := h.SVG(h.KV{"width": "100", "height": "100"},
+	page := h.SVG(h.AttrWidth("100"), h.AttrHeight("100"))(
 		h.RawText(`<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />`),
 	)
 	b.ResetTimer()
@@ -551,57 +550,52 @@ func BenchmarkSVG_Hyper(b *testing.B) {
 func buildRealWorldPage(users []User) h.HyperNode {
 	return h.Group(
 		h.DOCTYPE(),
-		h.HTML(
-			h.HEAD(
-				h.META(h.KV{"charset": "UTF-8"}),
-				h.META(h.KV{"name": "viewport", "content": "width=device-width, initial-scale=1.0"}),
-				h.TITLE(h.RawText("Dashboard - User Management")),
-				h.LINK(h.KV{"rel": "stylesheet", "href": "/css/main.css"}),
-				h.LINK(h.KV{"rel": "icon", "href": "/favicon.ico"}),
+		h.HTML()(
+			h.HEAD()(
+				h.META(h.AttrCharset("UTF-8")),
+				h.META(h.AttrName("viewport"), h.Attr("content", "width=device-width, initial-scale=1.0")),
+				h.TITLE()(h.RawText("Dashboard - User Management")),
+				h.LINK(h.AttrRel("stylesheet"), h.AttrHref("/css/main.css")),
+				h.LINK(h.AttrRel("icon"), h.AttrHref("/favicon.ico")),
 			),
-			h.BODY(
-				h.HEADER(
-					h.KV{"class": "site-header"},
-					h.NAV(
-						h.KV{"class": "main-nav"},
-						h.A(h.KV{"href": "/", "class": "nav-link"}, "Home"),
-						h.A(h.KV{"href": "/users", "class": "nav-link active"}, "Users"),
-						h.A(h.KV{"href": "/settings", "class": "nav-link"}, "Settings"),
-						h.A(h.KV{"href": "/logout", "class": "nav-link"}, "Logout"),
+			h.BODY()(
+				h.HEADER()(
+					h.NAV(h.AttrClass("main-nav"))(
+						h.A(h.AttrHref("/"), h.AttrClass("nav-link"))("Home"),
+						h.A(h.AttrHref("/users"), h.AttrClass("nav-link active"))("Users"),
+						h.A(h.AttrHref("/settings"), h.AttrClass("nav-link"))("Settings"),
+						h.A(h.AttrHref("/logout"), h.AttrClass("nav-link"))("Logout"),
 					),
 				),
-				h.MAIN(
-					h.KV{"class": "main-content"},
-					h.H1("User Management Dashboard"),
-					h.P("Welcome to the admin dashboard. Manage users and permissions below."),
+				h.MAIN(h.AttrClass("main-content"))(
+					h.H1()("User Management Dashboard"),
+					h.P()("Welcome to the admin dashboard. Manage users and permissions below."),
 					h.If(len(users) > 0,
-						h.SECTION(
-							h.KV{"class": "users-section"},
-							h.H2("Active Users"),
-							h.TABLE(
-								h.KV{"class": "users-table"},
-								h.THEAD(
-									h.TR(
-										h.TH("ID"),
-										h.TH("Name"),
-										h.TH("Role"),
-										h.TH("Status"),
-										h.TH("Actions"),
+						h.SECTION(h.AttrClass("users-section"))(
+							h.H2()("Active Users"),
+							h.TABLE(h.AttrClass("users-table"))(
+								h.THEAD()(
+									h.TR()(
+										h.TH()("ID"),
+										h.TH()("Name"),
+										h.TH()("Role"),
+										h.TH()("Status"),
+										h.TH()("Actions"),
 									),
 								),
-								h.TBODY(
+								h.TBODY()(
 									h.Range(users, func(u User) h.HyperNode {
-										return h.TR(
-											h.TD(h.STRONG("#")),
-											h.TD(u.Name),
-											h.TD(h.IfElse(u.Admin,
-												h.SPAN(h.KV{"class": "badge admin"}, "Administrator"),
-												h.SPAN(h.KV{"class": "badge user"}, "User"),
+										return h.TR()(
+											h.TD()(h.STRONG()("#")),
+											h.TD()(u.Name),
+											h.TD()(h.IfElse(u.Admin,
+												h.SPAN(h.AttrClass("badge admin"))("Administrator"),
+												h.SPAN(h.AttrClass("badge user"))("User"),
 											)),
-											h.TD(h.SPAN(h.KV{"class": "status active"}, "Active")),
-											h.TD(
-												h.BUTTON(h.KV{"class": "btn-edit"}, "Edit"),
-												h.BUTTON(h.KV{"class": "btn-delete"}, "Delete"),
+											h.TD()(h.SPAN(h.AttrClass("status active"))("Active")),
+											h.TD()(
+												h.BUTTON(h.AttrClass("btn-edit"))("Edit"),
+												h.BUTTON(h.AttrClass("btn-delete"))("Delete"),
 											),
 										)
 									}),
@@ -610,32 +604,26 @@ func buildRealWorldPage(users []User) h.HyperNode {
 						),
 					),
 					h.If(len(users) == 0,
-						h.DIV(
-							h.KV{"class": "empty-state"},
-							h.P("No users found. Add your first user to get started."),
+						h.DIV(h.AttrClass("empty-state"))(
+							h.P()("No users found. Add your first user to get started."),
 						),
 					),
-					h.SECTION(
-						h.KV{"class": "quick-stats"},
-						h.H3("Quick Stats"),
-						h.DIV(
-							h.KV{"class": "stats-grid"},
-							h.DIV(
-								h.KV{"class": "stat-card"},
-								h.STRONG(len(users)),
-								h.SPAN("Total Users"),
+					h.SECTION(h.AttrClass("quick-stats"))(
+						h.H3()("Quick Stats"),
+						h.DIV(h.AttrClass("stats-grid"))(
+							h.DIV(h.AttrClass("stat-card"))(
+								h.STRONG()(len(users)),
+								h.SPAN()("Total Users"),
 							),
-							h.DIV(
-								h.KV{"class": "stat-card"},
-								h.STRONG(h.IfElse(len(users) > 0, len(users), 0)),
-								h.SPAN("Active Now"),
+							h.DIV(h.AttrClass("stat-card"))(
+								h.STRONG()(h.IfElse(len(users) > 0, len(users), 0)),
+								h.SPAN()("Active Now"),
 							),
 						),
 					),
 				),
-				h.FOOTER(
-					h.KV{"class": "site-footer"},
-					h.P("2025 Company Inc. All rights reserved."),
+				h.FOOTER(h.AttrClass("site-footer"))(
+					h.P()("2025 Company Inc. All rights reserved."),
 				),
 			),
 		),
