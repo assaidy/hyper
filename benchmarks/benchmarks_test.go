@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"testing"
 
-	"github.com/assaidy/hyper/v2"
+	h "github.com/assaidy/hyper/v2"
 )
 
 // getBenchmarkData returns sample user data for benchmarks
