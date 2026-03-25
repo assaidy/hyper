@@ -1,5 +1,11 @@
 package hyper
 
+import (
+	"bytes"
+	"io"
+	"sync"
+)
+
 // IfElse returns the appropriate value based on a boolean condition.
 //
 // This generic function is useful for inline conditional expressions in
@@ -92,4 +98,56 @@ func Group(children ...any) HyperNode {
 	element := Element{Tag: ""}
 	InsertChildren(&element, children...)
 	return element
+}
+
+// Cache renders a Node once and caches the output for subsequent renders.
+//
+// The first time the cached node is rendered, the underlying node is rendered
+// and its output is stored in the cache. Subsequent renders simply replay
+// the cached output without re-rendering the node. This is useful for expensive
+// static content like headers, footers, or complex components that don't change.
+//
+// A NodeCache must be provided to hold the cached output. The same cache instance
+// should be used across all renders for the same content.
+//
+// Example:
+//
+//	var headerCache hyper.NodeCache
+//
+//	// Cache the header - renders once on first access
+//	header := hyper.Cache(&headerCache,
+//		DIV()(
+//			NAV()(
+//				A(AttrHref("/"))("Home"),
+//				A(AttrHref("/about"))("About"),
+//			),
+//		),
+//	)
+//
+//	// Render the same cached node multiple times - only renders once
+//	BODY()(header, mainContent, header)
+func Cache(cache *NodeCache, node HyperNode) HyperNode {
+	return cachedNode{cache: cache, node: node}
+}
+
+type NodeCache struct {
+	buffer bytes.Buffer
+	once   sync.Once
+	err    error
+}
+
+type cachedNode struct {
+	cache *NodeCache
+	node  HyperNode
+}
+
+func (me cachedNode) Render(w io.Writer) error {
+	me.cache.once.Do(func() {
+		me.cache.err = me.node.Render(&me.cache.buffer)
+	})
+	if me.cache.err != nil {
+		return me.cache.err
+	}
+	_, err := me.cache.buffer.WriteTo(w)
+	return err
 }
