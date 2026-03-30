@@ -148,6 +148,6 @@ func (me cachedNode) Render(w io.Writer) error {
 	if me.cache.err != nil {
 		return me.cache.err
 	}
-	_, err := me.cache.buffer.WriteTo(w)
+	_, err := w.Write(me.cache.buffer.Bytes())
 	return err
 }

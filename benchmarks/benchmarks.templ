@@ -1,4 +1,4 @@
-package h_vs_templ
+package benchmarks
 
 // User represents a user in the system
 type User struct {
@@ -165,7 +165,41 @@ templ SVGTempl() {
 	</svg>
 }
 
-// Benchmark 17: Real World Page (Concurrent)
+// Benchmark 17: Static Content
+// Complex static header/footer that would typically be cached
+templ StaticContentTempl() {
+	<header class="site-header">
+		<nav class="main-nav">
+			<a href="/" class="nav-link">Home</a>
+			<a href="/users" class="nav-link">Users</a>
+			<a href="/settings" class="nav-link">Settings</a>
+			<a href="/logout" class="nav-link">Logout</a>
+		</nav>
+	</header>
+	<main class="main-content">
+		<h1>User Management Dashboard</h1>
+		<p>Welcome to the admin dashboard. Manage users and permissions below.</p>
+		<section class="users-section">
+			<h2>Active Users</h2>
+			<table class="users-table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Name</th>
+						<th>Role</th>
+						<th>Status</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+			</table>
+		</section>
+	</main>
+	<footer class="site-footer">
+		<p>2025 Company Inc. All rights reserved.</p>
+	</footer>
+}
+
+// Benchmark 18: Real World Page (Concurrent)
 // Full realistic page with all features for concurrent benchmarking
 templ RealWorldTempl(users []User) {
 	<!DOCTYPE html>

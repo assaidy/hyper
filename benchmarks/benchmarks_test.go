@@ -1,4 +1,4 @@
-package h_vs_templ
+package benchmarks
 
 import (
 	"bytes"
@@ -783,7 +783,7 @@ func BenchmarkSimpleElement_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		simpleElementTmpl.Execute(&buf, nil)
+		simpleElementTempl.Execute(&buf, nil)
 	}
 }
 
@@ -791,7 +791,7 @@ func BenchmarkDeepNesting_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		deepNestingTmpl.Execute(&buf, nil)
+		deepNestingTempl.Execute(&buf, nil)
 	}
 }
 
@@ -799,7 +799,7 @@ func BenchmarkManyAttributes_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		manyAttributesTmpl.Execute(&buf, nil)
+		manyAttributesTempl.Execute(&buf, nil)
 	}
 }
 
@@ -808,7 +808,7 @@ func BenchmarkLargeText_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		largeTextTmpl.Execute(&buf, text)
+		largeTextTempl.Execute(&buf, text)
 	}
 }
 
@@ -817,7 +817,7 @@ func BenchmarkList10_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		listTempl10Tmpl.Execute(&buf, items)
+		listTempl10Templ.Execute(&buf, items)
 	}
 }
 
@@ -829,7 +829,7 @@ func BenchmarkList100_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		listTempl100Tmpl.Execute(&buf, items)
+		listTempl100Templ.Execute(&buf, items)
 	}
 }
 
@@ -838,7 +838,7 @@ func BenchmarkConditionals_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		conditionalsTmpl.Execute(&buf, data)
+		conditionalsTempl.Execute(&buf, data)
 	}
 }
 
@@ -846,7 +846,7 @@ func BenchmarkMixedContent_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		mixedContentTmpl.Execute(&buf, nil)
+		mixedContentTempl.Execute(&buf, nil)
 	}
 }
 
@@ -854,7 +854,7 @@ func BenchmarkVoidElements_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		voidElementsTmpl.Execute(&buf, nil)
+		voidElementsTempl.Execute(&buf, nil)
 	}
 }
 
@@ -863,7 +863,7 @@ func BenchmarkHTMLEscaping_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		htmlEscapingTmpl.Execute(&buf, content)
+		htmlEscapingTempl.Execute(&buf, content)
 	}
 }
 
@@ -873,7 +873,7 @@ func BenchmarkTable_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		tableTmpl.Execute(&buf, rowData)
+		tableTempl.Execute(&buf, rowData)
 	}
 }
 
@@ -889,7 +889,7 @@ func BenchmarkEmptyPage_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		emptyPageTmpl.Execute(&buf, nil)
+		emptyPageTempl.Execute(&buf, nil)
 	}
 }
 
@@ -898,7 +898,7 @@ func BenchmarkRawText_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		rawTextTmpl.Execute(&buf, html)
+		rawTextTempl.Execute(&buf, html)
 	}
 }
 
@@ -979,4 +979,79 @@ func BenchmarkConcurrentRealistic_RealWorld_HtmlTemplate(b *testing.B) {
 			realWorldTempl.Execute(&buf, data)
 		}
 	})
+}
+
+// ============================================================================
+// BENCHMARK: Static Content Caching
+// Compare hyper with/without caching vs templ and html/template
+// ============================================================================
+
+func getStaticContentPage() h.HyperNode {
+	return h.Group(
+		h.HEADER(h.AttrClass("site-header"))(
+			h.NAV(h.AttrClass("main-nav"))(
+				h.A(h.AttrHref("/"), h.AttrClass("nav-link"))("Home"),
+				h.A(h.AttrHref("/users"), h.AttrClass("nav-link"))("Users"),
+				h.A(h.AttrHref("/settings"), h.AttrClass("nav-link"))("Settings"),
+				h.A(h.AttrHref("/logout"), h.AttrClass("nav-link"))("Logout"),
+			),
+		),
+		h.MAIN(h.AttrClass("main-content"))(
+			h.H1()("User Management Dashboard"),
+			h.P()("Welcome to the admin dashboard. Manage users and permissions below."),
+			h.SECTION(h.AttrClass("users-section"))(
+				h.H2()("Active Users"),
+				h.TABLE(h.AttrClass("users-table"))(
+					h.THEAD()(
+						h.TR()(
+							h.TH()("ID"),
+							h.TH()("Name"),
+							h.TH()("Role"),
+							h.TH()("Status"),
+							h.TH()("Actions"),
+						),
+					),
+				),
+			),
+		),
+		h.FOOTER(h.AttrClass("site-footer"))(
+			h.P()("2025 Company Inc. All rights reserved."),
+		),
+	)
+}
+
+func BenchmarkStaticContent_Hyper_NoCache(b *testing.B) {
+	page := getStaticContentPage()
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		h.Render(&buf, page)
+	}
+}
+
+func BenchmarkStaticContent_Hyper_Cached(b *testing.B) {
+	var cache h.NodeCache
+	page := h.Cache(&cache, getStaticContentPage())
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		h.Render(&buf, page)
+	}
+}
+
+func BenchmarkStaticContent_Templ(b *testing.B) {
+	ctx := b.Context()
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		StaticContentTempl().Render(ctx, &buf)
+	}
+}
+
+func BenchmarkStaticContent_HtmlTemplate(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		staticContentTempl.Execute(&buf, nil)
+	}
 }
