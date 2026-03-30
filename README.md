@@ -190,3 +190,23 @@ Group(
 )
 // Renders: <h1>Title</h1><p>Description</p>
 ```
+
+### Caching
+Use `Cache()` to render a node once and cache its output for subsequent renders. This is useful for expensive static content like headers, footers, or complex components:
+
+```go
+var headerCache hyper.NodeCache
+
+// First render - actually renders the node
+header := Cache(&headerCache,
+    DIV()(
+        NAV()(
+            A(AttrHref("/"))("Home"),
+            A(AttrHref("/about"))("About"),
+        ),
+    ),
+)
+
+// Subsequent renders - uses cached output
+BODY()(header, mainContent, header)
+```
