@@ -95,7 +95,7 @@ func Range[T any](input []T, f func(T) HyperNode) HyperNode {
 //
 //	Group(P()("Item 1"), H1()("Item 2"), "Item 3")
 func Group(children ...any) HyperNode {
-	element := Element{Tag: ""}
+	element := Element{Tag: "", Children: make([]HyperNode, 0, len(children))}
 	InsertChildren(&element, children...)
 	return element
 }
