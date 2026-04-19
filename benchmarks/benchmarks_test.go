@@ -210,12 +210,9 @@ func BenchmarkConditionals_Templ(b *testing.B) {
 }
 
 func BenchmarkConditionals_Hyper(b *testing.B) {
-	page := h.DIV()(
-		h.If(true, h.SPAN()("First")),
-		h.If(false, h.SPAN()("Second")),
-		h.If(true, h.SPAN()("Third")),
-		h.IfElse(true, h.STRONG()("True"), h.EM()("False")),
-	)
+	cond := h.If(true, h.SPAN()("First"))
+	cond = cond.ElseIf(false, h.SPAN()("Second"))
+	page := h.DIV()(cond, h.IfElse(true, h.STRONG()("True"), h.EM()("False")))
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
@@ -225,8 +222,6 @@ func BenchmarkConditionals_Hyper(b *testing.B) {
 
 // ============================================================================
 // BENCHMARK 8: Mixed Content
-// Various element types and content
-// ============================================================================
 
 func BenchmarkMixedContent_Templ(b *testing.B) {
 	ctx := b.Context()

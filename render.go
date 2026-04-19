@@ -1,6 +1,9 @@
 package hyper
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 // Render writes the HTML representation of a Node to the provided io.Writer.
 //
@@ -11,6 +14,10 @@ import "io"
 //
 //	err := Render(os.Stdout, DIV()("Hello")) // Outputs: <div>Hello</div>
 func Render(w io.Writer, node HyperNode) error {
+	if node == nil {
+		_, err := fmt.Fprint(w, nil)
+		return err
+	}
 	return node.Render(w)
 }
 

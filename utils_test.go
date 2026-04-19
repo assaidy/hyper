@@ -79,39 +79,107 @@ func TestIfElse_Nodes(t *testing.T) {
 }
 
 func TestIf(t *testing.T) {
-	node := DIV()("content")
+	t.Run("Basic If", func(t *testing.T) {
+		node := DIV()("content")
+		resultNode := If(true, node)
+		var buf bytes.Buffer
+		err := Render(&buf, resultNode)
+		if err != nil {
+			t.Errorf("If() render error: %v", err)
+			return
+		}
+		if buf.String() != "<div>content</div>" {
+			t.Errorf("If() = %v, want <div>content</div>", buf.String())
+		}
+	})
 
-	tests := []struct {
-		name      string
-		condition bool
-		expected  string
-	}{
-		{
-			name:      "Condition true returns node",
-			condition: true,
-			expected:  "<div>content</div>",
-		},
-		{
-			name:      "Condition false returns empty",
-			condition: false,
-			expected:  "",
-		},
-	}
+	t.Run("Condition false returns empty", func(t *testing.T) {
+		node := DIV()("content")
+		resultNode := If(false, node)
+		var buf bytes.Buffer
+		err := Render(&buf, resultNode)
+		if err != nil {
+			t.Errorf("If() render error: %v", err)
+			return
+		}
+		if buf.String() != "" {
+			t.Errorf("If() = %v, want empty", buf.String())
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resultNode := If(tt.condition, node)
-			var buf bytes.Buffer
-			err := Render(&buf, resultNode)
-			if err != nil {
-				t.Errorf("If() node render error: %v", err)
-				return
-			}
-			if buf.String() != tt.expected {
-				t.Errorf("If() node render = %v, want %v", buf.String(), tt.expected)
-			}
-		})
-	}
+	t.Run("If with ElseIf and Else", func(t *testing.T) {
+		resultNode := If(false, DIV()("first")).
+			ElseIf(true, SPAN()("second")).
+			Else(DIV()("default"))
+		var buf bytes.Buffer
+		err := Render(&buf, resultNode)
+		if err != nil {
+			t.Errorf("If().ElseIf().Else() render error: %v", err)
+			return
+		}
+		if buf.String() != "<span>second</span>" {
+			t.Errorf("If().ElseIf().Else() = %v, want <span>second</span>", buf.String())
+		}
+	})
+
+	t.Run("Multiple ElseIf branches", func(t *testing.T) {
+		resultNode := If(false, DIV()("first")).
+			ElseIf(false, SPAN()("second")).
+			ElseIf(true, P()("third")).
+			Else(DIV()("default"))
+		var buf bytes.Buffer
+		err := Render(&buf, resultNode)
+		if err != nil {
+			t.Errorf("If().ElseIf().ElseIf().Else() render error: %v", err)
+			return
+		}
+		if buf.String() != "<p>third</p>" {
+			t.Errorf("If().ElseIf().ElseIf().Else() = %v, want <p>third</p>", buf.String())
+		}
+	})
+
+	t.Run("No condition matches falls through to Else", func(t *testing.T) {
+		resultNode := If(false, DIV()("first")).
+			ElseIf(false, SPAN()("second")).
+			Else(DIV()("default"))
+		var buf bytes.Buffer
+		err := Render(&buf, resultNode)
+		if err != nil {
+			t.Errorf("If().ElseIf().Else() render error: %v", err)
+			return
+		}
+		if buf.String() != "<div>default</div>" {
+			t.Errorf("If().ElseIf().Else() = %v, want <div>default</div>", buf.String())
+		}
+	})
+
+	t.Run("If with ElseIf without Else", func(t *testing.T) {
+		resultNode := If(false, DIV()("first")).
+			ElseIf(false, SPAN()("second"))
+		var buf bytes.Buffer
+		err := Render(&buf, resultNode)
+		if err != nil {
+			t.Errorf("If().ElseIf() render error: %v", err)
+			return
+		}
+		if buf.String() != "" {
+			t.Errorf("If().ElseIf() = %v, want empty", buf.String())
+		}
+	})
+
+	t.Run("If with ElseIf without Else matches", func(t *testing.T) {
+		resultNode := If(false, DIV()("first")).
+			ElseIf(true, DIV()("trial"))
+		var buf bytes.Buffer
+		err := Render(&buf, resultNode)
+		if err != nil {
+			t.Errorf("If().ElseIf() render error: %v", err)
+			return
+		}
+		if buf.String() != "<div>trial</div>" {
+			t.Errorf("If().ElseIf() = %v, want <div>trial</div>", buf.String())
+		}
+	})
 }
 
 func TestRepeat(t *testing.T) {

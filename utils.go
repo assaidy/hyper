@@ -20,6 +20,8 @@ import (
 //			P()("Regular user content"),
 //		),
 //	)
+//
+// class := IfElse(err != nil, "text-red", "text-black")
 func IfElse[T any](condition bool, result, alternative T) T {
 	if condition {
 		return result
@@ -27,23 +29,65 @@ func IfElse[T any](condition bool, result, alternative T) T {
 	return alternative
 }
 
-// Conditionally returns a Node based on a boolean condition.
+// If creates a conditional node chain starting with a condition.
 //
-// This function returns an empty Node (not nil) when the
-// condition is false, which prevents nil pointer issues when building
-// DOM trees.
+// The body is rendered only if the condition is true, otherwise
+// an empty group is rendered (preventing nil pointer issues).
 //
 // Example:
 //
-//	BODY()(
-//		If(showHeader, HEADER()(...)),
-//		MAIN()(...),
-//	)
-func If(condition bool, result HyperNode) HyperNode {
-	if condition {
-		return result
+//	If(isAuthenticated, HEADER()("Welcome")).
+//		ElseIf(isTrial, HEADER()("Try Premium")).
+//		Else(BUTTON()("Login"))
+func If(condition bool, body HyperNode) conditionalNode {
+	return conditionalNode{
+		ifBranches: []ifBranch{{condition: condition, body: body}},
+		elseBranch: Group(),
 	}
-	return Group()
+}
+
+// ElseIf adds an additional condition to the conditional chain.
+//
+// Example:
+//
+//	If(isLoggedIn, DIV()("Welcome")).
+//		ElseIf(isAdmin, DIV()("Admin Panel"))
+func (me conditionalNode) ElseIf(condition bool, body HyperNode) conditionalNode {
+	me.ifBranches = append(me.ifBranches, ifBranch{condition: condition, body: body})
+	return me
+}
+
+// Else provides a fallback body when no conditions match.
+//
+// Example:
+//
+//	If(isAdmin, DIV()("Admin")).
+//		Else(DIV()("User"))
+func (me conditionalNode) Else(body HyperNode) HyperNode {
+	me.elseBranch = body
+	return me
+}
+
+// conditionalNode represents a chain of if-else conditions.
+// It is created by If() and can be extended with ElseIf() and Else().
+type conditionalNode struct {
+	ifBranches []ifBranch
+	elseBranch HyperNode
+}
+
+func (me conditionalNode) Render(w io.Writer) error {
+	for _, n := range me.ifBranches {
+		if n.condition == true {
+			return Render(w, n.body)
+		}
+	}
+	return Render(w, me.elseBranch)
+}
+
+// ifBranch represents a single condition-body pair within a conditionalNode.
+type ifBranch struct {
+	condition bool
+	body      HyperNode
 }
 
 // Repeat generates multiple Nodes by calling a function n times.
@@ -130,12 +174,15 @@ func Cache(cache *NodeCache, node HyperNode) HyperNode {
 	return cachedNode{cache: cache, node: node}
 }
 
+// NodeCache stores rendered output for a cached node.
+// It must be reused across renders for the same content.
 type NodeCache struct {
 	buffer bytes.Buffer
 	once   sync.Once
 	err    error
 }
 
+// cachedNode wraps a node with a cache to render once and replay on subsequent renders.
 type cachedNode struct {
 	cache *NodeCache
 	node  HyperNode

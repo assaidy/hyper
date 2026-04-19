@@ -47,6 +47,14 @@ func main() {
                         DIV(AttrClass("bg-blue-50 p-4 rounded mb-4"))(
                             P(AttrClass("font-semibold"))("Admin Panel"),
                         ),
+                    ).ElseIf(isTrial,
+                        DIV(AttrClass("bg-yellow-50 p-4 rounded mb-4"))(
+                            P(AttrClass("font-semibold"))("Try Premium"),
+                        ),
+                    ).Else(
+                        DIV(AttrClass("p-4"))(
+                            P()("Welcome Guest"),
+                        ),
                     ),
                     
                     // User count
