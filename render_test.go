@@ -122,6 +122,65 @@ func TestRender_ComplexStructure(t *testing.T) {
 	}
 }
 
+func TestRenderThen(t *testing.T) {
+	tests := []struct {
+		name     string
+		node     HyperNode
+		expected string
+		wantErr  bool
+	}{
+		{
+			name:     "Simple text in element",
+			node:     DIV()("Hello World"),
+			expected: "<div>Hello World</div>",
+			wantErr:  false,
+		},
+		{
+			name:     "Empty element",
+			node:     DIV()(),
+			expected: "<div></div>",
+			wantErr:  false,
+		},
+		{
+			name:     "Element with children",
+			node:     DIV()("Hello", P()("World")),
+			expected: "<div>Hello<p>World</p></div>",
+			wantErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := RenderThen(tt.node, func(data []byte) error {
+				if string(data) != tt.expected {
+					t.Errorf("RenderThen callback received %q, want %q", string(data), tt.expected)
+				}
+				return nil
+			})
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("RenderThen() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestRenderThen_WriteError(t *testing.T) {
+	node := DIV()("test")
+
+	err := RenderThen(node, func(data []byte) error {
+		return &writeError{"write error"}
+	})
+
+	if err == nil {
+		t.Error("RenderThen() should return error when callback fails")
+	}
+
+	if !strings.Contains(err.Error(), "write error") {
+		t.Errorf("RenderThen() should return callback error, got: %v", err)
+	}
+}
+
 func BenchmarkRender_DensePage(b *testing.B) {
 	node := HTML(Attr("lang", "en"), Attr("data-theme", "light"))(
 		HEAD()(
