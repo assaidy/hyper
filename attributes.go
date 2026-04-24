@@ -182,6 +182,8 @@ var (
 	AttrEnterKeyHint = makePairAttribute("enterkeyhint")
 	// AttrElementTiming specifies that an element should be observed for performance.
 	AttrElementTiming = makePairAttribute("elementtiming")
+	// AttrFor links a label to an input by its ID, improving accessibility and usability.
+	AttrFor = makePairAttribute("for")
 	// AttrForm specifies the id of a form element that the element belongs to.
 	AttrForm = makePairAttribute("form")
 	// AttrFormAction specifies where to send the form data.
