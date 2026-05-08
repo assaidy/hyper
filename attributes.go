@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html"
+	"reflect"
 	"strings"
 )
 
@@ -65,18 +66,17 @@ func (me BooleanAttribute) Render(buf *bytes.Buffer) error {
 //	Attr("hidden", true)        // -> BooleanAttribute{Key: "hidden", IsActive: true}
 //	Attr("disabled", false)     // -> BooleanAttribute{Key: "disabled", IsActive: false}
 func Attr[V ~string | ~bool](key string, value V) Attribute {
-	return attr(key, value)
+	return attrReflect(key, value)
 }
 
-// TODO: move this function inside [Attr]
-func attr(key string, value any) Attribute {
-	switch v := value.(type) {
-	case string:
-		return PairAttribute{Key: key, Value: v}
-	case bool:
-		return BooleanAttribute{Key: key, IsActive: v}
+func attrReflect(key string, value any) Attribute {
+	reflectValue := reflect.ValueOf(value)
+	switch reflectValue.Kind() {
+	case reflect.String:
+		return PairAttribute{Key: key, Value: reflectValue.String()}
+	case reflect.Bool:
+		return BooleanAttribute{Key: key, IsActive: reflectValue.Bool()}
 	default:
-		// FIX: this panics for ~string that is not a direct string
 		panic("unexpected value type for attribute")
 	}
 }
@@ -680,7 +680,8 @@ const (
 	MethodGet = "get"
 	// MethodPost sends form data in the request body.
 	MethodPost = "post"
-	// TODO: add MethodDialog
+	// MethodDialog indicates that the form is part of a dialog and should use the dialog's method handling.
+	MethodDialog = "dialog"
 )
 
 // EncType* constants are valid values for the enctype attribute on <form>.
