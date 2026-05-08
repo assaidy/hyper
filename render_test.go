@@ -199,14 +199,14 @@ func BenchmarkRender_DensePage(b *testing.B) {
 						LI()(A(AttrHref("#contact"))()),
 					),
 					MAIN(AttrClass("main-content"), AttrRole("main"))(
-						SECTION(AttrClass("hero"), AttrID("hero"))(
+						SECTION(AttrClass("hero"), AttrId("hero"))(
 							DIV(AttrClass("container"))(
 								H1()("Welcome to Our Site"),
 								P()("This is a dense page for benchmarking purposes."),
 								BUTTON(AttrClass("btn btn-primary"), AttrType("button"))("Get Started"),
 							),
 						),
-						SECTION(AttrClass("features"), AttrID("features"))(
+						SECTION(AttrClass("features"), AttrId("features"))(
 							DIV(AttrClass("container"))(
 								H2()("Features"),
 								DIV(AttrClass("grid"))(

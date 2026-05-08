@@ -349,7 +349,7 @@ func TestCache(t *testing.T) {
 
 	t.Run("multiple renders produce same output", func(t *testing.T) {
 		var cache NodeCache
-		complexNode := DIV(AttrClass("header"), AttrID("main"))(
+		complexNode := DIV(AttrClass("header"), AttrId("main"))(
 			NAV()(
 				A(AttrHref("/"))("Home"),
 				A(AttrHref("/about"))("About"),

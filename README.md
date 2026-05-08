@@ -69,7 +69,7 @@ func main() {
                     ),
                     
                     // User list
-                    UL(AttrClass("space-y-2 mt-4"), AttrID("users-list"))(
+                    UL(AttrClass("space-y-2 mt-4"), AttrId("users-list"))(
                         Range(users, func(name string) HyperNode {
                             return LI(AttrClass("p-2 bg-white rounded shadow"))(name)
                         }),
@@ -132,7 +132,7 @@ DIV(Attr("class", "container"), Attr("id", "main"))("Content")
 // <div class="container" id="main">Content</div>
 
 // Using specific attribute functions (recommended for clarity)
-DIV(AttrClass("container"), AttrID("main"))("Content")
+DIV(AttrClass("container"), AttrId("main"))("Content")
 // <div class="container" id="main">Content</div>
 
 // Boolean attributes (present when true, absent when false)

@@ -68,6 +68,7 @@ func Attr[V ~string | ~bool](key string, value V) Attribute {
 	return attr(key, value)
 }
 
+// TODO: move this function inside [Attr]
 func attr(key string, value any) Attribute {
 	switch v := value.(type) {
 	case string:
@@ -75,6 +76,7 @@ func attr(key string, value any) Attribute {
 	case bool:
 		return BooleanAttribute{Key: key, IsActive: v}
 	default:
+		// FIX: this panics for ~string that is not a direct string
 		panic("unexpected value type for attribute")
 	}
 }
@@ -122,8 +124,8 @@ var (
 	AttrAutoplay = makeBooleanAttribute("autoplay")
 	// AttrBackground specifies the background image URL.
 	AttrBackground = makePairAttribute("background")
-	// AttrBGColor specifies the background color of an element.
-	AttrBGColor = makePairAttribute("bgcolor")
+	// AttrBgColor specifies the background color of an element.
+	AttrBgColor = makePairAttribute("bgcolor")
 	// AttrBorder specifies the border width around an element.
 	AttrBorder = makePairAttribute("border")
 	// AttrCapture specifies which camera/mic to use for media capture.
@@ -212,8 +214,8 @@ var (
 	AttrHrefLang = makePairAttribute("hreflang")
 	// AttrHttpEquiv provides an HTTP header for the information in the content attribute.
 	AttrHttpEquiv = makePairAttribute("http-equiv")
-	// AttrID specifies a unique id for an element.
-	AttrID = makePairAttribute("id")
+	// AttrId specifies a unique id for an element.
+	AttrId = makePairAttribute("id")
 	// AttrIntegrity specifies a hash of the resource to verify its integrity.
 	AttrIntegrity = makePairAttribute("integrity")
 	// AttrInputMode provides a hint to browsers about the type of data the user should enter.
@@ -678,16 +680,17 @@ const (
 	MethodGet = "get"
 	// MethodPost sends form data in the request body.
 	MethodPost = "post"
+	// TODO: add MethodDialog
 )
 
-// Enctype* constants are valid values for the enctype attribute on <form>.
+// EncType* constants are valid values for the enctype attribute on <form>.
 const (
-	// EnctypeUrlEncoded encodes form data as URL-encoded string.
-	EnctypeUrlEncoded = "application/x-www-form-urlencoded"
-	// EnctypeMultipartForm encodes form data as multipart/form-data.
-	EnctypeMultipartForm = "multipart/form-data"
-	// EnctypePlainText encodes form data as plain text.
-	EnctypePlainText = "text/plain"
+	// EncTypeUrlEncoded encodes form data as URL-encoded string.
+	EncTypeUrlEncoded = "application/x-www-form-urlencoded"
+	// EncTypeMultipartForm encodes form data as multipart/form-data.
+	EncTypeMultipartForm = "multipart/form-data"
+	// EncTypePlainText encodes form data as plain text.
+	EncTypePlainText = "text/plain"
 )
 
 // CrossOrigin* constants are valid values for the crossorigin attribute.
@@ -810,8 +813,8 @@ const (
 	ContentEditableTrue = "true"
 	// ContentEditableFalse makes the element non-editable.
 	ContentEditableFalse = "false"
-	// ContentEditablePlaintextOnly allows only plain text editing.
-	ContentEditablePlaintextOnly = "plaintext-only"
+	// ContentEditablePlainTextOnly allows only plain text editing.
+	ContentEditablePlainTextOnly = "plaintext-only"
 )
 
 // InputMode* constants are valid values for the inputmode attribute.
@@ -898,26 +901,26 @@ const (
 	AutocompleteCountry = "country"
 	// AutocompleteCountryName specifies the country name.
 	AutocompleteCountryName = "country-name"
-	// AutocompleteCCName specifies the name on the credit card.
-	AutocompleteCCName = "cc-name"
-	// AutocompleteCCGivenName specifies the given name on the credit card.
-	AutocompleteCCGivenName = "cc-given-name"
-	// AutocompleteCCAdditionalName specifies the additional name on the credit card.
-	AutocompleteCCAdditionalName = "cc-additional-name"
-	// AutocompleteCCFamilyName specifies the family name on the credit card.
-	AutocompleteCCFamilyName = "cc-family-name"
-	// AutocompleteCCNumber specifies the credit card number.
-	AutocompleteCCNumber = "cc-number"
-	// AutocompleteCCExp specifies the credit card expiration date.
-	AutocompleteCCExp = "cc-exp"
-	// AutocompleteCCExpMonth specifies the credit card expiration month.
-	AutocompleteCCExpMonth = "cc-exp-month"
-	// AutocompleteCCExpYear specifies the credit card expiration year.
-	AutocompleteCCExpYear = "cc-exp-year"
-	// AutocompleteCCCsc specifies the credit card security code.
-	AutocompleteCCCsc = "cc-csc"
-	// AutocompleteCCType specifies the credit card type (e.g., Visa, Mastercard).
-	AutocompleteCCType = "cc-type"
+	// AutocompleteCcName specifies the name on the credit card.
+	AutocompleteCcName = "cc-name"
+	// AutocompleteCcGivenName specifies the given name on the credit card.
+	AutocompleteCcGivenName = "cc-given-name"
+	// AutocompleteCcAdditionalName specifies the additional name on the credit card.
+	AutocompleteCcAdditionalName = "cc-additional-name"
+	// AutocompleteCcFamilyName specifies the family name on the credit card.
+	AutocompleteCcFamilyName = "cc-family-name"
+	// AutocompleteCcNumber specifies the credit card number.
+	AutocompleteCcNumber = "cc-number"
+	// AutocompleteCcExp specifies the credit card expiration date.
+	AutocompleteCcExp = "cc-exp"
+	// AutocompleteCcExpMonth specifies the credit card expiration month.
+	AutocompleteCcExpMonth = "cc-exp-month"
+	// AutocompleteCcExpYear specifies the credit card expiration year.
+	AutocompleteCcExpYear = "cc-exp-year"
+	// AutocompleteCcCsc specifies the credit card security code.
+	AutocompleteCcCsc = "cc-csc"
+	// AutocompleteCcType specifies the credit card type (e.g., Visa, Mastercard).
+	AutocompleteCcType = "cc-type"
 	// AutocompleteTransactionCurrency specifies the transaction currency.
 	AutocompleteTransactionCurrency = "transaction-currency"
 	// AutocompleteTransactionAmount specifies the transaction amount.

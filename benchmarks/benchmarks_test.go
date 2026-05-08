@@ -367,10 +367,10 @@ func BenchmarkForm_Hyper(b *testing.B) {
 		h.FIELDSET()(
 			h.LEGEND()("User Form"),
 			h.LABEL(h.Attr("for", "name"))("Name:"),
-			h.INPUT(h.AttrType("text"), h.AttrID("name"), h.AttrName("name")),
+			h.INPUT(h.AttrType("text"), h.AttrId("name"), h.AttrName("name")),
 			h.BR(),
 			h.LABEL(h.Attr("for", "email"))("Email:"),
-			h.INPUT(h.AttrType("email"), h.AttrID("email"), h.AttrName("email")),
+			h.INPUT(h.AttrType("email"), h.AttrId("email"), h.AttrName("email")),
 			h.BR(),
 			h.BUTTON(h.AttrType("submit"))("Submit"),
 		),

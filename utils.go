@@ -5,6 +5,7 @@ import (
 	"io"
 	"sync"
 )
+// TODO: add IfElseZero util
 
 // IfElse returns the appropriate value based on a boolean condition.
 //

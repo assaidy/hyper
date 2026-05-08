@@ -843,18 +843,16 @@ func SEARCH(attrs ...Attribute) ElementBuilder {
 
 // DIV is the generic container for flow content.
 //
-// Returns an ElementBuilder that must be called with children.
-//
 // Examples:
 //
 //	// Empty div
-//	DIV()
+//	DIV()()
 //
 //	// With text content
-//	DIV("Hello World")
+//	DIV()("Hello World")
 //
 //	// With attributes and children
-//	DIV(AttrClass, "container", AttrID, "main", "Content")
+//	DIV(AttrClass("container"), AttrId("main"))("Content")
 //	DIV(Attr("class", "container"))("Content")
 //
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/div
