@@ -5,7 +5,6 @@ import (
 	"io"
 	"sync"
 )
-// TODO: add IfElseZero util
 
 // IfElse returns the appropriate value based on a boolean condition.
 //
@@ -15,19 +14,28 @@ import (
 //
 // Example:
 //
-//	BODY()(
-//		IfElse(isAdmin,
-//			DIV()("Admin content"),
-//			P()("Regular user content"),
-//		),
-//	)
-//
 // class := IfElse(err != nil, "text-red", "text-black")
 func IfElse[T any](condition bool, result, alternative T) T {
 	if condition {
 		return result
 	}
 	return alternative
+}
+
+// IfElseZero returns the result if the condition is true, otherwise returns the zero value.
+//
+// This generic function is useful when you need a default/empty value when
+// a condition is false without explicitly specifying the alternative.
+//
+// Example:
+//
+// class += IfElseZero(err != nil, " text-red")
+func IfElseZero[T any](condition bool, result T) T {
+	if condition {
+		return result
+	}
+	var zero T
+	return zero
 }
 
 // If creates a conditional node chain starting with a condition.

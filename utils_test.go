@@ -78,6 +78,37 @@ func TestIfElse_Nodes(t *testing.T) {
 	}
 }
 
+func TestIfElseZero(t *testing.T) {
+	tests := []struct {
+		name      string
+		condition bool
+		result    string
+		expected  string
+	}{
+		{
+			name:      "Condition true returns result",
+			condition: true,
+			result:    "text-red",
+			expected:  "text-red",
+		},
+		{
+			name:      "Condition false returns zero value",
+			condition: false,
+			result:    "text-red",
+			expected:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IfElseZero(tt.condition, tt.result)
+			if result != tt.expected {
+				t.Errorf("IfElseZero() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
 func TestIf(t *testing.T) {
 	t.Run("Basic If", func(t *testing.T) {
 		node := DIV()("content")
