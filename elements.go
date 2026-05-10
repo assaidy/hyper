@@ -133,9 +133,6 @@ func (me Element) renderAttrs(buf *bytes.Buffer) error {
 //	DIV(AttrClass("container"))("Hello")
 type ChildrenInserter func(children ...any) Element
 
-// Deprecated: use [ChildrenInserter]
-type ElementBuilder = ChildrenInserter
-
 // MakeChildrenInserter wraps an [Element] and returns an [ChildrenInserter] that accepts children.
 func MakeChildrenInserter(element Element) ChildrenInserter {
 	return func(children ...any) Element {
@@ -144,9 +141,6 @@ func MakeChildrenInserter(element Element) ChildrenInserter {
 		return element
 	}
 }
-
-// Deprecated: use [MakeChildrenInserter]
-var MakeElementBuilder = MakeChildrenInserter
 
 // InsertChildren adds child nodes to an [Element]. It accepts [HyperNode] values,
 // strings (converted to [Text]), and other values (converted to [Text] via fmt.Sprint).
