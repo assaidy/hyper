@@ -124,6 +124,109 @@ func TestTextNode_Render_Error(t *testing.T) {
 	}
 }
 
+func TestInsertChildren(t *testing.T) {
+	tests := []struct {
+		name     string
+		initial  []HyperNode
+		children []any
+		want     []HyperNode
+	}{
+		{
+			name:     "no children",
+			initial:  nil,
+			children: nil,
+			want:     nil,
+		},
+		{
+			name:     "empty children",
+			initial:  nil,
+			children: []any{},
+			want:     nil,
+		},
+		{
+			name:     "single HyperNode",
+			initial:  nil,
+			children: []any{Text("a")},
+			want:     []HyperNode{Text("a")},
+		},
+		{
+			name:     "multiple HyperNodes",
+			initial:  nil,
+			children: []any{Text("a"), Text("b"), Text("c")},
+			want:     []HyperNode{Text("a"), Text("b"), Text("c")},
+		},
+		{
+			name:     "append to existing children",
+			initial:  []HyperNode{Text("a")},
+			children: []any{Text("b"), Text("c")},
+			want:     []HyperNode{Text("a"), Text("b"), Text("c")},
+		},
+		{
+			name:     "string converted to Text",
+			initial:  nil,
+			children: []any{"hello"},
+			want:     []HyperNode{Text("hello")},
+		},
+		{
+			name:     "multiple strings",
+			initial:  nil,
+			children: []any{"a", "b", "c"},
+			want:     []HyperNode{Text("a"), Text("b"), Text("c")},
+		},
+		{
+			name:     "fmt.Stringer converted to Text",
+			initial:  nil,
+			children: []any{stringerType("foo")},
+			want:     []HyperNode{Text("foo")},
+		},
+		{
+			name:     "int converted via fmt.Sprint",
+			initial:  nil,
+			children: []any{42},
+			want:     []HyperNode{Text("42")},
+		},
+		{
+			name:     "bool converted via fmt.Sprint",
+			initial:  nil,
+			children: []any{true},
+			want:     []HyperNode{Text("true")},
+		},
+		{
+			name:     "nil converted via fmt.Sprint",
+			initial:  nil,
+			children: []any{nil},
+			want:     []HyperNode{Text("<nil>")},
+		},
+		{
+			name:     "mixed types",
+			initial:  []HyperNode{Text("a")},
+			children: []any{Text("b"), "c", stringerType("d"), 42, true},
+			want:     []HyperNode{Text("a"), Text("b"), Text("c"), Text("d"), Text("42"), Text("true")},
+		},
+		{
+			name:     "triggers capacity growth",
+			initial:  make([]HyperNode, 0, 2),
+			children: []any{Text("a"), Text("b"), Text("c")},
+			want:     []HyperNode{Text("a"), Text("b"), Text("c")},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			elem := &Element{Children: tt.initial}
+			elem.InsertChildren(tt.children...)
+			if len(elem.Children) != len(tt.want) {
+				t.Fatalf("len = %d, want %d", len(elem.Children), len(tt.want))
+			}
+			for i := range tt.want {
+				if elem.Children[i] != tt.want[i] {
+					t.Errorf("Children[%d] = %#v, want %#v", i, elem.Children[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
 func TestElement_Render(t *testing.T) {
 	tests := []struct {
 		name     string
