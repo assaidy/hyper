@@ -99,6 +99,10 @@ type ifBranch struct {
 	body      HyperNode
 }
 
+// TODO: Return type any from the generator func in [Repeat] and [Range].
+// This allows generating a node with children of any type.
+// So user doesn't care about casting to [HyperNode]; We do it internally.
+
 // Repeat generates multiple Nodes by calling a function n times.
 //
 // The provided function is called exactly n times, and each resulting Node
@@ -146,10 +150,14 @@ func Range[T any](input []T, f func(T) HyperNode) HyperNode {
 //
 // Example:
 //
-//	Group(P()("Item 1"), H1()("Item 2"), "Item 3")
-func Group(children ...any) HyperNode {
-	element := Element{Tag: "", Children: make([]HyperNode, 0, len(children))}
-	InsertChildren(&element, children...)
+//	Group(
+//		P()("Item 1"),
+//		H1()("Item 2"),
+//		"Item 3",
+//	)
+func Group(children ...any) Element {
+	element := Element{Tag: ""}
+	element.InsertChildren(children...)
 	return element
 }
 

@@ -138,29 +138,46 @@ type ChildrenInserter func(children ...any) Element
 // MakeChildrenInserter wraps an [Element] and returns an [ChildrenInserter] that accepts children.
 func MakeChildrenInserter(element Element) ChildrenInserter {
 	return func(children ...any) Element {
-		element.Children = make([]HyperNode, 0, len(children))
-		InsertChildren(&element, children...)
+		element.InsertChildren(children...)
 		return element
 	}
 }
 
 // InsertChildren adds child nodes to an [Element]. It accepts [HyperNode] values,
 // strings (converted to [Text]), and other values (converted to [Text] via fmt.Sprint).
-func InsertChildren(element *Element, children ...any) {
+func (me *Element) InsertChildren(children ...any) {
+	n := len(children)
+	if n == 0 {
+		return
+	}
+
+	oldLen := len(me.Children)
+	newLen := oldLen + n
+
+	if newLen > cap(me.Children) {
+		newCap := 1
+		for newCap < newLen { // Capacity grows exponentially.
+			newCap <<= 1
+		}
+		newSlice := make([]HyperNode, oldLen, newCap)
+		copy(newSlice, me.Children)
+		me.Children = newSlice
+	}
+
 	for _, child := range children {
 		switch value := child.(type) {
 		case HyperNode:
-			element.Children = append(element.Children, value)
+			me.Children = append(me.Children, value)
 		// Explicit string and fmt.Stringer cases for performance:
 		// fmt.Sprint() would handle these, but with overhead from type inspection and buffer allocation.
 		case string:
-			element.Children = append(element.Children, Text(value))
+			me.Children = append(me.Children, Text(value))
 		case fmt.Stringer:
-			element.Children = append(element.Children, Text(value.String()))
+			me.Children = append(me.Children, Text(value.String()))
 		// Nil arguments are not checked/filtered - fmt.Sprint() will render them as "Nil",
 		// which is intentional for better debugging (makes it obvious when nil values are passed).
 		default:
-			element.Children = append(element.Children, Text(fmt.Sprint(value)))
+			me.Children = append(me.Children, Text(fmt.Sprint(value)))
 		}
 	}
 }
