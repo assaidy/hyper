@@ -181,6 +181,22 @@ func (me *Element) InsertChildren(children ...any) {
 	}
 }
 
+// toHyperNode converts an arbitrary value to a [HyperNode].
+// Strings become [Text], fmt.Stringer values are converted via String(),
+// and all other values use fmt.Sprint.
+func toHyperNode(v any) HyperNode {
+	switch value := v.(type) {
+	case HyperNode:
+		return value
+	case string:
+		return Text(value)
+	case fmt.Stringer:
+		return Text(value.String())
+	default:
+		return Text(fmt.Sprint(value))
+	}
+}
+
 // DOCTYPE creates the <!DOCTYPE html> element.
 //
 // https://developer.mozilla.org/en-US/docs/Glossary/Doctype

@@ -99,27 +99,24 @@ type ifBranch struct {
 	body      HyperNode
 }
 
-// TODO: Return type any from the generator func in [Repeat] and [Range].
-// This allows generating a node with children of any type.
-// So user doesn't care about casting to [HyperNode]; We do it internally.
-
 // Repeat generates multiple Nodes by calling a function n times.
 //
-// The provided function is called exactly n times, and each resulting Node
-// is aggregated into a single container Node. Using a function ensures each
-// Node instance is unique (important for elements with mutable state).
+// The provided function is called exactly n times, and each resulting value
+// is converted to a [HyperNode] and aggregated into a single container Node.
+// Using a function ensures each Node instance is unique (important for elements
+// with mutable state).
 //
 // Example:
 //
 //	UL()(
-//		Repeat(5, func() HyperNode {
+//		Repeat(5, func() any {
 //			return LI()("List item")
 //		}),
 //	)
-func Repeat(n int, f func() HyperNode) HyperNode {
+func Repeat(n int, f func() any) HyperNode {
 	result := Element{Tag: "", Children: make([]HyperNode, 0, n)}
 	for range n {
-		result.Children = append(result.Children, f())
+		result.Children = append(result.Children, toHyperNode(f()))
 	}
 	return result
 }
@@ -127,20 +124,21 @@ func Repeat(n int, f func() HyperNode) HyperNode {
 // Range transforms a slice of items into Nodes by applying a function to each element.
 //
 // Each element in the input slice is transformed using the provided function, and
-// all resulting Nodes are aggregated into a single container Node.
+// all resulting values are converted to [HyperNode] and aggregated into a single
+// container Node.
 //
 // Example:
 //
 //	items := []string{"Apple", "Banana", "Cherry"}
 //	UL()(
-//		Range(items, func(item string) HyperNode {
+//		Range(items, func(item string) any {
 //			return LI()(item)
 //		}),
 //	)
-func Range[T any](input []T, f func(T) HyperNode) HyperNode {
+func Range[T any](input []T, f func(T) any) HyperNode {
 	result := Element{Tag: "", Children: make([]HyperNode, 0, len(input))}
 	for _, item := range input {
-		result.Children = append(result.Children, f(item))
+		result.Children = append(result.Children, toHyperNode(f(item)))
 	}
 	return result
 }

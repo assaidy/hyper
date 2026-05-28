@@ -149,7 +149,7 @@ func BenchmarkList10_Templ(b *testing.B) {
 func BenchmarkList10_Hyper(b *testing.B) {
 	items := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
 	page := h.UL()(
-		h.Range(items, func(s string) h.HyperNode {
+		h.Range(items, func(s string) any {
 			return h.LI()(s)
 		}),
 	)
@@ -184,7 +184,7 @@ func BenchmarkList100_Hyper(b *testing.B) {
 		items[i] = "item"
 	}
 	page := h.UL()(
-		h.Range(items, func(s string) h.HyperNode {
+		h.Range(items, func(s string) any {
 			return h.LI()(s)
 		}),
 	)
@@ -332,7 +332,7 @@ func BenchmarkTable_Hyper(b *testing.B) {
 			),
 		),
 		h.TBODY()(
-			h.Repeat(rows, func() h.HyperNode {
+			h.Repeat(rows, func() any {
 				return h.TR()(
 					h.TD()("Cell 1"),
 					h.TD()("Cell 2"),
@@ -427,7 +427,7 @@ func BenchmarkRealWorld_Hyper(b *testing.B) {
 								),
 							),
 							h.TBODY()(
-								h.Range(users, func(u User) h.HyperNode {
+								h.Range(users, func(u User) any {
 									return h.TR()(
 										h.TD()(u.Name),
 										h.TD()(h.IfElse(u.Admin, h.STRONG()("Admin"), h.SPAN()("User"))),
@@ -579,7 +579,7 @@ func buildRealWorldPage(users []User) h.HyperNode {
 									),
 								),
 								h.TBODY()(
-									h.Range(users, func(u User) h.HyperNode {
+									h.Range(users, func(u User) any {
 										return h.TR()(
 											h.TD()(h.STRONG()("#")),
 											h.TD()(u.Name),

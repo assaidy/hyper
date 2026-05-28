@@ -217,31 +217,31 @@ func TestRepeat(t *testing.T) {
 	tests := []struct {
 		name     string
 		n        int
-		f        func() HyperNode
+		f        func() any
 		expected string
 	}{
 		{
 			name:     "Repeat zero times",
 			n:        0,
-			f:        func() HyperNode { return DIV()() },
+			f:        func() any { return DIV()() },
 			expected: "",
 		},
 		{
 			name:     "Repeat once",
 			n:        1,
-			f:        func() HyperNode { return DIV()("item") },
+			f:        func() any { return DIV()("item") },
 			expected: "<div>item</div>",
 		},
 		{
 			name:     "Repeat multiple times",
 			n:        3,
-			f:        func() HyperNode { return DIV()("item") },
+			f:        func() any { return DIV()("item") },
 			expected: "<div>item</div><div>item</div><div>item</div>",
 		},
 		{
 			name: "Repeat with different content",
 			n:    2,
-			f: func() HyperNode {
+			f: func() any {
 				static := 0
 				static++
 				return DIV()(string(rune('a' + static)))
@@ -269,44 +269,61 @@ func TestRepeat(t *testing.T) {
 func TestRange(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    []string
-		f        func(string) HyperNode
+		run      func() HyperNode
 		expected string
 	}{
 		{
-			name:     "Range empty slice",
-			input:    []string{},
-			f:        func(s string) HyperNode { return LI()(s) },
+			name: "empty slice",
+			run: func() HyperNode {
+				return Range([]string{}, func(s string) any { return LI()(s) })
+			},
 			expected: "",
 		},
 		{
-			name:     "Range single item",
-			input:    []string{"apple"},
-			f:        func(s string) HyperNode { return LI()(s) },
+			name: "single string item",
+			run: func() HyperNode {
+				return Range([]string{"apple"}, func(s string) any { return LI()(s) })
+			},
 			expected: "<li>apple</li>",
 		},
 		{
-			name:     "Range multiple items",
-			input:    []string{"apple", "banana", "cherry"},
-			f:        func(s string) HyperNode { return LI()(s) },
+			name: "multiple string items",
+			run: func() HyperNode {
+				return Range([]string{"apple", "banana", "cherry"}, func(s string) any { return LI()(s) })
+			},
 			expected: "<li>apple</li><li>banana</li><li>cherry</li>",
 		},
 		{
-			name:  "Range with conditional logic",
-			input: []string{"apple", "banana"},
-			f: func(s string) HyperNode {
-				if s == "apple" {
-					return LI()(s, SPAN()(" (popular)"))
-				}
-				return LI()(s)
+			name: "string items with conditional logic",
+			run: func() HyperNode {
+				return Range([]string{"apple", "banana"}, func(s string) any {
+					if s == "apple" {
+						return LI()(s, SPAN()(" (popular)"))
+					}
+					return LI()(s)
+				})
 			},
 			expected: "<li>apple<span> (popular)</span></li><li>banana</li>",
+		},
+		{
+			name: "integer items",
+			run: func() HyperNode {
+				return Range([]int{1, 2, 3}, func(n int) any { return n })
+			},
+			expected: "123",
+		},
+		{
+			name: "bool items",
+			run: func() HyperNode {
+				return Range([]bool{true, false}, func(b bool) any { return b })
+			},
+			expected: "truefalse",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resultNode := Range(tt.input, tt.f)
+			resultNode := tt.run()
 			var buf bytes.Buffer
 			err := Render(&buf, resultNode)
 			if err != nil {
@@ -317,24 +334,6 @@ func TestRange(t *testing.T) {
 				t.Errorf("Range() node render = %v, want %v", buf.String(), tt.expected)
 			}
 		})
-	}
-}
-
-func TestRange_Integers(t *testing.T) {
-	numbers := []int{1, 2, 3}
-	resultNode := Range(numbers, func(n int) HyperNode {
-		return DIV()(string(rune('0' + n)))
-	})
-
-	var buf bytes.Buffer
-	err := Render(&buf, resultNode)
-	if err != nil {
-		t.Errorf("Range() integers node render error: %v", err)
-		return
-	}
-	expected := "<div>1</div><div>2</div><div>3</div>"
-	if buf.String() != expected {
-		t.Errorf("Range() integers node render = %v, want %v", buf.String(), expected)
 	}
 }
 
@@ -459,7 +458,7 @@ func TestCache(t *testing.T) {
 						H1()("Site Title"),
 						NAV()(
 							UL()(
-								Range([]string{"Home", "About", "Contact"}, func(item string) HyperNode {
+								Range([]string{"Home", "About", "Contact"}, func(item string) any {
 									return LI()(A(AttrHref("/" + strings.ToLower(item)))(item))
 								}),
 							),
