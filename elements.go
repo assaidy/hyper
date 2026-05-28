@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"math/bits"
 	"sync"
 )
 
@@ -155,10 +156,8 @@ func (me *Element) InsertChildren(children ...any) {
 	newLen := oldLen + n
 
 	if newLen > cap(me.Children) {
-		newCap := 1
-		for newCap < newLen { // Capacity grows exponentially.
-			newCap <<= 1
-		}
+		// Capacity grows exponentially.
+		newCap := 1 << bits.Len(uint(newLen-1))
 		newSlice := make([]HyperNode, oldLen, newCap)
 		copy(newSlice, me.Children)
 		me.Children = newSlice
