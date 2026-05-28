@@ -70,7 +70,7 @@ func main() {
                     
                     // User list
                     UL(AttrClass("space-y-2 mt-4"), AttrId("users-list"))(
-                        Range(users, func(name string) HyperNode {
+                        Range(users, func(name string) any {
                             return LI(AttrClass("p-2 bg-white rounded shadow"))(name)
                         }),
                     ),
@@ -175,14 +175,14 @@ items := []string{"Apple", "Banana"}
 
 // Map over slice
 UL()(
-    Range(items, func(item string) HyperNode {
+    Range(items, func(item string) any {
         return LI()(item)
     }),
 )
 
 // Repeat N times
 DIV()(
-    Repeat(3, func() HyperNode {
+    Repeat(3, func() any {
         return P()("Repeated")
     }),
 )
