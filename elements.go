@@ -116,8 +116,10 @@ func (me Element) renderChildren(buf *bytes.Buffer) error {
 
 func (me Element) renderAttrs(buf *bytes.Buffer) error {
 	for _, attr := range me.Attributes {
-		if err := attr.Render(buf); err != nil {
-			return err
+		if attr != nil {
+			if err := attr.Render(buf); err != nil {
+				return err
+			}
 		}
 	}
 

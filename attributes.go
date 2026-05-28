@@ -10,6 +10,8 @@ import (
 
 // Attribute represents an HTML attribute that can be rendered.
 // Implementations include PairAttribute (key="value") and BooleanAttribute (present/absent).
+//
+// NOTE: Hyper doesn't render nil attributes. This is usefull for conditional attributes using [IfElseZero]
 type Attribute interface {
 	Render(buf *bytes.Buffer) error
 }
@@ -59,6 +61,8 @@ func (me BooleanAttribute) Render(buf *bytes.Buffer) error {
 // Attr creates an attribute from a key and value.
 // If value is a string, it creates a PairAttribute (key="value").
 // If value is a bool, it creates a BooleanAttribute (present when true, absent when false).
+//
+// NOTE: Hyper doesn't render nil attributes. This is usefull for conditional attributes using [IfElseZero]
 //
 // Examples:
 //
