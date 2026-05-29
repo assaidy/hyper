@@ -337,6 +337,149 @@ func TestRange(t *testing.T) {
 	}
 }
 
+func TestClasses(t *testing.T) {
+	tests := []struct {
+		name     string
+		classes  []string
+		expected string
+	}{
+		{
+			name:     "no arguments",
+			classes:  nil,
+			expected: "",
+		},
+		{
+			name:     "empty slice",
+			classes:  []string{},
+			expected: "",
+		},
+		{
+			name:     "single class",
+			classes:  []string{"btn"},
+			expected: "btn",
+		},
+		{
+			name:     "multiple classes",
+			classes:  []string{"btn", "btn-primary", "active"},
+			expected: "btn btn-primary active",
+		},
+		{
+			name:     "empty strings skipped",
+			classes:  []string{"btn", "", "active"},
+			expected: "btn active",
+		},
+		{
+			name:     "duplicates removed",
+			classes:  []string{"btn", "btn-primary", "btn", "active"},
+			expected: "btn btn-primary active",
+		},
+		{
+			name:     "whitespace trimmed",
+			classes:  []string{" btn ", "active"},
+			expected: "btn active",
+		},
+		{
+			name:     "all whitespace",
+			classes:  []string{"  ", "\t", "\n"},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Classes(tt.classes...)
+			if result != tt.expected {
+				t.Errorf("Classes() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestJson(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    any
+		expected string
+	}{
+		{
+			name:     "string",
+			input:    "hello",
+			expected: `"hello"`,
+		},
+		{
+			name:     "number",
+			input:    42,
+			expected: `42`,
+		},
+		{
+			name:     "map",
+			input:    Object{"key": "value"},
+			expected: `{"key":"value"}`,
+		},
+		{
+			name:     "nested Object",
+			input:    Object{"a": Object{"b": 1}},
+			expected: `{"a":{"b":1}}`,
+		},
+		{
+			name:     "slice",
+			input:    []int{1, 2, 3},
+			expected: `[1,2,3]`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Json(tt.input)
+			if result != tt.expected {
+				t.Errorf("Json() = %s, want %s", result, tt.expected)
+			}
+		})
+	}
+
+	t.Run("panic on unmarshalable value", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected panic")
+			}
+		}()
+		Json(make(chan int))
+	})
+}
+
+func TestObject(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    Object
+		expected string
+	}{
+		{
+			name:     "empty",
+			input:    Object{},
+			expected: `{}`,
+		},
+		{
+			name:     "single key",
+			input:    Object{"a": 1},
+			expected: `{"a":1}`,
+		},
+		{
+			name:     "mixed types",
+			input:    Object{"name": "test", "count": 3, "active": true},
+			expected: `{"active":true,"count":3,"name":"test"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Json(tt.input)
+			if result != tt.expected {
+				t.Errorf("Object via Json() = %s, want %s", result, tt.expected)
+			}
+		})
+	}
+}
+
 func TestCache(t *testing.T) {
 	t.Run("first render caches output", func(t *testing.T) {
 		var cache NodeCache

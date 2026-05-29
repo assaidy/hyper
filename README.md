@@ -218,3 +218,25 @@ header := Cache(&headerCache,
 // Subsequent renders - uses cached output
 BODY()(header, mainContent, header)
 ```
+
+### CSS Classes
+
+`Classes()` joins multiple class names into a single space-separated string, filtering out empty and duplicate entries:
+
+```go
+BUTTON(
+    AttrClass(Classes(
+        "btn",
+        IfElse(err != nil, "btn-error", "btn-primary"),
+        IfElseZero(isHidden, "hidden"),
+    )),
+)()
+```
+
+### JSON
+
+`Json()` marshals a value to a JSON string, panicking on error. `Object` is a shorthand for `map[string]any`:
+
+```go
+FORM(Attr("hx-vals", Json(Object{"role": "admin", "active": true})))()
+```

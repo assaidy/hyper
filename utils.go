@@ -2,7 +2,9 @@ package hyper
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
+	"strings"
 	"sync"
 )
 
@@ -213,3 +215,60 @@ func (me cachedNode) Render(w io.Writer) error {
 	_, err := w.Write(me.cache.buffer.Bytes())
 	return err
 }
+
+// Classes joins multiple CSS class names into a single space-separated string.
+// Duplicate or empty classes are filtered out.
+//
+// Example:
+//
+//	BUTTON(
+//		AttrClass(Classes(
+//			"btn",
+//			IfElse(err != nil, "btn-error", btn-primary),
+//			IfElseZero(isHidden, "hidden"),
+//		)),
+//	)()
+func Classes(classes ...string) string {
+	if len(classes) == 0 {
+		return ""
+	}
+
+	taken := make(map[string]struct{}, len(classes))
+	toRender := make([]string, 0, len(classes))
+
+	for _, c := range classes {
+		trimmed := strings.TrimSpace(c)
+		if trimmed == "" {
+			continue
+		}
+		if _, ok := taken[trimmed]; ok {
+			continue
+		}
+		taken[trimmed] = struct{}{}
+		toRender = append(toRender, trimmed)
+	}
+
+	return strings.Join(toRender, " ")
+}
+
+// Json marshals v to a JSON string, panicking on error.
+// Useful for embedding static JSON in templates where the value is known
+// to be valid at compile time, avoiding error-handling boilerplate.
+//
+// Example:
+//
+//	FORM(Attr("hx-vals", Json(Object{"role": "admin", "active": true})))()
+func Json(v any) string {
+	data, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
+}
+
+// Object is a shortcut for map[string]any, useful for JSON strings.
+//
+// Example:
+//
+//	Json(Object{"role": "admin", "active": true})
+type Object map[string]any
