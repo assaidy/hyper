@@ -177,6 +177,8 @@ func Group(children ...any) Element {
 //	        ),
 //	    )
 //	})
+//
+//go:noinline
 func Once(f func() HyperNode) HyperNode {
 	var pc [1]uintptr
 	if runtime.Callers(2, pc[:]) == 0 {
