@@ -977,76 +977,381 @@ func BenchmarkConcurrentRealistic_RealWorld_HtmlTemplate(b *testing.B) {
 }
 
 // ============================================================================
-// BENCHMARK: Static Content Caching
-// Compare hyper with/without caching vs templ and html/template
+// BUILDER BENCHMARKS: Closure vs Struct+Method
+// elementBuilder uses struct+method to avoid MakeChildrenInserter closure heap allocs
 // ============================================================================
 
-func getStaticContentPage() h.HyperNode {
-	return h.Group(
-		h.HEADER(h.AttrClass("site-header"))(
-			h.NAV(h.AttrClass("main-nav"))(
-				h.A(h.AttrHref("/"), h.AttrClass("nav-link"))("Home"),
-				h.A(h.AttrHref("/users"), h.AttrClass("nav-link"))("Users"),
-				h.A(h.AttrHref("/settings"), h.AttrClass("nav-link"))("Settings"),
-				h.A(h.AttrHref("/logout"), h.AttrClass("nav-link"))("Logout"),
+type elementBuilder struct {
+	elem h.Element
+}
+
+func (b elementBuilder) With(children ...any) h.Element {
+	b.elem.InsertChildren(children...)
+	return b.elem
+}
+
+func elemDIV(attrs ...h.Attribute) elementBuilder {
+	return elementBuilder{elem: h.Element{Tag: "div", Attributes: attrs}}
+}
+
+func elemP(attrs ...h.Attribute) elementBuilder {
+	return elementBuilder{elem: h.Element{Tag: "p", Attributes: attrs}}
+}
+
+func elemNAV(attrs ...h.Attribute) elementBuilder {
+	return elementBuilder{elem: h.Element{Tag: "nav", Attributes: attrs}}
+}
+
+func elemA(attrs ...h.Attribute) elementBuilder {
+	return elementBuilder{elem: h.Element{Tag: "a", Attributes: attrs}}
+}
+
+func elemUL(attrs ...h.Attribute) elementBuilder {
+	return elementBuilder{elem: h.Element{Tag: "ul", Attributes: attrs}}
+}
+
+func elemLI(attrs ...h.Attribute) elementBuilder {
+	return elementBuilder{elem: h.Element{Tag: "li", Attributes: attrs}}
+}
+
+// ============================================================================
+// SMALL TREE: div > p > text
+// ============================================================================
+
+func BenchmarkSmallTree_Closure_ConstructOnly(b *testing.B) {
+	for b.Loop() {
+		h.DIV(h.AttrClass("foo"))(h.P()("hello"))
+	}
+}
+
+func BenchmarkSmallTree_Closure_ConstructAndRender(b *testing.B) {
+	for b.Loop() {
+		page := h.DIV(h.AttrClass("foo"))(h.P()("hello"))
+		var buf bytes.Buffer
+		h.Render(&buf, page)
+	}
+}
+
+func BenchmarkSmallTree_Struct_ConstructOnly(b *testing.B) {
+	for b.Loop() {
+		elemDIV(h.AttrClass("foo")).With(elemP().With("hello"))
+	}
+}
+
+func BenchmarkSmallTree_Struct_ConstructAndRender(b *testing.B) {
+	for b.Loop() {
+		page := elemDIV(h.AttrClass("foo")).With(elemP().With("hello"))
+		var buf bytes.Buffer
+		h.Render(&buf, page)
+	}
+}
+
+// ============================================================================
+// MEDIUM TREE: div > nav > 3 links
+// ============================================================================
+
+func BenchmarkMediumTree_Closure_ConstructOnly(b *testing.B) {
+	for b.Loop() {
+		h.DIV(h.AttrClass("nav"))(
+			h.NAV()(
+				h.A(h.AttrHref("/"))("Home"),
+				h.A(h.AttrHref("/users"))("Users"),
+				h.A(h.AttrHref("/about"))("About"),
 			),
-		),
-		h.MAIN(h.AttrClass("main-content"))(
-			h.H1()("User Management Dashboard"),
-			h.P()("Welcome to the admin dashboard. Manage users and permissions below."),
-			h.SECTION(h.AttrClass("users-section"))(
-				h.H2()("Active Users"),
-				h.TABLE(h.AttrClass("users-table"))(
-					h.THEAD()(
-						h.TR()(
-							h.TH()("ID"),
-							h.TH()("Name"),
-							h.TH()("Role"),
-							h.TH()("Status"),
-							h.TH()("Actions"),
+		)
+	}
+}
+
+func BenchmarkMediumTree_Closure_ConstructAndRender(b *testing.B) {
+	for b.Loop() {
+		page := h.DIV(h.AttrClass("nav"))(
+			h.NAV()(
+				h.A(h.AttrHref("/"))("Home"),
+				h.A(h.AttrHref("/users"))("Users"),
+				h.A(h.AttrHref("/about"))("About"),
+			),
+		)
+		var buf bytes.Buffer
+		h.Render(&buf, page)
+	}
+}
+
+func BenchmarkMediumTree_Struct_ConstructOnly(b *testing.B) {
+	for b.Loop() {
+		elemDIV(h.AttrClass("nav")).With(
+			elemNAV().With(
+				elemA(h.AttrHref("/")).With("Home"),
+				elemA(h.AttrHref("/users")).With("Users"),
+				elemA(h.AttrHref("/about")).With("About"),
+			),
+		)
+	}
+}
+
+func BenchmarkMediumTree_Struct_ConstructAndRender(b *testing.B) {
+	for b.Loop() {
+		page := elemDIV(h.AttrClass("nav")).With(
+			elemNAV().With(
+				elemA(h.AttrHref("/")).With("Home"),
+				elemA(h.AttrHref("/users")).With("Users"),
+				elemA(h.AttrHref("/about")).With("About"),
+			),
+		)
+		var buf bytes.Buffer
+		h.Render(&buf, page)
+	}
+}
+
+// ============================================================================
+// ALLOCATION BREAKDOWN: where are the allocs going?
+// ============================================================================
+
+func BenchmarkConstructRealWorld_Hyper(b *testing.B) {
+	for b.Loop() {
+		buildRealWorldPage(getBenchmarkData())
+	}
+}
+
+func BenchmarkConstructAndRenderRealWorld_Hyper(b *testing.B) {
+	for b.Loop() {
+		page := buildRealWorldPage(getBenchmarkData())
+		var buf bytes.Buffer
+		h.Render(&buf, page)
+	}
+}
+
+// ============================================================================
+// BIG STATIC PAGE: templ vs html/template vs hyper (no cache) vs hyper_cache vs hyper_once
+// Compare a fully static marketing page rendered via different caching strategies.
+// Hyper variants rebuild the tree each iteration to simulate per-request tree construction.
+// ============================================================================
+
+func buildBigStaticPage() h.HyperNode {
+	return h.Group(
+		h.DOCTYPE(),
+		h.HTML()(
+			h.HEAD()(
+				h.META(h.AttrCharset("UTF-8")),
+				h.META(h.AttrName("viewport"), h.Attr("content", "width=device-width, initial-scale=1.0")),
+				h.TITLE()(h.RawText("MyCompany - Big Static Page")),
+				h.LINK(h.AttrRel("stylesheet"), h.AttrHref("/style.css")),
+				h.LINK(h.AttrRel("preconnect"), h.AttrHref("https://fonts.googleapis.com")),
+				h.LINK(h.AttrRel("icon"), h.AttrHref("/favicon.ico")),
+			),
+			h.BODY()(
+				h.HEADER(h.AttrClass("site-header"))(
+					h.DIV(h.AttrClass("container"))(
+						h.DIV(h.AttrClass("logo"))(
+							h.A(h.AttrHref("/"), h.AttrClass("logo-link"))(
+								h.IMG(h.AttrSrc("/logo.svg"), h.AttrAlt("Logo")),
+								h.SPAN()("MyCompany"),
+							),
+						),
+						h.NAV(h.AttrClass("main-nav"))(
+							h.UL()(
+								h.LI()(h.A(h.AttrHref("/"))("Home")),
+								h.LI()(h.A(h.AttrHref("/features"))("Features")),
+								h.LI()(h.A(h.AttrHref("/pricing"))("Pricing")),
+								h.LI()(h.A(h.AttrHref("/about"))("About")),
+								h.LI()(h.A(h.AttrHref("/contact"))("Contact")),
+								h.LI()(h.A(h.AttrHref("/blog"))("Blog")),
+							),
+						),
+						h.DIV(h.AttrClass("auth-buttons"))(
+							h.A(h.AttrHref("/login"), h.AttrClass("btn btn-outline"))("Log In"),
+							h.A(h.AttrHref("/signup"), h.AttrClass("btn btn-primary"))("Sign Up"),
+						),
+					),
+				),
+				h.MAIN()(
+					h.SECTION(h.AttrClass("hero"))(
+						h.DIV(h.AttrClass("hero-content"))(
+							h.H1()("Welcome to MyCompany"),
+							h.P()("The all-in-one platform for modern teams. Build faster, collaborate smarter, and deliver better results."),
+							h.DIV(h.AttrClass("hero-cta"))(
+								h.A(h.AttrHref("/signup"), h.AttrClass("btn btn-primary btn-large"))("Get Started Free"),
+								h.A(h.AttrHref("/demo"), h.AttrClass("btn btn-outline btn-large"))("Watch Demo"),
+							),
+							h.DIV(h.AttrClass("hero-stats"))(
+								h.DIV(h.AttrClass("stat"))(h.STRONG()("10K+"), h.SPAN()("Active Users")),
+								h.DIV(h.AttrClass("stat"))(h.STRONG()("99.9%"), h.SPAN()("Uptime")),
+								h.DIV(h.AttrClass("stat"))(h.STRONG()("150+"), h.SPAN()("Countries")),
+							),
+						),
+					),
+					h.SECTION(h.AttrClass("features"))(
+						h.DIV(h.AttrClass("container"))(
+							h.H2()("Why Choose MyCompany"),
+							h.DIV(h.AttrClass("feature-grid"))(
+								h.DIV(h.AttrClass("feature-card"))(
+									h.DIV(h.AttrClass("feature-icon"))(h.RawText("🚀")),
+									h.H3()("Lightning Fast"),
+									h.P()("Optimized performance with sub-millisecond response times and global CDN distribution for your content."),
+								),
+								h.DIV(h.AttrClass("feature-card"))(
+									h.DIV(h.AttrClass("feature-icon"))(h.RawText("🔒")),
+									h.H3()("Enterprise Security"),
+									h.P()("Bank-grade encryption, SOC 2 compliance, and advanced threat detection to keep your data safe."),
+								),
+								h.DIV(h.AttrClass("feature-card"))(
+									h.DIV(h.AttrClass("feature-icon"))(h.RawText("🎯")),
+									h.H3()("Smart Analytics"),
+									h.P()("Real-time insights and AI-powered recommendations to help you make data-driven decisions."),
+								),
+								h.DIV(h.AttrClass("feature-card"))(
+									h.DIV(h.AttrClass("feature-icon"))(h.RawText("🌐")),
+									h.H3()("Global Scale"),
+									h.P()("Deploy to 30+ regions worldwide with automatic scaling and built-in disaster recovery."),
+								),
+							),
+						),
+					),
+					h.SECTION(h.AttrClass("pricing"))(
+						h.DIV(h.AttrClass("container"))(
+							h.H2()("Simple, Transparent Pricing"),
+							h.DIV(h.AttrClass("pricing-grid"))(
+								h.DIV(h.AttrClass("pricing-card"))(
+									h.H3()("Starter"),
+									h.P(h.AttrClass("price"))(h.RawText("$9"), h.SPAN()("/month")),
+									h.UL()(
+										h.LI()("Up to 5 projects"),
+										h.LI()("10GB storage"),
+										h.LI()("Basic analytics"),
+										h.LI()("Email support"),
+										h.LI()("1 team member"),
+									),
+									h.A(h.AttrHref("/signup"), h.AttrClass("btn btn-outline"))("Choose Plan"),
+								),
+								h.DIV(h.AttrClass("pricing-card featured"))(
+									h.DIV(h.AttrClass("badge"))("Popular"),
+									h.H3()("Professional"),
+									h.P(h.AttrClass("price"))(h.RawText("$29"), h.SPAN()("/month")),
+									h.UL()(
+										h.LI()("Unlimited projects"),
+										h.LI()("100GB storage"),
+										h.LI()("Advanced analytics"),
+										h.LI()("Priority support"),
+										h.LI()("10 team members"),
+										h.LI()("Custom integrations"),
+									),
+									h.A(h.AttrHref("/signup"), h.AttrClass("btn btn-primary"))("Choose Plan"),
+								),
+								h.DIV(h.AttrClass("pricing-card"))(
+									h.H3()("Enterprise"),
+									h.P(h.AttrClass("price"))(h.RawText("$99"), h.SPAN()("/month")),
+									h.UL()(
+										h.LI()("Unlimited projects"),
+										h.LI()("1TB storage"),
+										h.LI()("Enterprise analytics"),
+										h.LI()("24/7 phone support"),
+										h.LI()("Unlimited team members"),
+										h.LI()("Custom integrations"),
+										h.LI()("Dedicated account manager"),
+										h.LI()("SLA guarantee"),
+									),
+									h.A(h.AttrHref("/contact"), h.AttrClass("btn btn-outline"))("Contact Sales"),
+								),
+							),
+						),
+					),
+				),
+				h.FOOTER(h.AttrClass("site-footer"))(
+					h.DIV(h.AttrClass("container"))(
+						h.DIV(h.AttrClass("footer-grid"))(
+							h.DIV(h.AttrClass("footer-col"))(
+								h.H4()("Product"),
+								h.UL()(
+									h.LI()(h.A(h.AttrHref("/features"))("Features")),
+									h.LI()(h.A(h.AttrHref("/pricing"))("Pricing")),
+									h.LI()(h.A(h.AttrHref("/integrations"))("Integrations")),
+									h.LI()(h.A(h.AttrHref("/changelog"))("Changelog")),
+								),
+							),
+							h.DIV(h.AttrClass("footer-col"))(
+								h.H4()("Company"),
+								h.UL()(
+									h.LI()(h.A(h.AttrHref("/about"))("About")),
+									h.LI()(h.A(h.AttrHref("/blog"))("Blog")),
+									h.LI()(h.A(h.AttrHref("/careers"))("Careers")),
+									h.LI()(h.A(h.AttrHref("/press"))("Press")),
+								),
+							),
+							h.DIV(h.AttrClass("footer-col"))(
+								h.H4()("Support"),
+								h.UL()(
+									h.LI()(h.A(h.AttrHref("/docs"))("Documentation")),
+									h.LI()(h.A(h.AttrHref("/help"))("Help Center")),
+									h.LI()(h.A(h.AttrHref("/status"))("Status")),
+									h.LI()(h.A(h.AttrHref("/contact"))("Contact")),
+								),
+							),
+							h.DIV(h.AttrClass("footer-col"))(
+								h.H4()("Legal"),
+								h.UL()(
+									h.LI()(h.A(h.AttrHref("/privacy"))("Privacy Policy")),
+									h.LI()(h.A(h.AttrHref("/terms"))("Terms of Service")),
+									h.LI()(h.A(h.AttrHref("/cookies"))("Cookie Policy")),
+									h.LI()(h.A(h.AttrHref("/gdpr"))("GDPR")),
+								),
+							),
+						),
+						h.DIV(h.AttrClass("footer-bottom"))(
+							h.P()("© 2025 MyCompany Inc. All rights reserved."),
 						),
 					),
 				),
 			),
 		),
-		h.FOOTER(h.AttrClass("site-footer"))(
-			h.P()("2025 Company Inc. All rights reserved."),
-		),
 	)
 }
 
-func BenchmarkStaticContent_Hyper_NoCache(b *testing.B) {
-	page := getStaticContentPage()
+func BenchmarkBigStaticPage_Templ(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		h.Render(&buf, page)
+		BigStaticPageTempl().Render(b.Context(), &buf)
 	}
 }
 
-func BenchmarkStaticContent_Hyper_Cached(b *testing.B) {
-	var cache h.NodeCache
-	page := h.Cache(&cache, getStaticContentPage())
+func BenchmarkBigStaticPage_HtmlTemplate(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		h.Render(&buf, page)
+		bigStaticPageTempl.Execute(&buf, nil)
 	}
 }
 
-func BenchmarkStaticContent_Templ(b *testing.B) {
-	ctx := b.Context()
+func BenchmarkBigStaticPage_HyperNoCache(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		StaticContentTempl().Render(ctx, &buf)
+		h.Render(&buf, buildBigStaticPage())
 	}
 }
 
-func BenchmarkStaticContent_HtmlTemplate(b *testing.B) {
+func BenchmarkBigStaticPage_HyperOnce(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		var buf bytes.Buffer
-		staticContentTempl.Execute(&buf, nil)
+		h.Render(&buf, h.Once(func() h.HyperNode {
+			return buildBigStaticPage()
+		}))
+	}
+}
+
+func BenchmarkBigStaticPage_HyperOnceWithKey(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		var buf bytes.Buffer
+		h.Render(&buf, h.OnceWithKey("key", func() h.HyperNode {
+			return buildBigStaticPage()
+		}))
+	}
+}
+
+func BenchmarkOnceKey_WithKey(b *testing.B) {
+	b.ResetTimer()
+	for b.Loop() {
+		h.OnceWithKey("static-key", func() h.HyperNode { return h.DIV()("hello") })
 	}
 }

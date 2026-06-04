@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -161,58 +163,76 @@ func Group(children ...any) Element {
 	return element
 }
 
-// Cache renders a Node once and caches the output for subsequent renders.
-//
-// The first time the cached node is rendered, the underlying node is rendered
-// and its output is stored in the cache. Subsequent renders simply replay
-// the cached output without re-rendering the node. This is useful for expensive
-// static content like headers, footers, or complex components that don't change.
-//
-// A NodeCache must be provided to hold the cached output. The same cache instance
-// should be used across all renders for the same content.
+// Once is like [OnceWithKey] but derives the cache key automatically from the
+// caller's program counter. This guarantees uniqueness without manual key management.
 //
 // Example:
 //
-//	var headerCache hyper.NodeCache
-//
-//	// Cache the header - renders once on first access
-//	header := hyper.Cache(&headerCache,
-//		DIV()(
-//			NAV()(
-//				A(AttrHref("/"))("Home"),
-//				A(AttrHref("/about"))("About"),
-//			),
-//		),
-//	)
-//
-//	// Render the same cached node multiple times - only renders once
-//	BODY()(header, mainContent, header)
-func Cache(cache *NodeCache, node HyperNode) HyperNode {
-	return cachedNode{cache: cache, node: node}
-}
-
-// NodeCache stores rendered output for a cached node.
-// It must be reused across renders for the same content.
-type NodeCache struct {
-	buffer bytes.Buffer
-	once   sync.Once
-	err    error
-}
-
-// cachedNode wraps a node with a cache to render once and replay on subsequent renders.
-type cachedNode struct {
-	cache *NodeCache
-	node  HyperNode
-}
-
-func (me cachedNode) Render(w io.Writer) error {
-	me.cache.once.Do(func() {
-		me.cache.err = me.node.Render(&me.cache.buffer)
-	})
-	if me.cache.err != nil {
-		return me.cache.err
+//	page := Once(func() HyperNode {
+//	    return Group(
+//	        DOCTYPE(),
+//	        HTML()(
+//	            HEAD()(TITLE()("Dashboard")),
+//	            BODY()(H1()("Welcome")),
+//	        ),
+//	    )
+//	})
+func Once(f func() HyperNode) HyperNode {
+	var pc [1]uintptr
+	if runtime.Callers(2, pc[:]) == 0 {
+		panic("failed to get caller PC")
 	}
-	_, err := w.Write(me.cache.buffer.Bytes())
+	return OnceWithKey(strconv.FormatUint(uint64(pc[0]), 10), f)
+}
+
+// OnceWithKey caches the rendered output of a component under an explicit key.
+//
+// The first time the returned node is rendered, f is called to build the component,
+// its output is rendered and cached. Subsequent renders replay the cached output
+// without calling f. This is useful for expensive static components whose tree
+// is rebuilt per request.
+//
+// The key must be unique across all OnceWithKey calls in your application.
+// Two calls with the same key share the same cache entry.
+//
+// Example:
+//
+//	page := OnceWithKey("dashboard-page", func() HyperNode {
+//	    return Group(
+//	        DOCTYPE(),
+//	        HTML()(
+//	            HEAD()(TITLE()("Dashboard")),
+//	            BODY()(H1()("Welcome")),
+//	        ),
+//	    )
+//	})
+func OnceWithKey(key string, f func() HyperNode) HyperNode {
+	return onceNode{nodeFunc: f, key: key}
+}
+
+type onceNode struct {
+	key      string
+	nodeFunc func() HyperNode
+}
+
+var onceCache sync.Map
+
+func (me onceNode) Render(w io.Writer) error {
+	value, ok := onceCache.Load(me.key)
+	if ok {
+		_, err := w.Write(value.([]byte))
+		return err
+	}
+
+	node := me.nodeFunc()
+	var buffer bytes.Buffer
+	if err := node.Render(&buffer); err != nil {
+		return err
+	}
+
+	result, _ := onceCache.LoadOrStore(me.key, buffer.Bytes())
+
+	_, err := w.Write(result.([]byte))
 	return err
 }
 

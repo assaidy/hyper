@@ -9,6 +9,13 @@ import (
 	"sync"
 )
 
+// TODO: Try arena allocator for Element nodes to reduce GC pressure.
+// TODO: Remove `any` from all params for explicitness:
+//	- Make [Text] a func(v any) HyperNode so users can pass any type as html text.
+//	- Change ChildrenInserter, InsertChildren, Group from ...any to ...HyperNode
+//	- Change Repeat/Range callbacks from func() any to func() HyperNode
+//	- Remove toHyperNode
+
 // Text represents a plain text node that renders HTML-escaped content.
 // Unlike HTML elements, Text nodes are not wrapped in tags and are rendered
 // as literal text content with HTML entities automatically escaped.

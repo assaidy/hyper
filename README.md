@@ -199,26 +199,6 @@ Group(
 // Renders: <h1>Title</h1><p>Description</p>
 ```
 
-### Caching
-Use `Cache()` to render a node once and cache its output for subsequent renders. This is useful for expensive static content like headers, footers, or complex components:
-
-```go
-var headerCache hyper.NodeCache
-
-// First render - actually renders the node
-header := Cache(&headerCache,
-    DIV()(
-        NAV()(
-            A(AttrHref("/"))("Home"),
-            A(AttrHref("/about"))("About"),
-        ),
-    ),
-)
-
-// Subsequent renders - uses cached output
-BODY()(header, mainContent, header)
-```
-
 ### CSS Classes
 
 `Classes()` joins multiple class names into a single space-separated string, filtering out empty and duplicate entries:
@@ -239,4 +219,37 @@ BUTTON(
 
 ```go
 FORM(Attr("hx-vals", Json(Object{"role": "admin", "active": true})))()
+```
+
+### Caching
+
+`Once()` and `OnceWithKey()` cache the rendered output of a component so the underlying tree is only built and rendered once — even when the tree is reconstructed on every request.
+
+When you rebuild the component tree per request (common in web apps), wrap the expensive static parts with `Once` or `OnceWithKey` to avoid reconstructing and re-rendering them on every call.
+
+- `Once` derives the cache key from the caller's program counter — zero-config, guaranteed uniqueness.
+- `OnceWithKey` uses an explicit key — useful when the same component is built from multiple call sites. It's also slightly faster (skips the PC capture).
+
+```go
+// Once — auto-keyed by caller PC (recommended)
+page := Once(func() HyperNode {
+    return Group(
+        DOCTYPE(),
+        HTML()(
+            HEAD()(TITLE()("Dashboard")),
+            BODY()(H1()("Welcome")),
+        ),
+    )
+})
+
+// OnceWithKey — explicit key
+page := OnceWithKey("dashboard", func() HyperNode {
+    return Group(
+        DOCTYPE(),
+        HTML()(
+            HEAD()(TITLE()("Dashboard")),
+            BODY()(H1()("Welcome")),
+        ),
+    )
+})
 ```
