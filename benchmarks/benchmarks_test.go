@@ -1006,14 +1006,6 @@ func elemA(attrs ...h.Attribute) elementBuilder {
 	return elementBuilder{elem: h.Element{Tag: "a", Attributes: attrs}}
 }
 
-func elemUL(attrs ...h.Attribute) elementBuilder {
-	return elementBuilder{elem: h.Element{Tag: "ul", Attributes: attrs}}
-}
-
-func elemLI(attrs ...h.Attribute) elementBuilder {
-	return elementBuilder{elem: h.Element{Tag: "li", Attributes: attrs}}
-}
-
 // ============================================================================
 // SMALL TREE: div > p > text
 // ============================================================================

@@ -171,20 +171,7 @@ func (me *Element) InsertChildren(children ...any) {
 	}
 
 	for _, child := range children {
-		switch value := child.(type) {
-		case HyperNode:
-			me.Children = append(me.Children, value)
-		// Explicit string and fmt.Stringer cases for performance:
-		// fmt.Sprint() would handle these, but with overhead from type inspection and buffer allocation.
-		case string:
-			me.Children = append(me.Children, Text(value))
-		case fmt.Stringer:
-			me.Children = append(me.Children, Text(value.String()))
-		// Nil arguments are not checked/filtered - fmt.Sprint() will render them as "Nil",
-		// which is intentional for better debugging (makes it obvious when nil values are passed).
-		default:
-			me.Children = append(me.Children, Text(fmt.Sprint(value)))
-		}
+		me.Children = append(me.Children, toHyperNode(child))
 	}
 }
 
@@ -195,10 +182,16 @@ func toHyperNode(v any) HyperNode {
 	switch value := v.(type) {
 	case HyperNode:
 		return value
+
+	// Explicit string and fmt.Stringer cases for performance:
+	// fmt.Sprint() would handle these, but with overhead from type inspection and buffer allocation.
 	case string:
 		return Text(value)
 	case fmt.Stringer:
 		return Text(value.String())
+
+	// Nil arguments are not checked/filtered - fmt.Sprint() will render them as "Nil",
+	// which is intentional for better debugging (makes it obvious when nil values are passed).
 	default:
 		return Text(fmt.Sprint(value))
 	}

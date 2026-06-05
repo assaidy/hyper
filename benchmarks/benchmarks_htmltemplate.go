@@ -17,17 +17,17 @@ var (
 	largeTextTempl      *template.Template
 	listTempl10Templ    *template.Template
 	listTempl100Templ   *template.Template
-	conditionalsTempl  *template.Template
-	mixedContentTempl  *template.Template
-	voidElementsTempl  *template.Template
-	htmlEscapingTempl  *template.Template
+	conditionalsTempl   *template.Template
+	mixedContentTempl   *template.Template
+	voidElementsTempl   *template.Template
+	htmlEscapingTempl   *template.Template
 	tableTempl          *template.Template
-	formTempl          *template.Template
-	emptyPageTempl     *template.Template
+	formTempl           *template.Template
+	emptyPageTempl      *template.Template
 	rawTextTempl        *template.Template
-	svgTempl           *template.Template
+	svgTempl            *template.Template
 	staticContentTempl  *template.Template
-	realWorldTempl     *template.Template
+	realWorldTempl      *template.Template
 	bigStaticPageTempl  *template.Template
 )
 
