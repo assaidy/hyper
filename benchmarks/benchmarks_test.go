@@ -1340,10 +1340,3 @@ func BenchmarkBigStaticPage_HyperOnceWithKey(b *testing.B) {
 		}))
 	}
 }
-
-func BenchmarkOnceKey_WithKey(b *testing.B) {
-	b.ResetTimer()
-	for b.Loop() {
-		h.OnceWithKey("static-key", func() h.HyperNode { return h.DIV()("hello") })
-	}
-}

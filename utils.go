@@ -217,6 +217,9 @@ type onceNode struct {
 	nodeFunc func() HyperNode
 }
 
+// I benchmarked against using a map[string][]byte with a sync.RWMutex
+// and found no tangible performance difference.
+// I decided to use sync.Map for simplicity.
 var onceCache sync.Map
 
 func (me onceNode) Render(w io.Writer) error {
