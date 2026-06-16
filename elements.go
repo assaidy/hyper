@@ -9,13 +9,6 @@ import (
 	"sync"
 )
 
-// TODO: Try arena allocator for Element nodes to reduce GC pressure.
-// TODO: Remove `any` from all params for explicitness:
-//	- Make [Text] a func(v any) HyperNode so users can pass any type as html text.
-//	- Change ChildrenInserter, InsertChildren, Group from ...any to ...HyperNode
-//	- Change Repeat/Range callbacks from func() any to func() HyperNode
-//	- Remove toHyperNode
-
 // Text represents a plain text node that renders HTML-escaped content.
 // Unlike HTML elements, Text nodes are not wrapped in tags and are rendered
 // as literal text content with HTML entities automatically escaped.
@@ -135,13 +128,28 @@ func (me Element) renderAttrs(buf *bytes.Buffer) error {
 }
 
 // ChildrenInserter is a function that constructs an [Element] with children.
-// It is returned by element functions (DIV, P, BODY, etc.) and must be called
-// to produce the final [Element].
+// It is returned by element functions (DIV, P, BODY, etc.) and implements
+// [HyperNode], so an element with no children can be used directly without
+// the trailing ().
 //
-// Example:
+// Examples:
 //
+//	// With children — call the inserter:
 //	DIV(AttrClass("container"))("Hello")
+//
+//	// No children — use directly as HyperNode:
+//	DIV(AttrClass("container"))
+//
+// Note: If you are rendering hot-path elements that have no children, keeping
+// the trailing () is slightly faster because it resolves to an [Element]
+// directly, avoiding the closure call in ChildrenInserter.Render.
+// Measure both to decide what matters for your use case.
 type ChildrenInserter func(children ...any) Element
+
+func (me ChildrenInserter) Render(w io.Writer) error {
+	e := me()
+	return e.Render(w)
+}
 
 // MakeChildrenInserter wraps an [Element] and returns an [ChildrenInserter] that accepts children.
 func MakeChildrenInserter(element Element) ChildrenInserter {
@@ -881,7 +889,7 @@ func SEARCH(attrs ...Attribute) ChildrenInserter {
 // Examples:
 //
 //	// Empty div
-//	DIV()()
+//	DIV()
 //
 //	// With text content
 //	DIV()("Hello World")

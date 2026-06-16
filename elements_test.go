@@ -382,6 +382,59 @@ func TestElement_Render(t *testing.T) {
 	}
 }
 
+func TestChildrenInserterAsHyperNode(t *testing.T) {
+	tests := []struct {
+		name     string
+		node     HyperNode
+		expected string
+	}{
+		{
+			name:     "DIV() without children",
+			node:     DIV(),
+			expected: "<div></div>",
+		},
+		{
+			name:     "DIV() with attributes, no children",
+			node:     DIV(AttrClass("container"), AttrId("main")),
+			expected: `<div class="container" id="main"></div>`,
+		},
+		{
+			name:     "P() without children",
+			node:     P(),
+			expected: "<p></p>",
+		},
+		{
+			name:     "ChildrenInserter passed to Render directly",
+			node:     H1(AttrId("title")),
+			expected: `<h1 id="title"></h1>`,
+		},
+		{
+			name:     "ChildrenInserter as child via children parens",
+			node:     DIV()(SPAN(AttrClass("bold")), P()),
+			expected: `<div><span class="bold"></span><p></p></div>`,
+		},
+		{
+			name:     "Nested ChildrenInserter elements",
+			node:     DIV()(DIV()(DIV())),
+			expected: "<div><div><div></div></div></div>",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := Render(&buf, tt.node)
+			if err != nil {
+				t.Errorf("Render() returned error: %v", err)
+				return
+			}
+			if buf.String() != tt.expected {
+				t.Errorf("Render() = %q, want %q", buf.String(), tt.expected)
+			}
+		})
+	}
+}
+
 func TestElement_renderAttrs(t *testing.T) {
 	tests := []struct {
 		name      string

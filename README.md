@@ -97,12 +97,15 @@ Elements follow a consistent pattern for attribute and child handling:
 ELEMENT(attrs)(children)
 ```
 
+When an element has no children, the trailing `()` can be omitted:
+
 ```go
 // No attributes, no children
-DIV()()
+DIV()
+DIV()() // keeping trailing ()
 
 // With attributes, no children  
-DIV(AttrClass("container"))()
+DIV(AttrClass("container"))
 
 // No attributes, with children
 DIV()("Hello")
@@ -142,6 +145,10 @@ INPUT(AttrDisabled(false))  // <input>
 
 ### Children
 The second set of parentheses accepts children. It accepts `HyperNode` values, strings (converted to `Text`), and other values (converted to `Text` via fmt.Sprint).
+
+When no children are needed, the element function alone (`DIV()`, `P()`, etc.) already implements `HyperNode`, so the trailing `()` can be dropped. This is what enables the simplified patterns above.
+
+> **Performance note:** On hot paths, keeping the trailing `()` is slightly faster because it resolves to an `Element` directly, avoiding the closure call in `ChildrenInserter.Render`. Measure both to decide what matters for your use case.
 
 ```go
 // Strings are auto-escaped
@@ -210,7 +217,7 @@ BUTTON(
         IfElse(err != nil, "btn-error", "btn-primary"),
         IfElseZero(isHidden, "hidden"),
     )),
-)()
+)
 ```
 
 ### JSON
@@ -218,7 +225,7 @@ BUTTON(
 `Json()` marshals a value to a JSON string, panicking on error. `Object` is a shorthand for `map[string]any`:
 
 ```go
-FORM(Attr("hx-vals", Json(Object{"role": "admin", "active": true})))()
+FORM(Attr("hx-vals", Json(Object{"role": "admin", "active": true})))
 ```
 
 ### Caching
@@ -229,6 +236,8 @@ When you rebuild the component tree per request (common in web apps), wrap the e
 
 - `Once` derives the cache key from the caller's program counter — zero-config, guaranteed uniqueness.
 - `OnceWithKey` uses an explicit key — useful when the same component is built from multiple call sites. It's also slightly faster (skips the PC capture).
+
+> **Note:** When `Once` is called inside a loop (a raw `for`, `Repeat()`, or `Range()`), all iterations share the same call site and therefore **the same cache key**. Only the first iteration renders; subsequent ones reuse the cached HTML. Use `OnceWithKey` with a distinguishing value (e.g., the loop index) when each iteration needs its own cache entry.
 
 ```go
 // Once — auto-keyed by caller PC (recommended)

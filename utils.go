@@ -166,6 +166,12 @@ func Group(children ...any) Element {
 // Once is like [OnceWithKey] but derives the cache key automatically from the
 // caller's program counter. This guarantees uniqueness without manual key management.
 //
+// Note: When Once is called inside a loop (for, [Repeat], [Range]), all iterations
+// share the same call site and therefore the same cache key. Only the first
+// iteration renders; subsequent ones reuse the cached HTML. Use [OnceWithKey]
+// with a distinguishing value (e.g., the loop index) when each iteration needs
+// its own cache entry.
+//
 // Example:
 //
 //	page := Once(func() HyperNode {
@@ -252,7 +258,7 @@ func (me onceNode) Render(w io.Writer) error {
 //			IfElse(err != nil, "btn-error", btn-primary),
 //			IfElseZero(isHidden, "hidden"),
 //		)),
-//	)()
+//	)
 func Classes(classes ...string) string {
 	if len(classes) == 0 {
 		return ""
@@ -282,7 +288,7 @@ func Classes(classes ...string) string {
 //
 // Example:
 //
-//	FORM(Attr("hx-vals", Json(Object{"role": "admin", "active": true})))()
+//	FORM(Attr("hx-vals", Json(Object{"role": "admin", "active": true})))
 func Json(v any) string {
 	data, err := json.Marshal(v)
 	if err != nil {

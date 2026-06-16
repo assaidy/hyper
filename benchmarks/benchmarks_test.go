@@ -977,6 +977,24 @@ func BenchmarkConcurrentRealistic_RealWorld_HtmlTemplate(b *testing.B) {
 }
 
 // ============================================================================
+// ChildrenInserter BENCHMARKS: DIV()() vs DIV()
+// ============================================================================
+
+func BenchmarkRenderDiv_TrailingParens(b *testing.B) {
+	for b.Loop() {
+		var buf bytes.Buffer
+		h.Render(&buf, h.DIV()())
+	}
+}
+
+func BenchmarkRenderDiv_NoTrailingParens(b *testing.B) {
+	for b.Loop() {
+		var buf bytes.Buffer
+		h.Render(&buf, h.DIV())
+	}
+}
+
+// ============================================================================
 // BUILDER BENCHMARKS: Closure vs Struct+Method
 // elementBuilder uses struct+method to avoid MakeChildrenInserter closure heap allocs
 // ============================================================================
