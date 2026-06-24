@@ -85,22 +85,23 @@ func attrReflect(key string, value any) Attribute {
 	}
 }
 
-// MakePairAttribute creates a function that produces a PairAttribute with the
-// given key. The returned function accepts a string value and returns a
-// PairAttribute. This is useful for defining custom HTML attributes that
-// take a string value.
-func MakePairAttribute(key string) func(value string) PairAttribute {
-	return func(value string) PairAttribute {
+// MakePairAttribute creates a function that produces a [PairAttribute] with the
+// given key. The returned function accepts a string value and returns an
+// [Attribute] interface (zero value is nil, useful with [IfElseZero] to skip).
+// This is useful for defining custom HTML attributes that take a string value.
+func MakePairAttribute(key string) func(value string) Attribute {
+	return func(value string) Attribute {
 		return PairAttribute{Key: key, Value: value}
 	}
 }
 
-// MakeBooleanAttribute creates a function that produces a BooleanAttribute
-// with the given key. The returned function accepts a bool value and returns a
-// BooleanAttribute. This is useful for defining custom boolean HTML attributes
-// (such as "disabled", "checked", etc.).
-func MakeBooleanAttribute(key string) func(isActive bool) BooleanAttribute {
-	return func(isActive bool) BooleanAttribute {
+// MakeBooleanAttribute creates a function that produces a [BooleanAttribute]
+// with the given key. The returned function accepts a bool value and returns an
+// [Attribute] interface (zero value is nil, useful with [IfElseZero] to skip).
+// This is useful for defining custom boolean HTML attributes (such as "disabled",
+// "checked", etc.).
+func MakeBooleanAttribute(key string) func(isActive bool) Attribute {
+	return func(isActive bool) Attribute {
 		return BooleanAttribute{Key: key, IsActive: isActive}
 	}
 }

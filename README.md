@@ -143,6 +143,35 @@ INPUT(AttrDisabled(true))   // <input disabled>
 INPUT(AttrDisabled(false))  // <input>
 ```
 
+`nil` attributes are silently skipped during rendering. This is useful for conditional attributes with `IfElseZero`:
+
+```go
+DIV(
+    AttrClass(Classes("btn", IfElseZero(isPrimary, "btn-primary"))),
+    IfElseZero(isHidden, AttrHidden(true)),
+)("Content")
+// When isHidden=false, no hidden attribute is rendered
+```
+
+Custom attributes can be created with `MakePairAttribute` and `MakeBooleanAttribute`:
+
+```go
+// Pair attribute — takes a string value
+var AttrHxGet = MakePairAttribute("hx-get")
+var AttrHxPost = MakePairAttribute("hx-post")
+var AttrHxTarget = MakePairAttribute("hx-target")
+
+// Boolean attribute — takes a bool value
+var AttrHxPreserve = MakeBooleanAttribute("hx-preserve")
+
+BUTTON(
+    AttrHxGet("/api/data"),
+    AttrHxTarget("#result"),
+    AttrHxPreserve(true),
+)("Click me")
+// Renders: <button hx-get="/api/data" hx-target="#result" hx-preserve>Click me</button>
+```
+
 ### Children
 The second set of parentheses accepts children. It accepts `HyperNode` values, strings (converted to `Text`), and other values (converted to `Text` via fmt.Sprint).
 

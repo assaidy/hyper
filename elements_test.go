@@ -496,6 +496,18 @@ func TestElement_renderAttrs(t *testing.T) {
 			expected:  ` &#34;&gt; &lt;script&gt;alert(1)&lt;/script&gt;`,
 			expectErr: false,
 		},
+		{
+			name:      "Nil attribute is ignored",
+			attrs:     []Attribute{nil},
+			expected:  "",
+			expectErr: false,
+		},
+		{
+			name:      "Mix of valid and nil attributes",
+			attrs:     []Attribute{AttrClass("test"), nil, AttrId("main")},
+			expected:  ` class="test" id="main"`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
