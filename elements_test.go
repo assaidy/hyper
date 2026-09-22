@@ -236,20 +236,20 @@ func TestElement_Render(t *testing.T) {
 	}{
 		{
 			name:     "Simple div",
-			element:  DIV()(),
+			element:  DIV(),
 			expected: "<div></div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Div with single attribute",
-			element:  DIV(AttrClass("container"))(),
+			element:  DIV(AttrClass("container")),
 			expected: `<div class="container"></div>`,
 			wantErr:  false,
 		},
 		{
 			name: "Div with text child (auto-escaped string)",
 			element: func() HyperNode {
-				return DIV()("Hello World")
+				return DIV("Hello World")
 			}(),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
@@ -257,7 +257,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with multiple string children",
 			element: func() HyperNode {
-				return DIV()("Hello", " ", "World")
+				return DIV("Hello", " ", "World")
 			}(),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
@@ -265,7 +265,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with auto-escaped HTML string",
 			element: func() HyperNode {
-				return DIV()("<script>alert('xss')</script>")
+				return DIV("<script>alert('xss')</script>")
 			}(),
 			expected: "<div>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</div>",
 			wantErr:  false,
@@ -273,7 +273,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with RawText (unescaped)",
 			element: func() HyperNode {
-				return DIV()(RawText("<script>alert('xss')</script>"))
+				return DIV(RawText("<script>alert('xss')</script>"))
 			}(),
 			expected: "<div><script>alert('xss')</script></div>",
 			wantErr:  false,
@@ -281,7 +281,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Nested elements with strings",
 			element: func() HyperNode {
-				return DIV()(P()("Hello"))
+				return DIV(P("Hello"))
 			}(),
 			expected: "<div><p>Hello</p></div>",
 			wantErr:  false,
@@ -314,20 +314,20 @@ func TestElement_Render(t *testing.T) {
 		},
 		{
 			name:     "Boolean attribute true",
-			element:  DIV(Attr("hidden", true))(),
+			element:  DIV(Attr("hidden", true)),
 			expected: `<div hidden></div>`,
 			wantErr:  false,
 		},
 		{
 			name:     "Boolean attribute false",
-			element:  DIV(Attr("hidden", false))(),
+			element:  DIV(Attr("hidden", false)),
 			expected: `<div></div>`,
 			wantErr:  false,
 		},
 		{
 			name: "Div with integer (auto-converted)",
 			element: func() HyperNode {
-				return DIV()(42)
+				return DIV(42)
 			}(),
 			expected: "<div>42</div>",
 			wantErr:  false,
@@ -335,7 +335,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with boolean (auto-converted)",
 			element: func() HyperNode {
-				return DIV()(true)
+				return DIV(true)
 			}(),
 			expected: "<div>true</div>",
 			wantErr:  false,
@@ -343,7 +343,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with fmt.Stringer (auto-converted)",
 			element: func() HyperNode {
-				return DIV()(stringerType("hello from stringer"))
+				return DIV(stringerType("hello from stringer"))
 			}(),
 			expected: "<div>hello from stringer</div>",
 			wantErr:  false,
@@ -351,7 +351,7 @@ func TestElement_Render(t *testing.T) {
 		{
 			name: "Div with mixed types",
 			element: func() HyperNode {
-				return DIV()("Count: ", 42, " Active: ", true)
+				return DIV("Count: ", 42, " Active: ", true)
 			}(),
 			expected: "<div>Count: 42 Active: true</div>",
 			wantErr:  false,
@@ -360,7 +360,7 @@ func TestElement_Render(t *testing.T) {
 			name: "Div with len() result (auto-converted)",
 			element: func() HyperNode {
 				items := []string{"a", "b", "c"}
-				return DIV()("Total: ", len(items))
+				return DIV("Total: ", len(items))
 			}(),
 			expected: "<div>Total: 3</div>",
 			wantErr:  false,
@@ -382,41 +382,51 @@ func TestElement_Render(t *testing.T) {
 	}
 }
 
-func TestChildrenInserterAsHyperNode(t *testing.T) {
+func TestElementAsHyperNode(t *testing.T) {
 	tests := []struct {
 		name     string
 		node     HyperNode
 		expected string
 	}{
 		{
-			name:     "DIV() without children",
+			name:     "DIV without children",
 			node:     DIV(),
 			expected: "<div></div>",
 		},
 		{
-			name:     "DIV() with attributes, no children",
+			name:     "DIV with attributes, no children",
 			node:     DIV(AttrClass("container"), AttrId("main")),
 			expected: `<div class="container" id="main"></div>`,
 		},
 		{
-			name:     "P() without children",
+			name:     "P without children",
 			node:     P(),
 			expected: "<p></p>",
 		},
 		{
-			name:     "ChildrenInserter passed to Render directly",
+			name:     "Element with attributes passed to Render directly",
 			node:     H1(AttrId("title")),
 			expected: `<h1 id="title"></h1>`,
 		},
 		{
-			name:     "ChildrenInserter as child via children parens",
-			node:     DIV()(SPAN(AttrClass("bold")), P()),
+			name:     "Elements nested as children directly",
+			node:     DIV(SPAN(AttrClass("bold")), P()),
 			expected: `<div><span class="bold"></span><p></p></div>`,
 		},
 		{
-			name:     "Nested ChildrenInserter elements",
-			node:     DIV()(DIV()(DIV())),
+			name:     "Deeply nested elements",
+			node:     DIV(DIV(DIV())),
 			expected: "<div><div><div></div></div></div>",
+		},
+		{
+			name:     "Void element used directly",
+			node:     BR(),
+			expected: "<br>",
+		},
+		{
+			name:     "Mixed attributes and children in one call",
+			node:     DIV(AttrClass("container"), "Hello", SPAN("World")),
+			expected: `<div class="container">Hello<span>World</span></div>`,
 		},
 	}
 
@@ -526,4 +536,123 @@ func TestElement_renderAttrs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewElement(t *testing.T) {
+	t.Run("attributes and children routed", func(t *testing.T) {
+		e := NewElement("div", AttrClass("container"), AttrId("main"), "Hello", 42)
+		if e.Name != "div" {
+			t.Errorf("Name = %q, want %q", e.Name, "div")
+		}
+		if len(e.Attributes) != 2 {
+			t.Fatalf("len(Attributes) = %d, want 2", len(e.Attributes))
+		}
+		if len(e.Children) != 2 {
+			t.Fatalf("len(Children) = %d, want 2", len(e.Children))
+		}
+		var buf bytes.Buffer
+		if err := e.Render(&buf); err != nil {
+			t.Fatal(err)
+		}
+		expected := `<div class="container" id="main">Hello42</div>`
+		if buf.String() != expected {
+			t.Errorf("Render() = %q, want %q", buf.String(), expected)
+		}
+	})
+
+	t.Run("HyperNode children pass through", func(t *testing.T) {
+		e := NewElement("div", P("inner"), Text("raw"))
+		var buf bytes.Buffer
+		if err := e.Render(&buf); err != nil {
+			t.Fatal(err)
+		}
+		expected := "<div><p>inner</p>raw</div>"
+		if buf.String() != expected {
+			t.Errorf("Render() = %q, want %q", buf.String(), expected)
+		}
+	})
+
+	t.Run("fmt.Stringer converted via String", func(t *testing.T) {
+		e := NewElement("span", stringerType("from stringer"))
+		var buf bytes.Buffer
+		if err := e.Render(&buf); err != nil {
+			t.Fatal(err)
+		}
+		if buf.String() != "<span>from stringer</span>" {
+			t.Errorf("Render() = %q", buf.String())
+		}
+	})
+
+	t.Run("no args", func(t *testing.T) {
+		e := NewElement("div")
+		if e.Name != "div" || len(e.Attributes) != 0 || len(e.Children) != 0 {
+			t.Errorf("NewElement() = %#v, want empty div", e)
+		}
+	})
+}
+
+func TestNewVoidElement(t *testing.T) {
+	t.Run("void without attributes", func(t *testing.T) {
+		e := NewVoidElement("br")
+		if !e.IsVoid {
+			t.Error("IsVoid = false, want true")
+		}
+		if len(e.Children) != 0 {
+			t.Errorf("len(Children) = %d, want 0", len(e.Children))
+		}
+		var buf bytes.Buffer
+		if err := e.Render(&buf); err != nil {
+			t.Fatal(err)
+		}
+		if buf.String() != "<br>" {
+			t.Errorf("Render() = %q, want %q", buf.String(), "<br>")
+		}
+	})
+
+	t.Run("void with attributes", func(t *testing.T) {
+		e := NewVoidElement("img", AttrSrc("a.png"), AttrAlt("pic"))
+		var buf bytes.Buffer
+		if err := e.Render(&buf); err != nil {
+			t.Fatal(err)
+		}
+		expected := `<img src="a.png" alt="pic">`
+		if buf.String() != expected {
+			t.Errorf("Render() = %q, want %q", buf.String(), expected)
+		}
+	})
+}
+
+func TestInsertAttributes(t *testing.T) {
+	t.Run("no attributes is a no-op", func(t *testing.T) {
+		e := &Element{Name: "div"}
+		e.InsertAttributes()
+		if len(e.Attributes) != 0 {
+			t.Errorf("len(Attributes) = %d, want 0", len(e.Attributes))
+		}
+	})
+
+	t.Run("appends to existing attributes", func(t *testing.T) {
+		e := &Element{Name: "div"}
+		e.InsertAttributes(AttrClass("a"))
+		e.InsertAttributes(AttrId("b"), AttrTitle("c"))
+		if len(e.Attributes) != 3 {
+			t.Fatalf("len(Attributes) = %d, want 3", len(e.Attributes))
+		}
+		var buf bytes.Buffer
+		if err := e.Render(&buf); err != nil {
+			t.Fatal(err)
+		}
+		expected := `<div class="a" id="b" title="c"></div>`
+		if buf.String() != expected {
+			t.Errorf("Render() = %q, want %q", buf.String(), expected)
+		}
+	})
+
+	t.Run("triggers capacity growth", func(t *testing.T) {
+		e := &Element{Name: "div", Attributes: make([]Attribute, 0, 1)}
+		e.InsertAttributes(AttrClass("a"), AttrId("b"), AttrTitle("c"))
+		if len(e.Attributes) != 3 {
+			t.Fatalf("len(Attributes) = %d, want 3", len(e.Attributes))
+		}
+	})
 }

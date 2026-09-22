@@ -15,19 +15,19 @@ func TestRender(t *testing.T) {
 	}{
 		{
 			name:     "Simple text in element",
-			node:     DIV()("Hello World"),
+			node:     DIV("Hello World"),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Simple element",
-			node:     DIV()(),
+			node:     DIV(),
 			expected: "<div></div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Element with children",
-			node:     DIV()("Hello", P()("World")),
+			node:     DIV("Hello", P("World")),
 			expected: "<div>Hello<p>World</p></div>",
 			wantErr:  false,
 		},
@@ -64,7 +64,7 @@ func TestRender(t *testing.T) {
 
 func TestRender_WriteError(t *testing.T) {
 	errorWriter := &errorWriter{}
-	node := DIV()("test")
+	node := DIV("test")
 
 	err := Render(errorWriter, node)
 	if err == nil {
@@ -91,17 +91,17 @@ func (e *writeError) Error() string {
 }
 
 func TestRender_ComplexStructure(t *testing.T) {
-	node := HTML(AttrLang("en"))(
-		HEAD()(
-			TITLE()("Test Page"),
+	node := HTML(AttrLang("en"),
+		HEAD(
+			TITLE("Test Page"),
 		),
-		BODY()(
-			DIV(AttrClass("container"))(
-				H1()("Welcome"),
-				P()("This is a test."),
-				UL()(
-					LI()("Item 1"),
-					LI()("Item 2"),
+		BODY(
+			DIV(AttrClass("container"),
+				H1("Welcome"),
+				P("This is a test."),
+				UL(
+					LI("Item 1"),
+					LI("Item 2"),
 				),
 			),
 		),
@@ -131,19 +131,19 @@ func TestRenderThen(t *testing.T) {
 	}{
 		{
 			name:     "Simple text in element",
-			node:     DIV()("Hello World"),
+			node:     DIV("Hello World"),
 			expected: "<div>Hello World</div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Empty element",
-			node:     DIV()(),
+			node:     DIV(),
 			expected: "<div></div>",
 			wantErr:  false,
 		},
 		{
 			name:     "Element with children",
-			node:     DIV()("Hello", P()("World")),
+			node:     DIV("Hello", P("World")),
 			expected: "<div>Hello<p>World</p></div>",
 			wantErr:  false,
 		},
@@ -166,7 +166,7 @@ func TestRenderThen(t *testing.T) {
 }
 
 func TestRenderThen_WriteError(t *testing.T) {
-	node := DIV()("test")
+	node := DIV("test")
 
 	err := RenderThen(node, func(data []byte) error {
 		return &writeError{"write error"}
@@ -182,60 +182,60 @@ func TestRenderThen_WriteError(t *testing.T) {
 }
 
 func BenchmarkRender_DensePage(b *testing.B) {
-	node := HTML(Attr("lang", "en"), Attr("data-theme", "light"))(
-		HEAD()(
+	node := HTML(Attr("lang", "en"), Attr("data-theme", "light"),
+		HEAD(
 			META(AttrCharset("utf-8")),
 			META(AttrName("viewport"), Attr("content", "width=device-width, initial-scale=1")),
-			TITLE()("Dense Page Benchmark"),
-			STYLE(AttrType("text/css"))("body{margin:0;padding:0}"),
+			TITLE("Dense Page Benchmark"),
+			STYLE(AttrType("text/css"), "body{margin:0;padding:0}"),
 			SCRIPT(AttrSrc("/app.js"), AttrDefer(true)),
 		),
-		BODY()(
-			HEADER(AttrClass("header"), AttrRole("banner"))(
-				NAV(AttrClass("navigation"), Attr("aria-label", "main"))(
-					UL()(
-						LI()(A(AttrHref("#home"))("Home")),
-						LI()(A(AttrHref("#about"))("About")),
-						LI()(A(AttrHref("#contact"))()),
+		BODY(
+			HEADER(AttrClass("header"), AttrRole("banner"),
+				NAV(AttrClass("navigation"), Attr("aria-label", "main"),
+					UL(
+						LI(A(AttrHref("#home"), "Home")),
+						LI(A(AttrHref("#about"), "About")),
+						LI(A(AttrHref("#contact"))),
 					),
-					MAIN(AttrClass("main-content"), AttrRole("main"))(
-						SECTION(AttrClass("hero"), AttrId("hero"))(
-							DIV(AttrClass("container"))(
-								H1()("Welcome to Our Site"),
-								P()("This is a dense page for benchmarking purposes."),
-								BUTTON(AttrClass("btn btn-primary"), AttrType("button"))("Get Started"),
+					MAIN(AttrClass("main-content"), AttrRole("main"),
+						SECTION(AttrClass("hero"), AttrId("hero"),
+							DIV(AttrClass("container"),
+								H1("Welcome to Our Site"),
+								P("This is a dense page for benchmarking purposes."),
+								BUTTON(AttrClass("btn btn-primary"), AttrType("button"), "Get Started"),
 							),
 						),
-						SECTION(AttrClass("features"), AttrId("features"))(
-							DIV(AttrClass("container"))(
-								H2()("Features"),
-								DIV(AttrClass("grid"))(
-									DIV(AttrClass("card"))(
-										H3()("Feature 1"),
-										P()("Description of feature 1 with lots of content."),
-										A(AttrHref("#"), AttrClass("learn-more"))("Learn More"),
+						SECTION(AttrClass("features"), AttrId("features"),
+							DIV(AttrClass("container"),
+								H2("Features"),
+								DIV(AttrClass("grid"),
+									DIV(AttrClass("card"),
+										H3("Feature 1"),
+										P("Description of feature 1 with lots of content."),
+										A(AttrHref("#"), AttrClass("learn-more"), "Learn More"),
 									),
-									DIV(AttrClass("card"))(
-										H3()("Feature 2"),
-										P()("Description of feature 2 with lots of content."),
-										A(AttrHref("#"), AttrClass("learn-more"))("Learn More"),
+									DIV(AttrClass("card"),
+										H3("Feature 2"),
+										P("Description of feature 2 with lots of content."),
+										A(AttrHref("#"), AttrClass("learn-more"), "Learn More"),
 									),
-									DIV(AttrClass("card"))(
-										H3()("Feature 3"),
-										P()("Description of feature 3 with lots of content."),
-										A(AttrHref("#"), AttrClass("learn-more"))("Learn More"),
+									DIV(AttrClass("card"),
+										H3("Feature 3"),
+										P("Description of feature 3 with lots of content."),
+										A(AttrHref("#"), AttrClass("learn-more"), "Learn More"),
 									),
 								),
 							),
 						),
 					),
-					FOOTER(AttrClass("footer"), AttrRole("contentinfo"))(
-						DIV(AttrClass("container"))(
-							P()("© 2024 Dense Page. All rights reserved."),
-							DIV(AttrClass("links"))(
-								A(AttrHref("#privacy"))("Privacy"),
+					FOOTER(AttrClass("footer"), AttrRole("contentinfo"),
+						DIV(AttrClass("container"),
+							P("© 2024 Dense Page. All rights reserved."),
+							DIV(AttrClass("links"),
+								A(AttrHref("#privacy"), "Privacy"),
 							),
-							A(AttrHref("#terms"))("Terms"),
+							A(AttrHref("#terms"), "Terms"),
 						),
 					),
 				),

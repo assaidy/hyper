@@ -12,9 +12,8 @@ import (
 
 // IfElse returns the appropriate value based on a boolean condition.
 //
-// This generic function is useful for inline conditional expressions in
-// builder-style code where you need to choose between two values without
-// breaking the chain of method calls.
+// This generic function is useful for inline conditional expressions when
+// building elements, letting you choose between two values in a single expression.
 //
 // Example:
 //
@@ -49,9 +48,9 @@ func IfElseZero[T any](condition bool, result T) T {
 //
 // Example:
 //
-//	If(isAuthenticated, HEADER()("Welcome")).
-//		ElseIf(isTrial, HEADER()("Try Premium")).
-//		Else(BUTTON()("Login"))
+//	If(isAuthenticated, HEADER("Welcome")).
+//		ElseIf(isTrial, HEADER("Try Premium")).
+//		Else(BUTTON("Login"))
 func If(condition bool, body HyperNode) conditionalNode {
 	return conditionalNode{
 		ifBranches: []ifBranch{{condition: condition, body: body}},
@@ -63,8 +62,8 @@ func If(condition bool, body HyperNode) conditionalNode {
 //
 // Example:
 //
-//	If(isLoggedIn, DIV()("Welcome")).
-//		ElseIf(isAdmin, DIV()("Admin Panel"))
+//	If(isLoggedIn, DIV("Welcome")).
+//		ElseIf(isAdmin, DIV("Admin Panel"))
 func (me conditionalNode) ElseIf(condition bool, body HyperNode) conditionalNode {
 	me.ifBranches = append(me.ifBranches, ifBranch{condition: condition, body: body})
 	return me
@@ -74,8 +73,8 @@ func (me conditionalNode) ElseIf(condition bool, body HyperNode) conditionalNode
 //
 // Example:
 //
-//	If(isAdmin, DIV()("Admin")).
-//		Else(DIV()("User"))
+//	If(isAdmin, DIV("Admin")).
+//		Else(DIV("User"))
 func (me conditionalNode) Else(body HyperNode) HyperNode {
 	me.elseBranch = body
 	return me
@@ -112,15 +111,15 @@ type ifBranch struct {
 //
 // Example:
 //
-//	UL()(
+//	UL(
 //		Repeat(5, func() any {
-//			return LI()("List item")
+//			return LI("List item")
 //		}),
 //	)
-func Repeat(n int, f func() any) HyperNode {
-	result := Element{Tag: "", Children: make([]HyperNode, 0, n)}
+func Repeat(n int, generate func() any) HyperNode {
+	result := Element{Children: make([]HyperNode, 0, n)}
 	for range n {
-		result.Children = append(result.Children, toHyperNode(f()))
+		result.Children = append(result.Children, toHyperNode(generate()))
 	}
 	return result
 }
@@ -134,31 +133,31 @@ func Repeat(n int, f func() any) HyperNode {
 // Example:
 //
 //	items := []string{"Apple", "Banana", "Cherry"}
-//	UL()(
+//	UL(
 //		Range(items, func(item string) any {
-//			return LI()(item)
+//			return LI(item)
 //		}),
 //	)
-func Range[T any](input []T, f func(T) any) HyperNode {
-	result := Element{Tag: "", Children: make([]HyperNode, 0, len(input))}
+func Range[T any](input []T, generate func(T) any) HyperNode {
+	result := Element{Children: make([]HyperNode, 0, len(input))}
 	for _, item := range input {
-		result.Children = append(result.Children, toHyperNode(f(item)))
+		result.Children = append(result.Children, toHyperNode(generate(item)))
 	}
 	return result
 }
 
 // Group groups multiple children without wrapping them in a tag.
-// It creates a container Element with an empty Tag, which renders only its children.
+// It creates a container Element with an empty Name, which renders only its children.
 //
 // Example:
 //
 //	Group(
-//		P()("Item 1"),
-//		H1()("Item 2"),
+//		P("Item 1"),
+//		H1("Item 2"),
 //		"Item 3",
 //	)
 func Group(children ...any) Element {
-	element := Element{Tag: ""}
+	var element Element
 	element.InsertChildren(children...)
 	return element
 }
@@ -177,28 +176,28 @@ func Group(children ...any) Element {
 //	page := Once(func() HyperNode {
 //	    return Group(
 //	        DOCTYPE(),
-//	        HTML()(
-//	            HEAD()(TITLE()("Dashboard")),
-//	            BODY()(H1()("Welcome")),
+//	        HTML(
+//	            HEAD(TITLE("Dashboard")),
+//	            BODY(H1("Welcome")),
 //	        ),
 //	    )
 //	})
 //
 //go:noinline
-func Once(f func() HyperNode) HyperNode {
+func Once(generate func() HyperNode) HyperNode {
 	var pc [1]uintptr
 	if runtime.Callers(2, pc[:]) == 0 {
 		panic("failed to get caller PC")
 	}
-	return OnceWithKey(strconv.FormatUint(uint64(pc[0]), 10), f)
+	return OnceWithKey(strconv.FormatUint(uint64(pc[0]), 10), generate)
 }
 
 // OnceWithKey caches the rendered output of a component under an explicit key.
 //
-// The first time the returned node is rendered, f is called to build the component,
-// its output is rendered and cached. Subsequent renders replay the cached output
-// without calling f. This is useful for expensive static components whose tree
-// is rebuilt per request.
+// The first time the returned node is rendered, generate is called to build
+// the component, its output is rendered and cached. Subsequent renders replay
+// the cached output without calling generate. This is useful for expensive
+// static components whose tree is rebuilt per request.
 //
 // The key must be unique across all OnceWithKey calls in your application.
 // Two calls with the same key share the same cache entry.
@@ -208,14 +207,14 @@ func Once(f func() HyperNode) HyperNode {
 //	page := OnceWithKey("dashboard-page", func() HyperNode {
 //	    return Group(
 //	        DOCTYPE(),
-//	        HTML()(
-//	            HEAD()(TITLE()("Dashboard")),
-//	            BODY()(H1()("Welcome")),
+//	        HTML(
+//	            HEAD(TITLE("Dashboard")),
+//	            BODY(H1("Welcome")),
 //	        ),
 //	    )
 //	})
-func OnceWithKey(key string, f func() HyperNode) HyperNode {
-	return onceNode{nodeFunc: f, key: key}
+func OnceWithKey(key string, generate func() HyperNode) HyperNode {
+	return onceNode{nodeFunc: generate, key: key}
 }
 
 type onceNode struct {
@@ -255,7 +254,7 @@ func (me onceNode) Render(w io.Writer) error {
 //	BUTTON(
 //		AttrClass(Classes(
 //			"btn",
-//			IfElse(err != nil, "btn-error", btn-primary),
+//			IfElse(err != nil, "btn-error", "btn-primary"),
 //			IfElseZero(isHidden, "hidden"),
 //		)),
 //	)

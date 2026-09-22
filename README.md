@@ -13,7 +13,7 @@ A fast, type-safe HTML generator for Go.
 ## Installation
 
 ```bash
-go get github.com/assaidy/hyper/v2
+go get github.com/assaidy/hyper/v3
 ```
 
 ## Quick Start
@@ -24,54 +24,55 @@ package main
 import (
     "os"
 
-    . "github.com/assaidy/hyper/v2"
+    . "github.com/assaidy/hyper/v3"
 )
 
 func main() {
     users := []string{"Alice", "Bob", "Charlie"}
     isAdmin := true
+    isTrial := false
 
     page := Group(
         DOCTYPE(),
-        HTML(AttrLang("en"))(
-            HEAD()(
-                TITLE()("Dashboard"),
+        HTML(AttrLang("en"),
+            HEAD(
+                TITLE("Dashboard"),
                 SCRIPT(AttrSrc("https://cdn.tailwindcss.com")),
             ),
-            BODY(AttrClass("bg-gray-100 p-8"))(
-                DIV(AttrClass("max-w-2xl mx-auto"))(
-                    H1(AttrClass("text-3xl font-bold mb-4"))("Dashboard"),
-                    
+            BODY(AttrClass("bg-gray-100 p-8"),
+                DIV(AttrClass("max-w-2xl mx-auto"),
+                    H1(AttrClass("text-3xl font-bold mb-4"), "Dashboard"),
+
                     // Conditional admin panel
                     If(isAdmin,
-                        DIV(AttrClass("bg-blue-50 p-4 rounded mb-4"))(
-                            P(AttrClass("font-semibold"))("Admin Panel"),
+                        DIV(AttrClass("bg-blue-50 p-4 rounded mb-4"),
+                            P(AttrClass("font-semibold"), "Admin Panel"),
                         ),
                     ).ElseIf(isTrial,
-                        DIV(AttrClass("bg-yellow-50 p-4 rounded mb-4"))(
-                            P(AttrClass("font-semibold"))("Try Premium"),
+                        DIV(AttrClass("bg-yellow-50 p-4 rounded mb-4"),
+                            P(AttrClass("font-semibold"), "Try Premium"),
                         ),
                     ).Else(
-                        DIV(AttrClass("p-4"))(
-                            P()("Welcome Guest"),
+                        DIV(AttrClass("p-4"),
+                            P("Welcome Guest"),
                         ),
                     ),
-                    
+
                     // User count
-                    P()("Total users: ", len(users)),
+                    P("Total users: ", len(users)),
 
                     // Standard form submission to refresh users
-                    FORM(AttrMethod(MethodPost), AttrAction("/api/users/refresh"))(
+                    FORM(AttrMethod(MethodPost), AttrAction("/api/users/refresh"),
                         BUTTON(
                             AttrClass("px-4 py-2 bg-blue-500 text-white rounded mt-4"),
                             AttrType(TypeSubmit),
-                        )("Refresh Users"),
+                         "Refresh Users"),
                     ),
-                    
+
                     // User list
-                    UL(AttrClass("space-y-2 mt-4"), AttrId("users-list"))(
+                    UL(AttrClass("space-y-2 mt-4"), AttrId("users-list"),
                         Range(users, func(name string) any {
-                            return LI(AttrClass("p-2 bg-white rounded shadow"))(name)
+                            return LI(AttrClass("p-2 bg-white rounded shadow"), name)
                         }),
                     ),
                 ),
@@ -91,30 +92,27 @@ All HTML element functions use **ALL_CAPS** names (DIV, P, H1, etc.) to avoid co
 
 ### Element Constructor Pattern
 
-Elements follow a consistent pattern for attribute and child handling:
+Elements take attributes and children in a single call:
 
 ```go
-ELEMENT(attrs)(children)
+ELEMENT(attr1, attr2, child1, child2, ...)
 ```
-
-When an element has no children, the trailing `()` can be omitted:
 
 ```go
 // No attributes, no children
 DIV()
-DIV()() // keeping trailing ()
 
-// With attributes, no children  
+// With attributes, no children
 DIV(AttrClass("container"))
 
 // No attributes, with children
-DIV()("Hello")
+DIV("Hello")
 
 // With attributes and children
-DIV(AttrClass("container"))("Hello")
+DIV(AttrClass("container"), "Hello")
 ```
 
-Void elements (self-closing tags like `<br>`, `<img>`, `<input>`) cannot have children, so they only have one set of parentheses:
+Void elements (self-closing tags like `<br>`, `<img>`, `<input>`) cannot have children, so they only accept attributes:
 
 ```go
 BR()                              // <br>
@@ -131,11 +129,11 @@ Alternatively, use specific attribute functions for common attributes:
 
 ```go
 // Using Attr function
-DIV(Attr("class", "container"), Attr("id", "main"))("Content")
+DIV(Attr("class", "container"), Attr("id", "main"), "Content")
 // <div class="container" id="main">Content</div>
 
 // Using specific attribute functions (recommended for clarity)
-DIV(AttrClass("container"), AttrId("main"))("Content")
+DIV(AttrClass("container"), AttrId("main"), "Content")
 // <div class="container" id="main">Content</div>
 
 // Boolean attributes (present when true, absent when false)
@@ -149,7 +147,7 @@ INPUT(AttrDisabled(false))  // <input>
 DIV(
     AttrClass(Classes("btn", IfElseZero(isPrimary, "btn-primary"))),
     IfElseZero(isHidden, AttrHidden(true)),
-)("Content")
+    "Content")
 // When isHidden=false, no hidden attribute is rendered
 ```
 
@@ -168,40 +166,38 @@ BUTTON(
     AttrHxGet("/api/data"),
     AttrHxTarget("#result"),
     AttrHxPreserve(true),
-)("Click me")
+    "Click me")
 // Renders: <button hx-get="/api/data" hx-target="#result" hx-preserve>Click me</button>
 ```
 
 ### Children
-The second set of parentheses accepts children. It accepts `HyperNode` values, strings (converted to `Text`), and other values (converted to `Text` via fmt.Sprint).
+Element constructors accept children after the attributes. Children can be `HyperNode` values, strings (converted to `Text`), and other values (converted to `Text` via fmt.Sprint).
 
-When no children are needed, the element function alone (`DIV()`, `P()`, etc.) already implements `HyperNode`, so the trailing `()` can be dropped. This is what enables the simplified patterns above.
-
-> **Performance note:** On hot paths, keeping the trailing `()` is slightly faster because it resolves to an `Element` directly, avoiding the closure call in `ChildrenInserter.Render`. Measure both to decide what matters for your use case.
+An element with no children (e.g. `DIV()`, `P()`) already implements `HyperNode`, so it can be used directly anywhere a node is expected.
 
 ```go
 // Strings are auto-escaped
-DIV()("Hello", " ", "World")  // <div>Hello World</div>
+DIV("Hello", " ", "World")  // <div>Hello World</div>
 
-P()("<script>alert('xss')</script>")
+P("<script>alert('xss')</script>")
 // <p>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</p>
 
 // Raw HTML (not escaped. use with caution)
-DIV()(RawText("<svg>...</svg>")) // <svg>...</svg>
+DIV(RawText("<svg>...</svg>")) // <svg>...</svg>
 
 // Numbers and booleans are auto-converted
-P()("Count: ", 42)           // <p>Count: 42</p>
-P()("Active: ", true)        // <p>Active: true</p>
+P("Count: ", 42)           // <p>Count: 42</p>
+P("Active: ", true)        // <p>Active: true</p>
 ```
 
 ### Conditional Rendering
 
 ```go
 // Show element only if condition is true
-If(isLoggedIn, DIV()("Welcome back!"))
+If(isLoggedIn, DIV("Welcome back!"))
 
 // Choose between two options
-IfElse(isAdmin, DIV()("Admin"), DIV()("User"))
+IfElse(isAdmin, DIV("Admin"), DIV("User"))
 ```
 
 ### Lists and Iteration
@@ -210,16 +206,16 @@ IfElse(isAdmin, DIV()("Admin"), DIV()("User"))
 items := []string{"Apple", "Banana"}
 
 // Map over slice
-UL()(
+UL(
     Range(items, func(item string) any {
-        return LI()(item)
+        return LI(item)
     }),
 )
 
 // Repeat N times
-DIV()(
+DIV(
     Repeat(3, func() any {
-        return P()("Repeated")
+        return P("Repeated")
     }),
 )
 ```
@@ -229,8 +225,8 @@ Use `Group()` to group multiple children without wrapping them in a tag. This is
 
 ```go
 Group(
-    H1()("Title"),
-    P()("Description"),
+    H1("Title"),
+    P("Description"),
 )
 // Renders: <h1>Title</h1><p>Description</p>
 ```
@@ -273,9 +269,9 @@ When you rebuild the component tree per request (common in web apps), wrap the e
 page := Once(func() HyperNode {
     return Group(
         DOCTYPE(),
-        HTML()(
-            HEAD()(TITLE()("Dashboard")),
-            BODY()(H1()("Welcome")),
+        HTML(
+            HEAD(TITLE("Dashboard")),
+            BODY(H1("Welcome")),
         ),
     )
 })
@@ -284,9 +280,9 @@ page := Once(func() HyperNode {
 page := OnceWithKey("dashboard", func() HyperNode {
     return Group(
         DOCTYPE(),
-        HTML()(
-            HEAD()(TITLE()("Dashboard")),
-            BODY()(H1()("Welcome")),
+        HTML(
+            HEAD(TITLE("Dashboard")),
+            BODY(H1("Welcome")),
         ),
     )
 })

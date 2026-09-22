@@ -5,16 +5,16 @@ import (
 	"io"
 )
 
-// Render writes the HTML representation of a Node to the provided io.Writer.
+// Render writes the HTML representation of a HyperNode to the provided io.Writer.
 //
-// This is a convenience function that makes it suitable for writing directly to
+// This is a convenience function for writing directly to
 // files, HTTP responses, or other output streams.
 //
 // Example:
 //
-//	err := Render(os.Stdout, DIV()("Hello")) // Outputs: <div>Hello</div>
+//	err := Render(os.Stdout, DIV("Hello")) // Outputs: <div>Hello</div>
 func Render(w io.Writer, node HyperNode) error {
-	// using Group() because is nil-safe
+	// using Group() because it is nil-safe
 	return Group(node).Render(w)
 }
 
@@ -39,12 +39,12 @@ func RenderThen(node HyperNode, then func(data []byte) error) error {
 //
 // The HyperNode interface is the core abstraction that allows both HTML elements
 // and text content to be treated uniformly when building and rendering HTML
-// trees. All elements created by the factory functions (DIV(), P(), SVG(), etc.)
+// trees. All elements created by the factory functions (DIV, P, SVG, etc.)
 // implement this interface.
 //
 // Example:
 //
-//	var node HyperNode = DIV()("Hello")
+//	var node HyperNode = DIV("Hello")
 //	err := node.Render(os.Stdout)
 type HyperNode interface {
 	Render(io.Writer) error

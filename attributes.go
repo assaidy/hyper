@@ -11,7 +11,7 @@ import (
 // Attribute represents an HTML attribute that can be rendered.
 // Implementations include PairAttribute (key="value") and BooleanAttribute (present/absent).
 //
-// NOTE: Hyper doesn't render nil attributes. This is usefull for conditional attributes using [IfElseZero]
+// NOTE: Hyper doesn't render nil attributes. This is useful for conditional attributes using [IfElseZero]
 type Attribute interface {
 	Render(buf *bytes.Buffer) error
 }
@@ -62,7 +62,7 @@ func (me BooleanAttribute) Render(buf *bytes.Buffer) error {
 // If value is a string, it creates a PairAttribute (key="value").
 // If value is a bool, it creates a BooleanAttribute (present when true, absent when false).
 //
-// NOTE: Hyper doesn't render nil attributes. This is usefull for conditional attributes using [IfElseZero]
+// NOTE: Hyper doesn't render nil attributes. This is useful for conditional attributes using [IfElseZero]
 //
 // Examples:
 //
@@ -87,8 +87,11 @@ func attrReflect(key string, value any) Attribute {
 
 // MakePairAttribute creates a function that produces a [PairAttribute] with the
 // given key. The returned function accepts a string value and returns an
-// [Attribute] interface (zero value is nil, useful with [IfElseZero] to skip).
-// This is useful for defining custom HTML attributes that take a string value.
+// [Attribute]. This is useful for defining custom HTML attributes that take
+// a string value.
+//
+// Pair the result with [IfElseZero] to conditionally omit the attribute:
+// a nil [Attribute] is not rendered.
 func MakePairAttribute(key string) func(value string) Attribute {
 	return func(value string) Attribute {
 		return PairAttribute{Key: key, Value: value}
@@ -96,10 +99,12 @@ func MakePairAttribute(key string) func(value string) Attribute {
 }
 
 // MakeBooleanAttribute creates a function that produces a [BooleanAttribute]
-// with the given key. The returned function accepts a bool value and returns an
-// [Attribute] interface (zero value is nil, useful with [IfElseZero] to skip).
-// This is useful for defining custom boolean HTML attributes (such as "disabled",
-// "checked", etc.).
+// with the given key. The returned function accepts a bool value and returns
+// an [Attribute]. This is useful for defining custom boolean HTML attributes
+// (such as "disabled", "checked", etc.).
+//
+// Pair the result with [IfElseZero] to conditionally omit the attribute:
+// a nil [Attribute] is not rendered.
 func MakeBooleanAttribute(key string) func(isActive bool) Attribute {
 	return func(isActive bool) Attribute {
 		return BooleanAttribute{Key: key, IsActive: isActive}
@@ -869,7 +874,7 @@ const (
 	AutocompleteOn = "on"
 	// AutocompleteName specifies the full name.
 	AutocompleteName = "name"
-	// AutocompleteHonorificPrefix specifies a honorific prefix (e.g., Mr, Mrs).
+	// AutocompleteHonorificPrefix specifies an honorific prefix (e.g., Mr, Mrs).
 	AutocompleteHonorificPrefix = "honorific-prefix"
 	// AutocompleteGivenName specifies the given (first) name.
 	AutocompleteGivenName = "given-name"
@@ -877,7 +882,7 @@ const (
 	AutocompleteAdditionalName = "additional-name"
 	// AutocompleteFamilyName specifies the family (last) name.
 	AutocompleteFamilyName = "family-name"
-	// AutocompleteHonorificSuffix specifies a honorific suffix (e.g., Jr, III).
+	// AutocompleteHonorificSuffix specifies an honorific suffix (e.g., Jr, III).
 	AutocompleteHonorificSuffix = "honorific-suffix"
 	// AutocompleteNickname specifies a nickname.
 	AutocompleteNickname = "nickname"

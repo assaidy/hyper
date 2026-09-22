@@ -40,8 +40,8 @@ func TestIfElse(t *testing.T) {
 }
 
 func TestIfElse_Nodes(t *testing.T) {
-	trueNode := DIV()("true")
-	falseNode := P()("false")
+	trueNode := DIV("true")
+	falseNode := P("false")
 
 	tests := []struct {
 		name      string
@@ -109,7 +109,7 @@ func TestIfElseZero(t *testing.T) {
 
 func TestIf(t *testing.T) {
 	t.Run("Basic If", func(t *testing.T) {
-		node := DIV()("content")
+		node := DIV("content")
 		resultNode := If(true, node)
 		var buf bytes.Buffer
 		err := Render(&buf, resultNode)
@@ -123,7 +123,7 @@ func TestIf(t *testing.T) {
 	})
 
 	t.Run("Condition false returns empty", func(t *testing.T) {
-		node := DIV()("content")
+		node := DIV("content")
 		resultNode := If(false, node)
 		var buf bytes.Buffer
 		err := Render(&buf, resultNode)
@@ -137,9 +137,9 @@ func TestIf(t *testing.T) {
 	})
 
 	t.Run("If with ElseIf and Else", func(t *testing.T) {
-		resultNode := If(false, DIV()("first")).
-			ElseIf(true, SPAN()("second")).
-			Else(DIV()("default"))
+		resultNode := If(false, DIV("first")).
+			ElseIf(true, SPAN("second")).
+			Else(DIV("default"))
 		var buf bytes.Buffer
 		err := Render(&buf, resultNode)
 		if err != nil {
@@ -152,10 +152,10 @@ func TestIf(t *testing.T) {
 	})
 
 	t.Run("Multiple ElseIf branches", func(t *testing.T) {
-		resultNode := If(false, DIV()("first")).
-			ElseIf(false, SPAN()("second")).
-			ElseIf(true, P()("third")).
-			Else(DIV()("default"))
+		resultNode := If(false, DIV("first")).
+			ElseIf(false, SPAN("second")).
+			ElseIf(true, P("third")).
+			Else(DIV("default"))
 		var buf bytes.Buffer
 		err := Render(&buf, resultNode)
 		if err != nil {
@@ -168,9 +168,9 @@ func TestIf(t *testing.T) {
 	})
 
 	t.Run("No condition matches falls through to Else", func(t *testing.T) {
-		resultNode := If(false, DIV()("first")).
-			ElseIf(false, SPAN()("second")).
-			Else(DIV()("default"))
+		resultNode := If(false, DIV("first")).
+			ElseIf(false, SPAN("second")).
+			Else(DIV("default"))
 		var buf bytes.Buffer
 		err := Render(&buf, resultNode)
 		if err != nil {
@@ -183,8 +183,8 @@ func TestIf(t *testing.T) {
 	})
 
 	t.Run("If with ElseIf without Else", func(t *testing.T) {
-		resultNode := If(false, DIV()("first")).
-			ElseIf(false, SPAN()("second"))
+		resultNode := If(false, DIV("first")).
+			ElseIf(false, SPAN("second"))
 		var buf bytes.Buffer
 		err := Render(&buf, resultNode)
 		if err != nil {
@@ -197,8 +197,8 @@ func TestIf(t *testing.T) {
 	})
 
 	t.Run("If with ElseIf without Else matches", func(t *testing.T) {
-		resultNode := If(false, DIV()("first")).
-			ElseIf(true, DIV()("trial"))
+		resultNode := If(false, DIV("first")).
+			ElseIf(true, DIV("trial"))
 		var buf bytes.Buffer
 		err := Render(&buf, resultNode)
 		if err != nil {
@@ -221,19 +221,19 @@ func TestRepeat(t *testing.T) {
 		{
 			name:     "Repeat zero times",
 			n:        0,
-			f:        func() any { return DIV()() },
+			f:        func() any { return DIV() },
 			expected: "",
 		},
 		{
 			name:     "Repeat once",
 			n:        1,
-			f:        func() any { return DIV()("item") },
+			f:        func() any { return DIV("item") },
 			expected: "<div>item</div>",
 		},
 		{
 			name:     "Repeat multiple times",
 			n:        3,
-			f:        func() any { return DIV()("item") },
+			f:        func() any { return DIV("item") },
 			expected: "<div>item</div><div>item</div><div>item</div>",
 		},
 		{
@@ -242,7 +242,7 @@ func TestRepeat(t *testing.T) {
 			f: func() any {
 				static := 0
 				static++
-				return DIV()(string(rune('a' + static)))
+				return DIV(string(rune('a' + static)))
 			},
 			expected: "<div>b</div><div>b</div>",
 		},
@@ -273,21 +273,21 @@ func TestRange(t *testing.T) {
 		{
 			name: "empty slice",
 			run: func() HyperNode {
-				return Range([]string{}, func(s string) any { return LI()(s) })
+				return Range([]string{}, func(s string) any { return LI(s) })
 			},
 			expected: "",
 		},
 		{
 			name: "single string item",
 			run: func() HyperNode {
-				return Range([]string{"apple"}, func(s string) any { return LI()(s) })
+				return Range([]string{"apple"}, func(s string) any { return LI(s) })
 			},
 			expected: "<li>apple</li>",
 		},
 		{
 			name: "multiple string items",
 			run: func() HyperNode {
-				return Range([]string{"apple", "banana", "cherry"}, func(s string) any { return LI()(s) })
+				return Range([]string{"apple", "banana", "cherry"}, func(s string) any { return LI(s) })
 			},
 			expected: "<li>apple</li><li>banana</li><li>cherry</li>",
 		},
@@ -296,9 +296,9 @@ func TestRange(t *testing.T) {
 			run: func() HyperNode {
 				return Range([]string{"apple", "banana"}, func(s string) any {
 					if s == "apple" {
-						return LI()(s, SPAN()(" (popular)"))
+						return LI(s, SPAN(" (popular)"))
 					}
-					return LI()(s)
+					return LI(s)
 				})
 			},
 			expected: "<li>apple<span> (popular)</span></li><li>banana</li>",
@@ -483,7 +483,7 @@ func TestOnceWithKey(t *testing.T) {
 		counter := 0
 		n := OnceWithKey("test-1", func() HyperNode {
 			counter++
-			return DIV()("hello")
+			return DIV("hello")
 		})
 
 		var buf1 bytes.Buffer
@@ -516,11 +516,11 @@ func TestOnceWithKey(t *testing.T) {
 		counterB := 0
 		a := OnceWithKey("key-a", func() HyperNode {
 			counterA++
-			return DIV()("a")
+			return DIV("a")
 		})
 		b := OnceWithKey("key-b", func() HyperNode {
 			counterB++
-			return P()("b")
+			return P("b")
 		})
 
 		var buf bytes.Buffer
@@ -541,7 +541,7 @@ func TestOnceWithKey(t *testing.T) {
 		counter := 0
 		fn := func() HyperNode {
 			counter++
-			return DIV()("shared")
+			return DIV("shared")
 		}
 
 		a := OnceWithKey("shared-key", fn)
@@ -563,7 +563,7 @@ func TestOnce(t *testing.T) {
 		counter := 0
 		n := Once(func() HyperNode {
 			counter++
-			return DIV()("hello")
+			return DIV("hello")
 		})
 
 		var buf1 bytes.Buffer
@@ -597,11 +597,11 @@ func TestOnce(t *testing.T) {
 
 		onceA := Once(func() HyperNode {
 			counterA++
-			return DIV()("a")
+			return DIV("a")
 		})
 		onceB := Once(func() HyperNode {
 			counterB++
-			return DIV()("b")
+			return DIV("b")
 		})
 
 		var buf bytes.Buffer
