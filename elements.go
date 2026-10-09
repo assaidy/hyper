@@ -36,6 +36,7 @@ type Element struct {
 }
 
 // RenderNode generates the HTML for the element and its children to the provided writer.
+// It returns an error if [Element.Name] is empty.
 func (me Element) RenderNode(w io.Writer) error {
 	buf := bufferPool.Get().(*bytes.Buffer)
 	defer func() {
@@ -65,7 +66,7 @@ var bufferPool = sync.Pool{
 // render renders the element to the provided buffer.
 func (me Element) render(buf *bytes.Buffer) error {
 	if me.Name == "" {
-		return me.renderChildren(buf)
+		return fmt.Errorf("empty element name not allowed.")
 	}
 
 	buf.WriteByte('<')
@@ -114,7 +115,7 @@ func (me Element) renderChildren(buf *bytes.Buffer) error {
 	return nil
 }
 
-// renderChildren renders all attributes to the provided buffer.
+// renderAttrs renders all attributes to the provided buffer.
 func (me Element) renderAttrs(buf *bytes.Buffer) error {
 	for _, attr := range me.Attributes {
 		if attr != nil {
@@ -178,10 +179,14 @@ func toHyperNode(v any) HyperNode {
 
 // NewElement creates an [Element] with the given tag name from mixed arguments.
 // [Attribute] values become element attributes; all other values become
-// children via [InsertChildren].
+// children via [InsertChildren]. It panics if any argument is nil: use
+// [IfAttr] to conditionally omit an attribute.
 func NewElement(name string, args ...any) Element {
 	e := Element{Name: name}
 	for _, a := range args {
+		if a == nil {
+			panic("nil argument passed to NewElement")
+		}
 		if attr, ok := a.(Attribute); ok {
 			e.InsertAttributes(attr)
 		} else {

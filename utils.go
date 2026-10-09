@@ -11,50 +11,119 @@ import (
 	"sync"
 )
 
-// IfElse returns the appropriate value based on a boolean condition.
+// If returns the appropriate value based on a boolean condition. When no
+// alternative is given, a false condition yields the zero value of T.
 //
 // This generic function is useful for inline conditional expressions when
 // building elements, letting you choose between two values in a single expression.
+// For conditional attributes use [IfAttr] instead: a false condition without an
+// alternative yields a nil attribute, which panics in element constructors.
 //
 // Example:
 //
-// class := IfElse(err != nil, "text-red", "text-black")
-func IfElse[T any](condition bool, result, alternative T) T {
+//	class := If(err != nil, "text-red", "text-black")
+//	class := If(err != nil, "text-red")
+func If[T any](condition bool, ifTrue T, ifFalse ...T) T {
 	if condition {
-		return result
+		return ifTrue
 	}
-	return alternative
-}
-
-// IfElseZero returns the result if the condition is true, otherwise returns the zero value.
-//
-// This generic function is useful when you need a default/empty value when
-// a condition is false without explicitly specifying the alternative.
-//
-// Example:
-//
-// class += IfElseZero(err != nil, " text-red")
-func IfElseZero[T any](condition bool, result T) T {
-	if condition {
-		return result
+	if len(ifFalse) > 0 {
+		return ifFalse[0]
 	}
 	var zero T
 	return zero
 }
 
-// If creates a conditional node chain starting with a condition.
+// IfAttr returns a conditional attribute chain starting with a condition.
 //
-// The body is rendered only if the condition is true, otherwise
-// an empty group is rendered (preventing nil pointer issues).
+// The attribute is rendered only when its condition is true. When no branch
+// matches and no else branch was set, nothing is rendered (the attribute is
+// omitted). Extend the chain with ElseIf and Else.
 //
 // Example:
 //
-//	If(isAuthenticated, HEADER("Welcome")).
+//	IfAttr(isHidden, AttrHidden(true)).
+//		Else(AttrRequired(true))
+func IfAttr(condition bool, attr Attribute) conditionalAttr {
+	if attr == nil {
+		panic("nil attribute passed to IfAttr")
+	}
+	return conditionalAttr{
+		ifBranches: []attrIfBranch{{condition: condition, body: attr}},
+	}
+}
+
+// ElseIf adds an additional condition to the conditional chain.
+//
+// Example:
+//
+//	IfAttr(isDark, AttrHidden(true)).
+//		ElseIf(isLight, AttrRequired(true))
+func (me conditionalAttr) ElseIf(condition bool, attr Attribute) conditionalAttr {
+	if attr == nil {
+		panic("nil attribute passed to ElseIf")
+	}
+	me.ifBranches = append(me.ifBranches, attrIfBranch{condition: condition, body: attr})
+	return me
+}
+
+// Else provides a fallback attribute when no conditions match.
+//
+// Example:
+//
+//	IfAttr(isAdmin, AttrRequired(true)).
+//		Else(AttrReadOnly(true))
+func (me conditionalAttr) Else(attr Attribute) Attribute {
+	if attr == nil {
+		panic("nil attribute passed to Else")
+	}
+	me.elseBranch = attr
+	return me
+}
+
+// conditionalAttr represents a chain of if-else conditions for attributes.
+// It is created by [IfAttr] and can be extended with ElseIf() and Else().
+type conditionalAttr struct {
+	ifBranches []attrIfBranch
+	elseBranch Attribute
+}
+
+func (me conditionalAttr) RenderAttribute(w io.Writer) error {
+	for _, n := range me.ifBranches {
+		if n.condition == true {
+			return n.body.RenderAttribute(w)
+		}
+	}
+
+	if me.elseBranch != nil {
+		return me.elseBranch.RenderAttribute(w)
+	}
+
+	// don't render anything if the condition is false and else branche was not specified.
+	return nil
+}
+
+type attrIfBranch struct {
+	condition bool
+	body      Attribute
+}
+
+// IfNode creates a conditional node chain starting with a condition.
+//
+// The body is rendered only if the condition is true, otherwise
+// an empty fragment is rendered (preventing nil pointer issues).
+//
+// Example:
+//
+//	IfNode(isAuthenticated, HEADER("Welcome")).
 //		ElseIf(isTrial, HEADER("Try Premium")).
 //		Else(BUTTON("Login"))
-func If(condition bool, body HyperNode) conditionalNode {
+func IfNode(condition bool, body HyperNode) conditionalNode {
+	if body == nil {
+		panic("nil node passed to IfNode")
+	}
 	return conditionalNode{
-		ifBranches: []ifBranch{{condition: condition, body: body}},
+		ifBranches: []nodeIfBranch{{condition: condition, body: body}},
 		elseBranch: Fragment(),
 	}
 }
@@ -63,10 +132,13 @@ func If(condition bool, body HyperNode) conditionalNode {
 //
 // Example:
 //
-//	If(isLoggedIn, DIV("Welcome")).
+//	IfNode(isLoggedIn, DIV("Welcome")).
 //		ElseIf(isAdmin, DIV("Admin Panel"))
 func (me conditionalNode) ElseIf(condition bool, body HyperNode) conditionalNode {
-	me.ifBranches = append(me.ifBranches, ifBranch{condition: condition, body: body})
+	if body == nil {
+		panic("nil node passed to ElseIf")
+	}
+	me.ifBranches = append(me.ifBranches, nodeIfBranch{condition: condition, body: body})
 	return me
 }
 
@@ -74,17 +146,20 @@ func (me conditionalNode) ElseIf(condition bool, body HyperNode) conditionalNode
 //
 // Example:
 //
-//	If(isAdmin, DIV("Admin")).
+//	IfNode(isAdmin, DIV("Admin")).
 //		Else(DIV("User"))
 func (me conditionalNode) Else(body HyperNode) HyperNode {
+	if body == nil {
+		panic("nil node passed to Else")
+	}
 	me.elseBranch = body
 	return me
 }
 
 // conditionalNode represents a chain of if-else conditions.
-// It is created by If() and can be extended with ElseIf() and Else().
+// It is created by [IfNode] and can be extended with ElseIf() and Else().
 type conditionalNode struct {
-	ifBranches []ifBranch
+	ifBranches []nodeIfBranch
 	elseBranch HyperNode
 }
 
@@ -97,8 +172,8 @@ func (me conditionalNode) RenderNode(w io.Writer) error {
 	return RenderNode(w, me.elseBranch)
 }
 
-// ifBranch represents a single condition-body pair within a conditionalNode.
-type ifBranch struct {
+// nodeIfBranch represents a single condition-body pair within a conditionalNode.
+type nodeIfBranch struct {
 	condition bool
 	body      HyperNode
 }
@@ -118,11 +193,14 @@ type ifBranch struct {
 //		}),
 //	)
 func Repeat(n int, generate func() any) HyperNode {
-	result := Element{Children: make([]HyperNode, 0, n)}
-	for range n {
-		result.Children = append(result.Children, toHyperNode(generate()))
+	if n < 0 {
+		panic("negative count passed to Repeat")
 	}
-	return result
+	fragment := fragmentNode{nodes: make([]HyperNode, 0, n)}
+	for range n {
+		fragment.nodes = append(fragment.nodes, toHyperNode(generate()))
+	}
+	return fragment
 }
 
 // Range transforms a slice of items into Nodes by applying a function to each element.
@@ -140,11 +218,11 @@ func Repeat(n int, generate func() any) HyperNode {
 //		}),
 //	)
 func Range[T any](input []T, generate func(T) any) HyperNode {
-	result := Element{Children: make([]HyperNode, 0, len(input))}
+	fragment := fragmentNode{nodes: make([]HyperNode, 0, len(input))}
 	for _, item := range input {
-		result.Children = append(result.Children, toHyperNode(generate(item)))
+		fragment.nodes = append(fragment.nodes, toHyperNode(generate(item)))
 	}
-	return result
+	return fragment
 }
 
 // Fragment groups multiple nodes into a single [HyperNode] without wrapping
@@ -165,6 +243,9 @@ func Range[T any](input []T, generate func(T) any) HyperNode {
 func Fragment(args ...any) HyperNode {
 	fragment := fragmentNode{nodes: make([]HyperNode, 0, len(args))}
 	for _, arg := range args {
+		if arg == nil {
+			panic("nil argument passed to Fragment")
+		}
 		fragment.nodes = append(fragment.nodes, toHyperNode(arg))
 	}
 	return fragment
@@ -283,8 +364,8 @@ func (me onceNode) RenderNode(w io.Writer) error {
 //	BUTTON(
 //		AttrClass(Classes(
 //			"btn",
-//			IfElse(err != nil, "btn-error", "btn-primary"),
-//			IfElseZero(isHidden, "hidden"),
+//			If(err != nil, "btn-error", "btn-primary"),
+//			If(isHidden, "hidden"),
 //		)),
 //	)
 func Classes(classes ...string) string {

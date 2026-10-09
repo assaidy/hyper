@@ -11,7 +11,8 @@ import (
 // Attribute represents an HTML attribute that can be rendered.
 // Implementations include PairAttribute (key="value") and BooleanAttribute (present/absent).
 //
-// NOTE: Hyper doesn't render nil attributes. This is useful for conditional attributes using [IfElseZero]
+// NOTE: Passing a nil attribute to an element constructor panics.
+// Use [IfAttr] for conditional attributes.
 type Attribute interface {
 	RenderAttribute(w io.Writer) error
 }
@@ -62,7 +63,8 @@ func (me BooleanAttribute) RenderAttribute(w io.Writer) error {
 // If value is a string, it creates a PairAttribute (key="value").
 // If value is a bool, it creates a BooleanAttribute (present when true, absent when false).
 //
-// NOTE: Hyper doesn't render nil attributes. This is useful for conditional attributes using [IfElseZero]
+// NOTE: Passing a nil attribute to an element constructor panics.
+// Use [IfAttr] for conditional attributes.
 //
 // Examples:
 //
@@ -85,491 +87,491 @@ func attrReflect(key string, value any) Attribute {
 	}
 }
 
-// MakePairAttribute creates a function that produces a [PairAttribute] with the
-// given key. The returned function accepts a string value and returns an
-// [Attribute]. This is useful for defining custom HTML attributes that take
+// MakePairAttributeConstructor creates a function that produces a [PairAttribute] with the
+// given key. The returned function accepts a string value and returns a
+// [PairAttribute]. This is useful for defining custom HTML attributes that take
 // a string value.
 //
-// Pair the result with [IfElseZero] to conditionally omit the attribute:
-// a nil [Attribute] is not rendered.
-func MakePairAttribute(key string) func(value string) Attribute {
-	return func(value string) Attribute {
+// Pair the result with [IfAttr] to conditionally omit the attribute:
+// when no branch matches and no else branch was set, nothing is rendered.
+func MakePairAttributeConstructor(key string) func(value string) PairAttribute {
+	return func(value string) PairAttribute {
 		return PairAttribute{Key: key, Value: value}
 	}
 }
 
-// MakeBooleanAttribute creates a function that produces a [BooleanAttribute]
+// MakeBooleanAttributeConstructor creates a function that produces a [BooleanAttribute]
 // with the given key. The returned function accepts a bool value and returns
-// an [Attribute]. This is useful for defining custom boolean HTML attributes
+// a [BooleanAttribute]. This is useful for defining custom boolean HTML attributes
 // (such as "disabled", "checked", etc.).
 //
-// Pair the result with [IfElseZero] to conditionally omit the attribute:
-// a nil [Attribute] is not rendered.
-func MakeBooleanAttribute(key string) func(isActive bool) Attribute {
-	return func(isActive bool) Attribute {
+// Pair the result with [IfAttr] to conditionally omit the attribute:
+// when no branch matches and no else branch was set, nothing is rendered.
+func MakeBooleanAttributeConstructor(key string) func(isActive bool) BooleanAttribute {
+	return func(isActive bool) BooleanAttribute {
 		return BooleanAttribute{Key: key, IsActive: isActive}
 	}
 }
 
 var (
 	// AttrAccept sets the accepted file types for <input type="file">.
-	AttrAccept = MakePairAttribute("accept")
+	AttrAccept = MakePairAttributeConstructor("accept")
 	// AttrAcceptCharset sets the character encodings accepted by the server.
-	AttrAcceptCharset = MakePairAttribute("accept-charset")
+	AttrAcceptCharset = MakePairAttributeConstructor("accept-charset")
 	// AttrAccessKey gives keyboard shortcut access to an element.
-	AttrAccessKey = MakePairAttribute("accesskey")
+	AttrAccessKey = MakePairAttributeConstructor("accesskey")
 	// AttrAction specifies where to send the form data.
-	AttrAction = MakePairAttribute("action")
+	AttrAction = MakePairAttributeConstructor("action")
 	// AttrAlign specifies the alignment of an element.
-	AttrAlign = MakePairAttribute("align")
+	AttrAlign = MakePairAttributeConstructor("align")
 	// AttrAllow specifies permissions for an iframe.
-	AttrAllow = MakePairAttribute("allow")
+	AttrAllow = MakePairAttributeConstructor("allow")
 	// AttrAlpha sets the alpha transparency level of an element.
-	AttrAlpha = MakePairAttribute("alpha")
+	AttrAlpha = MakePairAttributeConstructor("alpha")
 	// AttrAlt provides alternative text for an image.
-	AttrAlt = MakePairAttribute("alt")
+	AttrAlt = MakePairAttributeConstructor("alt")
 	// AttrAs specifies the relation between the linked resource and the document.
-	AttrAs = MakePairAttribute("as")
+	AttrAs = MakePairAttributeConstructor("as")
 	// AttrAsync indicates that the script should execute asynchronously.
-	AttrAsync = MakeBooleanAttribute("async")
+	AttrAsync = MakeBooleanAttributeConstructor("async")
 	// AttrAutocapitalize controls whether text input is automatically capitalized.
-	AttrAutocapitalize = MakePairAttribute("autocapitalize")
+	AttrAutocapitalize = MakePairAttributeConstructor("autocapitalize")
 	// AttrAutocomplete specifies whether an input field should have autocomplete enabled.
-	AttrAutocomplete = MakePairAttribute("autocomplete")
+	AttrAutocomplete = MakePairAttributeConstructor("autocomplete")
 	// AttrAutofocus specifies that an element should automatically get focus on page load.
-	AttrAutofocus = MakeBooleanAttribute("autofocus")
+	AttrAutofocus = MakeBooleanAttributeConstructor("autofocus")
 	// AttrAutoplay specifies that the audio/video should automatically start playing.
-	AttrAutoplay = MakeBooleanAttribute("autoplay")
+	AttrAutoplay = MakeBooleanAttributeConstructor("autoplay")
 	// AttrBackground specifies the background image URL.
-	AttrBackground = MakePairAttribute("background")
+	AttrBackground = MakePairAttributeConstructor("background")
 	// AttrBgColor specifies the background color of an element.
-	AttrBgColor = MakePairAttribute("bgcolor")
+	AttrBgColor = MakePairAttributeConstructor("bgcolor")
 	// AttrBorder specifies the border width around an element.
-	AttrBorder = MakePairAttribute("border")
+	AttrBorder = MakePairAttributeConstructor("border")
 	// AttrCapture specifies which camera/mic to use for media capture.
-	AttrCapture = MakePairAttribute("capture")
+	AttrCapture = MakePairAttributeConstructor("capture")
 	// AttrCharset specifies the character encoding of the document.
-	AttrCharset = MakePairAttribute("charset")
+	AttrCharset = MakePairAttributeConstructor("charset")
 	// AttrChecked specifies whether an input checkbox or radio is checked.
-	AttrChecked = MakeBooleanAttribute("checked")
+	AttrChecked = MakeBooleanAttributeConstructor("checked")
 	// AttrCite specifies the source of a quotation.
-	AttrCite = MakePairAttribute("cite")
+	AttrCite = MakePairAttributeConstructor("cite")
 	// AttrClass specifies one or more class names for an element.
-	AttrClass = MakePairAttribute("class")
+	AttrClass = MakePairAttributeConstructor("class")
 	// AttrColor specifies the text color of an element.
-	AttrColor = MakePairAttribute("color")
+	AttrColor = MakePairAttributeConstructor("color")
 	// AttrColorSpace specifies the color space for an image.
-	AttrColorSpace = MakePairAttribute("colorspace")
+	AttrColorSpace = MakePairAttributeConstructor("colorspace")
 	// AttrCols specifies the number of columns in a textarea.
-	AttrCols = MakePairAttribute("cols")
+	AttrCols = MakePairAttributeConstructor("cols")
 	// AttrColSpan specifies the number of columns a table cell should span.
-	AttrColSpan = MakePairAttribute("colspan")
+	AttrColSpan = MakePairAttributeConstructor("colspan")
 	// AttrContent provides metadata about the element.
-	AttrContent = MakePairAttribute("content")
+	AttrContent = MakePairAttributeConstructor("content")
 	// AttrContentEditable specifies whether the element is editable.
-	AttrContentEditable = MakePairAttribute("contenteditable")
+	AttrContentEditable = MakePairAttributeConstructor("contenteditable")
 	// AttrControls shows the audio/video controls.
-	AttrControls = MakeBooleanAttribute("controls")
+	AttrControls = MakeBooleanAttributeConstructor("controls")
 	// AttrCoords specifies the coordinates of an area in an image map.
-	AttrCoords = MakePairAttribute("coords")
+	AttrCoords = MakePairAttributeConstructor("coords")
 	// AttrCrossOrigin specifies how the element handles cross-origin requests.
-	AttrCrossOrigin = MakePairAttribute("crossorigin")
+	AttrCrossOrigin = MakePairAttributeConstructor("crossorigin")
 	// AttrCsp specifies the Content Security Policy for an element.
-	AttrCsp = MakePairAttribute("csp")
+	AttrCsp = MakePairAttributeConstructor("csp")
 	// AttrData specifies the URL of the data for an object element.
-	AttrData = MakePairAttribute("data")
+	AttrData = MakePairAttributeConstructor("data")
 	// AttrDateTime specifies the date and time for an element.
-	AttrDateTime = MakePairAttribute("datetime")
+	AttrDateTime = MakePairAttributeConstructor("datetime")
 	// AttrDecoding specifies how to decode an image.
-	AttrDecoding = MakePairAttribute("decoding")
+	AttrDecoding = MakePairAttributeConstructor("decoding")
 	// AttrDefault specifies that a track should be enabled by default.
-	AttrDefault = MakeBooleanAttribute("default")
+	AttrDefault = MakeBooleanAttributeConstructor("default")
 	// AttrDefer indicates that the script should be executed after the document is parsed.
-	AttrDefer = MakeBooleanAttribute("defer")
+	AttrDefer = MakeBooleanAttributeConstructor("defer")
 	// AttrDir specifies the text direction of an element.
-	AttrDir = MakePairAttribute("dir")
+	AttrDir = MakePairAttributeConstructor("dir")
 	// AttrDirName specifies the name of the form field used for sending the directionality of the element.
-	AttrDirName = MakePairAttribute("dirname")
+	AttrDirName = MakePairAttributeConstructor("dirname")
 	// AttrDisabled specifies that an element should be disabled.
-	AttrDisabled = MakeBooleanAttribute("disabled")
+	AttrDisabled = MakeBooleanAttributeConstructor("disabled")
 	// AttrDownload specifies that the target should be downloaded when clicked.
-	AttrDownload = MakePairAttribute("download")
+	AttrDownload = MakePairAttributeConstructor("download")
 	// AttrDraggable specifies whether an element is draggable.
-	AttrDraggable = MakePairAttribute("draggable")
+	AttrDraggable = MakePairAttributeConstructor("draggable")
 	// AttrEncType specifies how form data should be encoded before sending to a server.
-	AttrEncType = MakePairAttribute("enctype")
+	AttrEncType = MakePairAttributeConstructor("enctype")
 	// AttrEnterKeyHint specifies what action label to show on the enter key.
-	AttrEnterKeyHint = MakePairAttribute("enterkeyhint")
+	AttrEnterKeyHint = MakePairAttributeConstructor("enterkeyhint")
 	// AttrElementTiming specifies that an element should be observed for performance.
-	AttrElementTiming = MakePairAttribute("elementtiming")
+	AttrElementTiming = MakePairAttributeConstructor("elementtiming")
 	// AttrFor links a label to an input by its ID, improving accessibility and usability.
-	AttrFor = MakePairAttribute("for")
+	AttrFor = MakePairAttributeConstructor("for")
 	// AttrForm specifies the id of a form element that the element belongs to.
-	AttrForm = MakePairAttribute("form")
+	AttrForm = MakePairAttributeConstructor("form")
 	// AttrFormAction specifies where to send the form data.
-	AttrFormAction = MakePairAttribute("formaction")
+	AttrFormAction = MakePairAttributeConstructor("formaction")
 	// AttrFormEncType specifies how form data should be encoded.
-	AttrFormEncType = MakePairAttribute("formenctype")
+	AttrFormEncType = MakePairAttributeConstructor("formenctype")
 	// AttrFormMethod specifies the HTTP method for form submission.
-	AttrFormMethod = MakePairAttribute("formmethod")
+	AttrFormMethod = MakePairAttributeConstructor("formmethod")
 	// AttrFormNoValidate specifies that the form should not be validated.
-	AttrFormNoValidate = MakeBooleanAttribute("formnovalidate")
+	AttrFormNoValidate = MakeBooleanAttributeConstructor("formnovalidate")
 	// AttrFormTarget specifies where to display the response after form submission.
-	AttrFormTarget = MakePairAttribute("formtarget")
+	AttrFormTarget = MakePairAttributeConstructor("formtarget")
 	// AttrFetchPriority indicates the priority of fetching an external resource.
-	AttrFetchPriority = MakePairAttribute("fetchpriority")
+	AttrFetchPriority = MakePairAttributeConstructor("fetchpriority")
 	// AttrHeaders specifies the header cells that a table cell relates to.
-	AttrHeaders = MakePairAttribute("headers")
+	AttrHeaders = MakePairAttributeConstructor("headers")
 	// AttrHeight specifies the height of an element.
-	AttrHeight = MakePairAttribute("height")
+	AttrHeight = MakePairAttributeConstructor("height")
 	// AttrHidden specifies that an element is not yet or is no longer relevant.
-	AttrHidden = MakeBooleanAttribute("hidden")
+	AttrHidden = MakeBooleanAttributeConstructor("hidden")
 	// AttrHigh specifies the lower bound of a range.
-	AttrHigh = MakePairAttribute("high")
+	AttrHigh = MakePairAttributeConstructor("high")
 	// AttrHref specifies the URL of a link.
-	AttrHref = MakePairAttribute("href")
+	AttrHref = MakePairAttributeConstructor("href")
 	// AttrHrefLang specifies the language of the linked resource.
-	AttrHrefLang = MakePairAttribute("hreflang")
+	AttrHrefLang = MakePairAttributeConstructor("hreflang")
 	// AttrHttpEquiv provides an HTTP header for the information in the content attribute.
-	AttrHttpEquiv = MakePairAttribute("http-equiv")
+	AttrHttpEquiv = MakePairAttributeConstructor("http-equiv")
 	// AttrId specifies a unique id for an element.
-	AttrId = MakePairAttribute("id")
+	AttrId = MakePairAttributeConstructor("id")
 	// AttrIntegrity specifies a hash of the resource to verify its integrity.
-	AttrIntegrity = MakePairAttribute("integrity")
+	AttrIntegrity = MakePairAttributeConstructor("integrity")
 	// AttrInputMode provides a hint to browsers about the type of data the user should enter.
-	AttrInputMode = MakePairAttribute("inputmode")
+	AttrInputMode = MakePairAttributeConstructor("inputmode")
 	// AttrIsMap specifies that an image is part of a server-side image map.
-	AttrIsMap = MakeBooleanAttribute("ismap")
+	AttrIsMap = MakeBooleanAttributeConstructor("ismap")
 	// AttrItemProp specifies the property of an item.
-	AttrItemProp = MakePairAttribute("itemprop")
+	AttrItemProp = MakePairAttributeConstructor("itemprop")
 	// AttrKind specifies the kind of text track.
-	AttrKind = MakePairAttribute("kind")
+	AttrKind = MakePairAttributeConstructor("kind")
 	// AttrLabel specifies the label of an option or track.
-	AttrLabel = MakePairAttribute("label")
+	AttrLabel = MakePairAttributeConstructor("label")
 	// AttrLang specifies the language of the element.
-	AttrLang = MakePairAttribute("lang")
+	AttrLang = MakePairAttributeConstructor("lang")
 	// AttrLanguage specifies the scripting language of an element.
-	AttrLanguage = MakePairAttribute("language")
+	AttrLanguage = MakePairAttributeConstructor("language")
 	// AttrLoading specifies whether to load an image lazily.
-	AttrLoading = MakePairAttribute("loading")
+	AttrLoading = MakePairAttributeConstructor("loading")
 	// AttrList refers to a datalist containing predefined options.
-	AttrList = MakePairAttribute("list")
+	AttrList = MakePairAttributeConstructor("list")
 	// AttrLoop specifies whether to loop an audio/video.
-	AttrLoop = MakeBooleanAttribute("loop")
+	AttrLoop = MakeBooleanAttributeConstructor("loop")
 	// AttrLow specifies the upper bound of a range.
-	AttrLow = MakePairAttribute("low")
+	AttrLow = MakePairAttributeConstructor("low")
 	// AttrMax specifies the maximum value.
-	AttrMax = MakePairAttribute("max")
+	AttrMax = MakePairAttributeConstructor("max")
 	// AttrMaxLength specifies the maximum number of characters allowed.
-	AttrMaxLength = MakePairAttribute("maxlength")
+	AttrMaxLength = MakePairAttributeConstructor("maxlength")
 	// AttrMinLength specifies the minimum number of characters required.
-	AttrMinLength = MakePairAttribute("minlength")
+	AttrMinLength = MakePairAttributeConstructor("minlength")
 	// AttrMedia specifies the media type or device the resource applies to.
-	AttrMedia = MakePairAttribute("media")
+	AttrMedia = MakePairAttributeConstructor("media")
 	// AttrMethod specifies the HTTP method for form submission.
-	AttrMethod = MakePairAttribute("method")
+	AttrMethod = MakePairAttributeConstructor("method")
 	// AttrMin specifies the minimum value.
-	AttrMin = MakePairAttribute("min")
+	AttrMin = MakePairAttributeConstructor("min")
 	// AttrMultiple specifies that a user can enter more than one value.
-	AttrMultiple = MakeBooleanAttribute("multiple")
+	AttrMultiple = MakeBooleanAttributeConstructor("multiple")
 	// AttrMuted specifies that the audio should be muted.
-	AttrMuted = MakeBooleanAttribute("muted")
+	AttrMuted = MakeBooleanAttributeConstructor("muted")
 	// AttrName specifies the name of an element.
-	AttrName = MakePairAttribute("name")
+	AttrName = MakePairAttributeConstructor("name")
 	// AttrNoValidate specifies that the form should not be validated.
-	AttrNoValidate = MakeBooleanAttribute("novalidate")
+	AttrNoValidate = MakeBooleanAttributeConstructor("novalidate")
 	// AttrOnAbort specifies the event handler for the abort event.
-	AttrOnAbort = MakePairAttribute("onAbort")
+	AttrOnAbort = MakePairAttributeConstructor("onAbort")
 	// AttrOnActivate specifies the event handler for the activate event.
-	AttrOnActivate = MakePairAttribute("onActivate")
+	AttrOnActivate = MakePairAttributeConstructor("onActivate")
 	// AttrOnAfterPrint specifies the event handler for the afterprint event.
-	AttrOnAfterPrint = MakePairAttribute("onAfterPrint")
+	AttrOnAfterPrint = MakePairAttributeConstructor("onAfterPrint")
 	// AttrOnAfterUpdate specifies the event handler for the afterupdate event.
-	AttrOnAfterUpdate = MakePairAttribute("onAfterUpdate")
+	AttrOnAfterUpdate = MakePairAttributeConstructor("onAfterUpdate")
 	// AttrOnBeforeActivate specifies the event handler for the beforeactivate event.
-	AttrOnBeforeActivate = MakePairAttribute("onBeforeActivate")
+	AttrOnBeforeActivate = MakePairAttributeConstructor("onBeforeActivate")
 	// AttrOnBeforeCopy specifies the event handler for the beforecopy event.
-	AttrOnBeforeCopy = MakePairAttribute("onBeforeCopy")
+	AttrOnBeforeCopy = MakePairAttributeConstructor("onBeforeCopy")
 	// AttrOnBeforeCut specifies the event handler for the beforecut event.
-	AttrOnBeforeCut = MakePairAttribute("onBeforeCut")
+	AttrOnBeforeCut = MakePairAttributeConstructor("onBeforeCut")
 	// AttrOnBeforeDeactivate specifies the event handler for the beforedeactivate event.
-	AttrOnBeforeDeactivate = MakePairAttribute("onBeforeDeactivate")
+	AttrOnBeforeDeactivate = MakePairAttributeConstructor("onBeforeDeactivate")
 	// AttrOnBeforeEditFocus specifies the event handler for the beforeeditfocus event.
-	AttrOnBeforeEditFocus = MakePairAttribute("onBeforeEditFocus")
+	AttrOnBeforeEditFocus = MakePairAttributeConstructor("onBeforeEditFocus")
 	// AttrOnBeforePaste specifies the event handler for the beforepaste event.
-	AttrOnBeforePaste = MakePairAttribute("onBeforePaste")
+	AttrOnBeforePaste = MakePairAttributeConstructor("onBeforePaste")
 	// AttrOnBeforePrint specifies the event handler for the beforeprint event.
-	AttrOnBeforePrint = MakePairAttribute("onBeforePrint")
+	AttrOnBeforePrint = MakePairAttributeConstructor("onBeforePrint")
 	// AttrOnBeforeUnload specifies the event handler for the beforeunload event.
-	AttrOnBeforeUnload = MakePairAttribute("onBeforeUnload")
+	AttrOnBeforeUnload = MakePairAttributeConstructor("onBeforeUnload")
 	// AttrOnBeforeUpdate specifies the event handler for the beforeupdate event.
-	AttrOnBeforeUpdate = MakePairAttribute("onBeforeUpdate")
+	AttrOnBeforeUpdate = MakePairAttributeConstructor("onBeforeUpdate")
 	// AttrOnBegin specifies the event handler for the begin event.
-	AttrOnBegin = MakePairAttribute("onBegin")
+	AttrOnBegin = MakePairAttributeConstructor("onBegin")
 	// AttrOnBlur specifies the event handler for the blur event.
-	AttrOnBlur = MakePairAttribute("onBlur")
+	AttrOnBlur = MakePairAttributeConstructor("onBlur")
 	// AttrOnBounce specifies the event handler for the bounce event.
-	AttrOnBounce = MakePairAttribute("onBounce")
+	AttrOnBounce = MakePairAttributeConstructor("onBounce")
 	// AttrOnCellChange specifies the event handler for the cellchange event.
-	AttrOnCellChange = MakePairAttribute("onCellChange")
+	AttrOnCellChange = MakePairAttributeConstructor("onCellChange")
 	// AttrOnChange specifies the event handler for the change event.
-	AttrOnChange = MakePairAttribute("onChange")
+	AttrOnChange = MakePairAttributeConstructor("onChange")
 	// AttrOnClick specifies the event handler for the click event.
-	AttrOnClick = MakePairAttribute("onClick")
+	AttrOnClick = MakePairAttributeConstructor("onClick")
 	// AttrOnContextMenu specifies the event handler for the contextmenu event.
-	AttrOnContextMenu = MakePairAttribute("onContextMenu")
+	AttrOnContextMenu = MakePairAttributeConstructor("onContextMenu")
 	// AttrOnControlSelect specifies the event handler for the controlselect event.
-	AttrOnControlSelect = MakePairAttribute("onControlSelect")
+	AttrOnControlSelect = MakePairAttributeConstructor("onControlSelect")
 	// AttrOnCopy specifies the event handler for the copy event.
-	AttrOnCopy = MakePairAttribute("onCopy")
+	AttrOnCopy = MakePairAttributeConstructor("onCopy")
 	// AttrOnCut specifies the event handler for the cut event.
-	AttrOnCut = MakePairAttribute("onCut")
+	AttrOnCut = MakePairAttributeConstructor("onCut")
 	// AttrOnDataAvailable specifies the event handler for the dataavailable event.
-	AttrOnDataAvailable = MakePairAttribute("onDataAvailable")
+	AttrOnDataAvailable = MakePairAttributeConstructor("onDataAvailable")
 	// AttrOnDataSetChanged specifies the event handler for the datasetchanged event.
-	AttrOnDataSetChanged = MakePairAttribute("onDataSetChanged")
+	AttrOnDataSetChanged = MakePairAttributeConstructor("onDataSetChanged")
 	// AttrOnDataSetComplete specifies the event handler for the datasetcomplete event.
-	AttrOnDataSetComplete = MakePairAttribute("onDataSetComplete")
+	AttrOnDataSetComplete = MakePairAttributeConstructor("onDataSetComplete")
 	// AttrOnDblClick specifies the event handler for the dblclick event.
-	AttrOnDblClick = MakePairAttribute("onDblClick")
+	AttrOnDblClick = MakePairAttributeConstructor("onDblClick")
 	// AttrOnDeactivate specifies the event handler for the deactivate event.
-	AttrOnDeactivate = MakePairAttribute("onDeactivate")
+	AttrOnDeactivate = MakePairAttributeConstructor("onDeactivate")
 	// AttrOnDrag specifies the event handler for the drag event.
-	AttrOnDrag = MakePairAttribute("onDrag")
+	AttrOnDrag = MakePairAttributeConstructor("onDrag")
 	// AttrOnDragEnd specifies the event handler for the dragend event.
-	AttrOnDragEnd = MakePairAttribute("onDragEnd")
+	AttrOnDragEnd = MakePairAttributeConstructor("onDragEnd")
 	// AttrOnDragLeave specifies the event handler for the dragleave event.
-	AttrOnDragLeave = MakePairAttribute("onDragLeave")
+	AttrOnDragLeave = MakePairAttributeConstructor("onDragLeave")
 	// AttrOnDragEnter specifies the event handler for the dragenter event.
-	AttrOnDragEnter = MakePairAttribute("onDragEnter")
+	AttrOnDragEnter = MakePairAttributeConstructor("onDragEnter")
 	// AttrOnDragOver specifies the event handler for the dragover event.
-	AttrOnDragOver = MakePairAttribute("onDragOver")
+	AttrOnDragOver = MakePairAttributeConstructor("onDragOver")
 	// AttrOnDragDrop specifies the event handler for the dragdrop event.
-	AttrOnDragDrop = MakePairAttribute("onDragDrop")
+	AttrOnDragDrop = MakePairAttributeConstructor("onDragDrop")
 	// AttrOnDragStart specifies the event handler for the dragstart event.
-	AttrOnDragStart = MakePairAttribute("onDragStart")
+	AttrOnDragStart = MakePairAttributeConstructor("onDragStart")
 	// AttrOnDrop specifies the event handler for the drop event.
-	AttrOnDrop = MakePairAttribute("onDrop")
+	AttrOnDrop = MakePairAttributeConstructor("onDrop")
 	// AttrOnEnd specifies the event handler for the end event.
-	AttrOnEnd = MakePairAttribute("onEnd")
+	AttrOnEnd = MakePairAttributeConstructor("onEnd")
 	// AttrOnError specifies the event handler for the error event.
-	AttrOnError = MakePairAttribute("onError")
+	AttrOnError = MakePairAttributeConstructor("onError")
 	// AttrOnErrorUpdate specifies the event handler for the errorupdate event.
-	AttrOnErrorUpdate = MakePairAttribute("onErrorUpdate")
+	AttrOnErrorUpdate = MakePairAttributeConstructor("onErrorUpdate")
 	// AttrOnFilterChange specifies the event handler for the filterchange event.
-	AttrOnFilterChange = MakePairAttribute("onFilterChange")
+	AttrOnFilterChange = MakePairAttributeConstructor("onFilterChange")
 	// AttrOnFinish specifies the event handler for the finish event.
-	AttrOnFinish = MakePairAttribute("onFinish")
+	AttrOnFinish = MakePairAttributeConstructor("onFinish")
 	// AttrOnFocus specifies the event handler for the focus event.
-	AttrOnFocus = MakePairAttribute("onFocus")
+	AttrOnFocus = MakePairAttributeConstructor("onFocus")
 	// AttrOnFocusIn specifies the event handler for the focusin event.
-	AttrOnFocusIn = MakePairAttribute("onFocusIn")
+	AttrOnFocusIn = MakePairAttributeConstructor("onFocusIn")
 	// AttrOnFocusOut specifies the event handler for the focusout event.
-	AttrOnFocusOut = MakePairAttribute("onFocusOut")
+	AttrOnFocusOut = MakePairAttributeConstructor("onFocusOut")
 	// AttrOnHashChange specifies the event handler for the hashchange event.
-	AttrOnHashChange = MakePairAttribute("onHashChange")
+	AttrOnHashChange = MakePairAttributeConstructor("onHashChange")
 	// AttrOnHelp specifies the event handler for the help event.
-	AttrOnHelp = MakePairAttribute("onHelp")
+	AttrOnHelp = MakePairAttributeConstructor("onHelp")
 	// AttrOnInput specifies the event handler for the input event.
-	AttrOnInput = MakePairAttribute("onInput")
+	AttrOnInput = MakePairAttributeConstructor("onInput")
 	// AttrOnKeyDown specifies the event handler for the keydown event.
-	AttrOnKeyDown = MakePairAttribute("onKeyDown")
+	AttrOnKeyDown = MakePairAttributeConstructor("onKeyDown")
 	// AttrOnKeyPress specifies the event handler for the keypress event.
-	AttrOnKeyPress = MakePairAttribute("onKeyPress")
+	AttrOnKeyPress = MakePairAttributeConstructor("onKeyPress")
 	// AttrOnKeyUp specifies the event handler for the keyup event.
-	AttrOnKeyUp = MakePairAttribute("onKeyUp")
+	AttrOnKeyUp = MakePairAttributeConstructor("onKeyUp")
 	// AttrOnLayoutComplete specifies the event handler for the layoutcomplete event.
-	AttrOnLayoutComplete = MakePairAttribute("onLayoutComplete")
+	AttrOnLayoutComplete = MakePairAttributeConstructor("onLayoutComplete")
 	// AttrOnLoad specifies the event handler for the load event.
-	AttrOnLoad = MakePairAttribute("onLoad")
+	AttrOnLoad = MakePairAttributeConstructor("onLoad")
 	// AttrOnLoseCapture specifies the event handler for the losecapture event.
-	AttrOnLoseCapture = MakePairAttribute("onLoseCapture")
+	AttrOnLoseCapture = MakePairAttributeConstructor("onLoseCapture")
 	// AttrOnMediaComplete specifies the event handler for the mediacomplete event.
-	AttrOnMediaComplete = MakePairAttribute("onMediaComplete")
+	AttrOnMediaComplete = MakePairAttributeConstructor("onMediaComplete")
 	// AttrOnMediaError specifies the event handler for the mediaerror event.
-	AttrOnMediaError = MakePairAttribute("onMediaError")
+	AttrOnMediaError = MakePairAttributeConstructor("onMediaError")
 	// AttrOnMessage specifies the event handler for the message event.
-	AttrOnMessage = MakePairAttribute("onMessage")
+	AttrOnMessage = MakePairAttributeConstructor("onMessage")
 	// AttrOnMouseDown specifies the event handler for the mousedown event.
-	AttrOnMouseDown = MakePairAttribute("onMouseDown")
+	AttrOnMouseDown = MakePairAttributeConstructor("onMouseDown")
 	// AttrOnMouseEnter specifies the event handler for the mouseenter event.
-	AttrOnMouseEnter = MakePairAttribute("onMouseEnter")
+	AttrOnMouseEnter = MakePairAttributeConstructor("onMouseEnter")
 	// AttrOnMouseLeave specifies the event handler for the mouseleave event.
-	AttrOnMouseLeave = MakePairAttribute("onMouseLeave")
+	AttrOnMouseLeave = MakePairAttributeConstructor("onMouseLeave")
 	// AttrOnMouseMove specifies the event handler for the mousemove event.
-	AttrOnMouseMove = MakePairAttribute("onMouseMove")
+	AttrOnMouseMove = MakePairAttributeConstructor("onMouseMove")
 	// AttrOnMouseOut specifies the event handler for the mouseout event.
-	AttrOnMouseOut = MakePairAttribute("onMouseOut")
+	AttrOnMouseOut = MakePairAttributeConstructor("onMouseOut")
 	// AttrOnMouseOver specifies the event handler for the mouseover event.
-	AttrOnMouseOver = MakePairAttribute("onMouseOver")
+	AttrOnMouseOver = MakePairAttributeConstructor("onMouseOver")
 	// AttrOnMouseUp specifies the event handler for the mouseup event.
-	AttrOnMouseUp = MakePairAttribute("onMouseUp")
+	AttrOnMouseUp = MakePairAttributeConstructor("onMouseUp")
 	// AttrOnMouseWheel specifies the event handler for the mousewheel event.
-	AttrOnMouseWheel = MakePairAttribute("onMouseWheel")
+	AttrOnMouseWheel = MakePairAttributeConstructor("onMouseWheel")
 	// AttrOnMove specifies the event handler for the move event.
-	AttrOnMove = MakePairAttribute("onMove")
+	AttrOnMove = MakePairAttributeConstructor("onMove")
 	// AttrOnMoveEnd specifies the event handler for the moveend event.
-	AttrOnMoveEnd = MakePairAttribute("onMoveEnd")
+	AttrOnMoveEnd = MakePairAttributeConstructor("onMoveEnd")
 	// AttrOnMoveStart specifies the event handler for the movestart event.
-	AttrOnMoveStart = MakePairAttribute("onMoveStart")
+	AttrOnMoveStart = MakePairAttributeConstructor("onMoveStart")
 	// AttrOnOffline specifies the event handler for the offline event.
-	AttrOnOffline = MakePairAttribute("onOffline")
+	AttrOnOffline = MakePairAttributeConstructor("onOffline")
 	// AttrOnOnline specifies the event handler for the online event.
-	AttrOnOnline = MakePairAttribute("onOnline")
+	AttrOnOnline = MakePairAttributeConstructor("onOnline")
 	// AttrOnOutOfSync specifies the event handler for the outofsync event.
-	AttrOnOutOfSync = MakePairAttribute("onOutOfSync")
+	AttrOnOutOfSync = MakePairAttributeConstructor("onOutOfSync")
 	// AttrOnPaste specifies the event handler for the paste event.
-	AttrOnPaste = MakePairAttribute("onPaste")
+	AttrOnPaste = MakePairAttributeConstructor("onPaste")
 	// AttrOnPause specifies the event handler for the pause event.
-	AttrOnPause = MakePairAttribute("onPause")
+	AttrOnPause = MakePairAttributeConstructor("onPause")
 	// AttrOnPopState specifies the event handler for the popstate event.
-	AttrOnPopState = MakePairAttribute("onPopState")
+	AttrOnPopState = MakePairAttributeConstructor("onPopState")
 	// AttrOnProgress specifies the event handler for the progress event.
-	AttrOnProgress = MakePairAttribute("onProgress")
+	AttrOnProgress = MakePairAttributeConstructor("onProgress")
 	// AttrOnPropertyChange specifies the event handler for the propertychange event.
-	AttrOnPropertyChange = MakePairAttribute("onPropertyChange")
+	AttrOnPropertyChange = MakePairAttributeConstructor("onPropertyChange")
 	// AttrOnReadyStateChange specifies the event handler for the readystatechange event.
-	AttrOnReadyStateChange = MakePairAttribute("onReadyStateChange")
+	AttrOnReadyStateChange = MakePairAttributeConstructor("onReadyStateChange")
 	// AttrOnRedo specifies the event handler for the redo event.
-	AttrOnRedo = MakePairAttribute("onRedo")
+	AttrOnRedo = MakePairAttributeConstructor("onRedo")
 	// AttrOnRepeat specifies the event handler for the repeat event.
-	AttrOnRepeat = MakePairAttribute("onRepeat")
+	AttrOnRepeat = MakePairAttributeConstructor("onRepeat")
 	// AttrOnReset specifies the event handler for the reset event.
-	AttrOnReset = MakePairAttribute("onReset")
+	AttrOnReset = MakePairAttributeConstructor("onReset")
 	// AttrOnResize specifies the event handler for the resize event.
-	AttrOnResize = MakePairAttribute("onResize")
+	AttrOnResize = MakePairAttributeConstructor("onResize")
 	// AttrOnResizeEnd specifies the event handler for the resizeend event.
-	AttrOnResizeEnd = MakePairAttribute("onResizeEnd")
+	AttrOnResizeEnd = MakePairAttributeConstructor("onResizeEnd")
 	// AttrOnResizeStart specifies the event handler for the resizestart event.
-	AttrOnResizeStart = MakePairAttribute("onResizeStart")
+	AttrOnResizeStart = MakePairAttributeConstructor("onResizeStart")
 	// AttrOnResume specifies the event handler for the resume event.
-	AttrOnResume = MakePairAttribute("onResume")
+	AttrOnResume = MakePairAttributeConstructor("onResume")
 	// AttrOnReverse specifies the event handler for the reverse event.
-	AttrOnReverse = MakePairAttribute("onReverse")
+	AttrOnReverse = MakePairAttributeConstructor("onReverse")
 	// AttrOnRowsEnter specifies the event handler for the rowsenter event.
-	AttrOnRowsEnter = MakePairAttribute("onRowsEnter")
+	AttrOnRowsEnter = MakePairAttributeConstructor("onRowsEnter")
 	// AttrOnRowExit specifies the event handler for the rowexit event.
-	AttrOnRowExit = MakePairAttribute("onRowExit")
+	AttrOnRowExit = MakePairAttributeConstructor("onRowExit")
 	// AttrOnRowDelete specifies the event handler for the rowdelete event.
-	AttrOnRowDelete = MakePairAttribute("onRowDelete")
+	AttrOnRowDelete = MakePairAttributeConstructor("onRowDelete")
 	// AttrOnRowInserted specifies the event handler for the rowinserted event.
-	AttrOnRowInserted = MakePairAttribute("onRowInserted")
+	AttrOnRowInserted = MakePairAttributeConstructor("onRowInserted")
 	// AttrOnScroll specifies the event handler for the scroll event.
-	AttrOnScroll = MakePairAttribute("onScroll")
+	AttrOnScroll = MakePairAttributeConstructor("onScroll")
 	// AttrOnSeek specifies the event handler for the seek event.
-	AttrOnSeek = MakePairAttribute("onSeek")
+	AttrOnSeek = MakePairAttributeConstructor("onSeek")
 	// AttrOnSelect specifies the event handler for the select event.
-	AttrOnSelect = MakePairAttribute("onSelect")
+	AttrOnSelect = MakePairAttributeConstructor("onSelect")
 	// AttrOnSelectionChange specifies the event handler for the selectionchange event.
-	AttrOnSelectionChange = MakePairAttribute("onSelectionChange")
+	AttrOnSelectionChange = MakePairAttributeConstructor("onSelectionChange")
 	// AttrOnSelectStart specifies the event handler for the selectstart event.
-	AttrOnSelectStart = MakePairAttribute("onSelectStart")
+	AttrOnSelectStart = MakePairAttributeConstructor("onSelectStart")
 	// AttrOnStart specifies the event handler for the start event.
-	AttrOnStart = MakePairAttribute("onStart")
+	AttrOnStart = MakePairAttributeConstructor("onStart")
 	// AttrOnStop specifies the event handler for the stop event.
-	AttrOnStop = MakePairAttribute("onStop")
+	AttrOnStop = MakePairAttributeConstructor("onStop")
 	// AttrOnStorage specifies the event handler for the storage event.
-	AttrOnStorage = MakePairAttribute("onStorage")
+	AttrOnStorage = MakePairAttributeConstructor("onStorage")
 	// AttrOnSyncRestored specifies the event handler for the syncrestored event.
-	AttrOnSyncRestored = MakePairAttribute("onSyncRestored")
+	AttrOnSyncRestored = MakePairAttributeConstructor("onSyncRestored")
 	// AttrOnSubmit specifies the event handler for the submit event.
-	AttrOnSubmit = MakePairAttribute("onSubmit")
+	AttrOnSubmit = MakePairAttributeConstructor("onSubmit")
 	// AttrOnTimeError specifies the event handler for the timeerror event.
-	AttrOnTimeError = MakePairAttribute("onTimeError")
+	AttrOnTimeError = MakePairAttributeConstructor("onTimeError")
 	// AttrOnTrackChange specifies the event handler for the trackchange event.
-	AttrOnTrackChange = MakePairAttribute("onTrackChange")
+	AttrOnTrackChange = MakePairAttributeConstructor("onTrackChange")
 	// AttrOnUndo specifies the event handler for the undo event.
-	AttrOnUndo = MakePairAttribute("onUndo")
+	AttrOnUndo = MakePairAttributeConstructor("onUndo")
 	// AttrOnUnload specifies the event handler for the unload event.
-	AttrOnUnload = MakePairAttribute("onUnload")
+	AttrOnUnload = MakePairAttributeConstructor("onUnload")
 	// AttrOnUrlFlip specifies the event handler for the urlflip event.
-	AttrOnUrlFlip = MakePairAttribute("onUrlFlip")
+	AttrOnUrlFlip = MakePairAttributeConstructor("onUrlFlip")
 	// AttrOpen specifies whether the element is visible (for details, dialog, etc.).
-	AttrOpen = MakeBooleanAttribute("open")
+	AttrOpen = MakeBooleanAttributeConstructor("open")
 	// AttrOptimum specifies the optimal value in a range.
-	AttrOptimum = MakePairAttribute("optimum")
+	AttrOptimum = MakePairAttributeConstructor("optimum")
 	// AttrPattern specifies a regular expression for input validation.
-	AttrPattern = MakePairAttribute("pattern")
+	AttrPattern = MakePairAttributeConstructor("pattern")
 	// AttrPing specifies a list of URLs to notify when a link is clicked.
-	AttrPing = MakePairAttribute("ping")
+	AttrPing = MakePairAttributeConstructor("ping")
 	// AttrPlaceholder provides a hint to the user about what to enter.
-	AttrPlaceholder = MakePairAttribute("placeholder")
+	AttrPlaceholder = MakePairAttributeConstructor("placeholder")
 	// AttrPlaysInline specifies that the video should play inline.
-	AttrPlaysInline = MakeBooleanAttribute("playsinline")
+	AttrPlaysInline = MakeBooleanAttributeConstructor("playsinline")
 	// AttrPoster specifies the preview image for a video.
-	AttrPoster = MakePairAttribute("poster")
+	AttrPoster = MakePairAttributeConstructor("poster")
 	// AttrPopoverTargetAction specifies the action to perform with a popover element.
-	AttrPopoverTargetAction = MakePairAttribute("popovertargetaction")
+	AttrPopoverTargetAction = MakePairAttributeConstructor("popovertargetaction")
 	// AttrPreload specifies how to preload an audio/video.
-	AttrPreload = MakePairAttribute("preload")
+	AttrPreload = MakePairAttributeConstructor("preload")
 	// AttrReadOnly specifies that an input field is read-only.
-	AttrReadOnly = MakeBooleanAttribute("readonly")
+	AttrReadOnly = MakeBooleanAttributeConstructor("readonly")
 	// AttrReferrerPolicy specifies the referrer policy for the resource.
-	AttrReferrerPolicy = MakePairAttribute("referrerpolicy")
+	AttrReferrerPolicy = MakePairAttributeConstructor("referrerpolicy")
 	// AttrRel specifies the relationship between the current document and the linked resource.
-	AttrRel = MakePairAttribute("rel")
+	AttrRel = MakePairAttributeConstructor("rel")
 	// AttrRequired specifies that an input field must be filled out.
-	AttrRequired = MakeBooleanAttribute("required")
+	AttrRequired = MakeBooleanAttributeConstructor("required")
 	// AttrReversed specifies that the list order should be reversed.
-	AttrReversed = MakeBooleanAttribute("reversed")
+	AttrReversed = MakeBooleanAttributeConstructor("reversed")
 	// AttrRole specifies the role of an element for accessibility.
-	AttrRole = MakePairAttribute("role")
+	AttrRole = MakePairAttributeConstructor("role")
 	// AttrRows specifies the number of rows in a textarea.
-	AttrRows = MakePairAttribute("rows")
+	AttrRows = MakePairAttributeConstructor("rows")
 	// AttrRowSpan specifies the number of rows a table cell should span.
-	AttrRowSpan = MakePairAttribute("rowspan")
+	AttrRowSpan = MakePairAttributeConstructor("rowspan")
 	// AttrSandbox enables extra restrictions for an iframe.
-	AttrSandbox = MakePairAttribute("sandbox")
+	AttrSandbox = MakePairAttributeConstructor("sandbox")
 	// AttrScope specifies the header cells that a th element applies to.
-	AttrScope = MakePairAttribute("scope")
+	AttrScope = MakePairAttributeConstructor("scope")
 	// AttrSelected specifies that an option should be pre-selected.
-	AttrSelected = MakeBooleanAttribute("selected")
+	AttrSelected = MakeBooleanAttributeConstructor("selected")
 	// AttrShape specifies the shape of an area in an image map.
-	AttrShape = MakePairAttribute("shape")
+	AttrShape = MakePairAttributeConstructor("shape")
 	// AttrSize specifies the size of an input field or select element.
-	AttrSize = MakePairAttribute("size")
+	AttrSize = MakePairAttributeConstructor("size")
 	// AttrSizes specifies the sizes of an image for different layouts.
-	AttrSizes = MakePairAttribute("sizes")
+	AttrSizes = MakePairAttributeConstructor("sizes")
 	// AttrSlot assigns a slot to an element in a shadow DOM.
-	AttrSlot = MakePairAttribute("slot")
+	AttrSlot = MakePairAttributeConstructor("slot")
 	// AttrSpan specifies the number of columns in a colgroup.
-	AttrSpan = MakePairAttribute("span")
+	AttrSpan = MakePairAttributeConstructor("span")
 	// AttrSpellCheck specifies whether to enable spell checking.
-	AttrSpellCheck = MakePairAttribute("spellcheck")
+	AttrSpellCheck = MakePairAttributeConstructor("spellcheck")
 	// AttrSrc specifies the URL of an image, audio, video, or iframe.
-	AttrSrc = MakePairAttribute("src")
+	AttrSrc = MakePairAttributeConstructor("src")
 	// AttrSrcDoc specifies the inline HTML for an iframe.
-	AttrSrcDoc = MakePairAttribute("srcdoc")
+	AttrSrcDoc = MakePairAttributeConstructor("srcdoc")
 	// AttrSrcLang specifies the language of the track text.
-	AttrSrcLang = MakePairAttribute("srclang")
+	AttrSrcLang = MakePairAttributeConstructor("srclang")
 	// AttrSrcSet specifies multiple image sources for responsive images.
-	AttrSrcSet = MakePairAttribute("srcset")
+	AttrSrcSet = MakePairAttributeConstructor("srcset")
 	// AttrStart specifies the starting number of an ordered list.
-	AttrStart = MakePairAttribute("start")
+	AttrStart = MakePairAttributeConstructor("start")
 	// AttrStep specifies the interval between legal numbers in an input.
-	AttrStep = MakePairAttribute("step")
+	AttrStep = MakePairAttributeConstructor("step")
 	// AttrStyle specifies inline CSS styles.
-	AttrStyle = MakePairAttribute("style")
+	AttrStyle = MakePairAttributeConstructor("style")
 	// AttrSummary provides a summary for a table.
-	AttrSummary = MakePairAttribute("summary")
+	AttrSummary = MakePairAttributeConstructor("summary")
 	// AttrTabIndex specifies the tab order of an element.
-	AttrTabIndex = MakePairAttribute("tabindex")
+	AttrTabIndex = MakePairAttributeConstructor("tabindex")
 	// AttrTarget specifies where to open a link or form response.
-	AttrTarget = MakePairAttribute("target")
+	AttrTarget = MakePairAttributeConstructor("target")
 	// AttrTitle provides advisory information about an element.
-	AttrTitle = MakePairAttribute("title")
+	AttrTitle = MakePairAttributeConstructor("title")
 	// AttrTranslate specifies whether to translate an element.
-	AttrTranslate = MakePairAttribute("translate")
+	AttrTranslate = MakePairAttributeConstructor("translate")
 	// AttrType specifies the type of an input element.
-	AttrType = MakePairAttribute("type")
+	AttrType = MakePairAttributeConstructor("type")
 	// AttrUseMap specifies that an image is a client-side image map.
-	AttrUseMap = MakePairAttribute("usemap")
+	AttrUseMap = MakePairAttributeConstructor("usemap")
 	// AttrValue specifies the value of an input element.
-	AttrValue = MakePairAttribute("value")
+	AttrValue = MakePairAttributeConstructor("value")
 	// AttrWidth specifies the width of an element.
-	AttrWidth = MakePairAttribute("width")
+	AttrWidth = MakePairAttributeConstructor("width")
 	// AttrWrap specifies how text should wrap in a textarea.
-	AttrWrap = MakePairAttribute("wrap")
+	AttrWrap = MakePairAttributeConstructor("wrap")
 )
 
 // Type* constants are valid values for the type attribute on various elements.

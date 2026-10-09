@@ -6,7 +6,7 @@ A fast, type-safe HTML generator for Go.
 
 - **Auto-escaping** - Strings are HTML-escaped automatically for security
 - **Type-safe** - Compile-time checking of your HTML structure
-- **Zero dependencies** - Pure Go standard library
+- **Zero runtime dependencies** - Pure Go standard library
 - **Fast** - Minimal allocations, direct writer output
 - **Composable** - Build complex layouts from simple components
 
@@ -47,7 +47,7 @@ func main() {
                     H1(AttrClass("text-3xl font-bold mb-4"), "Dashboard"),
 
                     // Conditional admin panel
-                    If(isAdmin,
+                    IfNode(isAdmin,
                         DIV(
                             AttrClass("bg-blue-50 p-4 rounded mb-4"),
                             P(AttrClass("font-semibold"), "Admin Panel"),
@@ -152,27 +152,27 @@ INPUT(AttrDisabled(true))   // <input disabled>
 INPUT(AttrDisabled(false))  // <input>
 ```
 
-`nil` attributes are silently skipped during rendering. This is useful for conditional attributes with `IfElseZero`:
+Passing a `nil` argument to an element constructor panics. For conditional attributes use `IfAttr`, which renders nothing when no branch matches and no else branch was set:
 
 ```go
 DIV(
-    AttrClass(Classes("btn", IfElseZero(isPrimary, "btn-primary"))),
-    IfElseZero(isHidden, AttrHidden(true)),
+    AttrClass(Classes("btn", If(isPrimary, "btn-primary"))),
+    IfAttr(isHidden, AttrHidden(true)),
     "Content",
 )
 // When isHidden=false, no hidden attribute is rendered
 ```
 
-Custom attributes can be created with `MakePairAttribute` and `MakeBooleanAttribute`:
+Custom attributes can be created with `MakePairAttributeConstructor` and `MakeBooleanAttributeConstructor`:
 
 ```go
 // Pair attribute — takes a string value
-var AttrHxGet = MakePairAttribute("hx-get")
-var AttrHxPost = MakePairAttribute("hx-post")
-var AttrHxTarget = MakePairAttribute("hx-target")
+var AttrHxGet = MakePairAttributeConstructor("hx-get")
+var AttrHxPost = MakePairAttributeConstructor("hx-post")
+var AttrHxTarget = MakePairAttributeConstructor("hx-target")
 
 // Boolean attribute — takes a bool value
-var AttrHxPreserve = MakeBooleanAttribute("hx-preserve")
+var AttrHxPreserve = MakeBooleanAttributeConstructor("hx-preserve")
 
 BUTTON(
     AttrHxGet("/api/data"),
@@ -207,10 +207,10 @@ P("Active: ", true)        // <p>Active: true</p>
 
 ```go
 // Show element only if condition is true
-If(isLoggedIn, DIV("Welcome back!"))
+IfNode(isLoggedIn, DIV("Welcome back!"))
 
 // Choose between two options
-IfElse(isAdmin, DIV("Admin"), DIV("User"))
+If(isAdmin, DIV("Admin"), DIV("User"))
 ```
 
 ### Lists and Iteration
@@ -252,8 +252,8 @@ Fragment(
 BUTTON(
     AttrClass(Classes(
         "btn",
-        IfElse(err != nil, "btn-error", "btn-primary"),
-        IfElseZero(isHidden, "hidden"),
+        If(err != nil, "btn-error", "btn-primary"),
+        If(isHidden, "hidden"),
     )),
 )
 ```
