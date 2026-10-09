@@ -32,28 +32,34 @@ func main() {
     isAdmin := true
     isTrial := false
 
-    page := Group(
+    page := Fragment(
         DOCTYPE(),
-        HTML(AttrLang("en"),
+        HTML(
+            AttrLang("en"),
             HEAD(
                 TITLE("Dashboard"),
                 SCRIPT(AttrSrc("https://cdn.tailwindcss.com")),
             ),
-            BODY(AttrClass("bg-gray-100 p-8"),
-                DIV(AttrClass("max-w-2xl mx-auto"),
+            BODY(
+                AttrClass("bg-gray-100 p-8"),
+                DIV(
+                    AttrClass("max-w-2xl mx-auto"),
                     H1(AttrClass("text-3xl font-bold mb-4"), "Dashboard"),
 
                     // Conditional admin panel
                     If(isAdmin,
-                        DIV(AttrClass("bg-blue-50 p-4 rounded mb-4"),
+                        DIV(
+                            AttrClass("bg-blue-50 p-4 rounded mb-4"),
                             P(AttrClass("font-semibold"), "Admin Panel"),
                         ),
                     ).ElseIf(isTrial,
-                        DIV(AttrClass("bg-yellow-50 p-4 rounded mb-4"),
+                        DIV(
+                            AttrClass("bg-yellow-50 p-4 rounded mb-4"),
                             P(AttrClass("font-semibold"), "Try Premium"),
                         ),
                     ).Else(
-                        DIV(AttrClass("p-4"),
+                        DIV(
+                            AttrClass("p-4"),
                             P("Welcome Guest"),
                         ),
                     ),
@@ -62,15 +68,20 @@ func main() {
                     P("Total users: ", len(users)),
 
                     // Standard form submission to refresh users
-                    FORM(AttrMethod(MethodPost), AttrAction("/api/users/refresh"),
+                    FORM(
+                        AttrMethod(MethodPost),
+                        AttrAction("/api/users/refresh"),
                         BUTTON(
                             AttrClass("px-4 py-2 bg-blue-500 text-white rounded mt-4"),
                             AttrType(TypeSubmit),
-                         "Refresh Users"),
+                            "Refresh Users",
+                        ),
                     ),
 
                     // User list
-                    UL(AttrClass("space-y-2 mt-4"), AttrId("users-list"),
+                    UL(
+                        AttrClass("space-y-2 mt-4"),
+                        AttrId("users-list"),
                         Range(users, func(name string) any {
                             return LI(AttrClass("p-2 bg-white rounded shadow"), name)
                         }),
@@ -80,7 +91,7 @@ func main() {
         ),
     )
 
-    if err := page.Render(os.Stdout); err != nil {
+    if err := RenderNode(os.Stdout, page); err != nil {
         panic(err)
     }
 }
@@ -147,7 +158,8 @@ INPUT(AttrDisabled(false))  // <input>
 DIV(
     AttrClass(Classes("btn", IfElseZero(isPrimary, "btn-primary"))),
     IfElseZero(isHidden, AttrHidden(true)),
-    "Content")
+    "Content",
+)
 // When isHidden=false, no hidden attribute is rendered
 ```
 
@@ -166,7 +178,8 @@ BUTTON(
     AttrHxGet("/api/data"),
     AttrHxTarget("#result"),
     AttrHxPreserve(true),
-    "Click me")
+    "Click me",
+)
 // Renders: <button hx-get="/api/data" hx-target="#result" hx-preserve>Click me</button>
 ```
 
@@ -221,10 +234,10 @@ DIV(
 ```
 
 ### Grouping
-Use `Group()` to group multiple children without wrapping them in a tag. This is useful for fragments that don't have a common ancestor:
+Use `Fragment()` to group multiple children without wrapping them in a tag. This is useful for fragments that don't have a common ancestor:
 
 ```go
-Group(
+Fragment(
     H1("Title"),
     P("Description"),
 )
@@ -255,19 +268,19 @@ FORM(Attr("hx-vals", Json(Object{"role": "admin", "active": true})))
 
 ### Caching
 
-`Once()` and `OnceWithKey()` cache the rendered output of a component so the underlying tree is only built and rendered once — even when the tree is reconstructed on every request.
+`Once()` and `OnceKey()` cache the rendered output of a component so the underlying tree is only built and rendered once — even when the tree is reconstructed on every request.
 
-When you rebuild the component tree per request (common in web apps), wrap the expensive static parts with `Once` or `OnceWithKey` to avoid reconstructing and re-rendering them on every call.
+When you rebuild the component tree per request (common in web apps), wrap the expensive static parts with `Once` or `OnceKey` to avoid reconstructing and re-rendering them on every call.
 
 - `Once` derives the cache key from the caller's program counter — zero-config, guaranteed uniqueness.
-- `OnceWithKey` uses an explicit key — useful when the same component is built from multiple call sites. It's also slightly faster (skips the PC capture).
+- `OnceKey` uses an explicit key — useful when the same component is built from multiple call sites. It's also slightly faster (skips the PC capture).
 
-> **Note:** When `Once` is called inside a loop (a raw `for`, `Repeat()`, or `Range()`), all iterations share the same call site and therefore **the same cache key**. Only the first iteration renders; subsequent ones reuse the cached HTML. Use `OnceWithKey` with a distinguishing value (e.g., the loop index) when each iteration needs its own cache entry.
+> **Note:** When `Once` is called inside a loop (a raw `for`, `Repeat()`, or `Range()`), all iterations share the same call site and therefore **the same cache key**. Only the first iteration renders; subsequent ones reuse the cached HTML. Use `OnceKey` with a distinguishing value (e.g., the loop index) when each iteration needs its own cache entry.
 
 ```go
 // Once — auto-keyed by caller PC (recommended)
 page := Once(func() HyperNode {
-    return Group(
+    return Fragment(
         DOCTYPE(),
         HTML(
             HEAD(TITLE("Dashboard")),
@@ -276,9 +289,9 @@ page := Once(func() HyperNode {
     )
 })
 
-// OnceWithKey — explicit key
-page := OnceWithKey("dashboard", func() HyperNode {
-    return Group(
+// OnceKey — explicit key
+page := OnceKey("dashboard", func() HyperNode {
+    return Fragment(
         DOCTYPE(),
         HTML(
             HEAD(TITLE("Dashboard")),

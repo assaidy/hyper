@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"math/bits"
 	"runtime"
 	"strconv"
 	"strings"
@@ -54,7 +55,7 @@ func IfElseZero[T any](condition bool, result T) T {
 func If(condition bool, body HyperNode) conditionalNode {
 	return conditionalNode{
 		ifBranches: []ifBranch{{condition: condition, body: body}},
-		elseBranch: Group(),
+		elseBranch: Fragment(),
 	}
 }
 
@@ -87,13 +88,13 @@ type conditionalNode struct {
 	elseBranch HyperNode
 }
 
-func (me conditionalNode) Render(w io.Writer) error {
+func (me conditionalNode) RenderNode(w io.Writer) error {
 	for _, n := range me.ifBranches {
 		if n.condition == true {
-			return Render(w, n.body)
+			return RenderNode(w, n.body)
 		}
 	}
-	return Render(w, me.elseBranch)
+	return RenderNode(w, me.elseBranch)
 }
 
 // ifBranch represents a single condition-body pair within a conditionalNode.
@@ -146,35 +147,63 @@ func Range[T any](input []T, generate func(T) any) HyperNode {
 	return result
 }
 
-// Group groups multiple children without wrapping them in a tag.
-// It creates a container Element with an empty Name, which renders only its children.
+// Fragment groups multiple nodes into a single [HyperNode] without wrapping
+// them in an HTML tag. Each argument is converted to a [HyperNode] and the
+// children are rendered back-to-back, so the output is identical to rendering
+// each node individually.
+//
+// This is useful when you need to pass several nodes as one value, e.g. as the
+// body of a conditional or as a single argument to another component.
 //
 // Example:
 //
-//	Group(
+//	Fragment(
 //		P("Item 1"),
 //		H1("Item 2"),
 //		"Item 3",
 //	)
-func Group(children ...any) Element {
-	var element Element
-	element.InsertChildren(children...)
-	return element
+func Fragment(args ...any) HyperNode {
+	fragment := fragmentNode{nodes: make([]HyperNode, 0, len(args))}
+	for _, arg := range args {
+		fragment.nodes = append(fragment.nodes, toHyperNode(arg))
+	}
+	return fragment
 }
 
-// Once is like [OnceWithKey] but derives the cache key automatically from the
+type fragmentNode struct {
+	nodes []HyperNode
+}
+
+func (me fragmentNode) RenderNode(w io.Writer) error {
+	buf := bufferPool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufferPool.Put(buf)
+	}()
+
+	for _, node := range me.nodes {
+		if err := node.RenderNode(buf); err != nil {
+			return err
+		}
+	}
+
+	_, err := w.Write(buf.Bytes())
+	return err
+}
+
+// Once is like [OnceKey] but derives the cache key automatically from the
 // caller's program counter. This guarantees uniqueness without manual key management.
 //
 // Note: When Once is called inside a loop (for, [Repeat], [Range]), all iterations
 // share the same call site and therefore the same cache key. Only the first
-// iteration renders; subsequent ones reuse the cached HTML. Use [OnceWithKey]
+// iteration renders; subsequent ones reuse the cached HTML. Use [OnceKey]
 // with a distinguishing value (e.g., the loop index) when each iteration needs
 // its own cache entry.
 //
 // Example:
 //
 //	page := Once(func() HyperNode {
-//	    return Group(
+//	    return Fragment(
 //	        DOCTYPE(),
 //	        HTML(
 //	            HEAD(TITLE("Dashboard")),
@@ -189,23 +218,23 @@ func Once(generate func() HyperNode) HyperNode {
 	if runtime.Callers(2, pc[:]) == 0 {
 		panic("failed to get caller PC")
 	}
-	return OnceWithKey(strconv.FormatUint(uint64(pc[0]), 10), generate)
+	return OnceKey(strconv.FormatUint(uint64(pc[0]), 10), generate)
 }
 
-// OnceWithKey caches the rendered output of a component under an explicit key.
+// OnceKey caches the rendered output of a component under an explicit key.
 //
 // The first time the returned node is rendered, generate is called to build
 // the component, its output is rendered and cached. Subsequent renders replay
 // the cached output without calling generate. This is useful for expensive
 // static components whose tree is rebuilt per request.
 //
-// The key must be unique across all OnceWithKey calls in your application.
+// The key must be unique across all OnceKey calls in your application.
 // Two calls with the same key share the same cache entry.
 //
 // Example:
 //
-//	page := OnceWithKey("dashboard-page", func() HyperNode {
-//	    return Group(
+//	page := OnceKey("dashboard-page", func() HyperNode {
+//	    return Fragment(
 //	        DOCTYPE(),
 //	        HTML(
 //	            HEAD(TITLE("Dashboard")),
@@ -213,7 +242,7 @@ func Once(generate func() HyperNode) HyperNode {
 //	        ),
 //	    )
 //	})
-func OnceWithKey(key string, generate func() HyperNode) HyperNode {
+func OnceKey(key string, generate func() HyperNode) HyperNode {
 	return onceNode{nodeFunc: generate, key: key}
 }
 
@@ -227,7 +256,7 @@ type onceNode struct {
 // I decided to use sync.Map for simplicity.
 var onceCache sync.Map
 
-func (me onceNode) Render(w io.Writer) error {
+func (me onceNode) RenderNode(w io.Writer) error {
 	value, ok := onceCache.Load(me.key)
 	if ok {
 		_, err := w.Write(value.([]byte))
@@ -236,7 +265,7 @@ func (me onceNode) Render(w io.Writer) error {
 
 	node := me.nodeFunc()
 	var buffer bytes.Buffer
-	if err := node.Render(&buffer); err != nil {
+	if err := node.RenderNode(&buffer); err != nil {
 		return err
 	}
 
@@ -302,3 +331,17 @@ func Json(v any) string {
 //
 //	Json(Object{"role": "admin", "active": true})
 type Object map[string]any
+
+// growSliceCapacity grows s's capacity to the smallest power of two
+// greater than or equal to n, if necessary, while preserving its length
+// and elements. If cap(s) is already sufficient, s is returned unchanged.
+func growSliceCapacity[T any](s []T, n int) []T {
+	if cap(s) >= n {
+		return s
+	}
+
+	newCap := 1 << bits.Len(uint(n-1))
+	newSlice := make([]T, len(s), newCap)
+	copy(newSlice, s)
+	return newSlice
+}

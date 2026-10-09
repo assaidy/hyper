@@ -5,17 +5,17 @@ import (
 	"io"
 )
 
-// Render writes the HTML representation of a HyperNode to the provided io.Writer.
+// RenderNode writes the HTML representation of a HyperNode to the provided io.Writer.
 //
 // This is a convenience function for writing directly to
 // files, HTTP responses, or other output streams.
 //
 // Example:
 //
-//	err := Render(os.Stdout, DIV("Hello")) // Outputs: <div>Hello</div>
-func Render(w io.Writer, node HyperNode) error {
-	// using Group() because it is nil-safe
-	return Group(node).Render(w)
+//	err := RenderNode(os.Stdout, DIV("Hello")) // Outputs: <div>Hello</div>
+func RenderNode(w io.Writer, node HyperNode) error {
+	// using Fragment() because it is nil-safe
+	return Fragment(node).RenderNode(w)
 }
 
 // RenderThen renders a HyperNode and passes the resulting bytes to the
@@ -29,7 +29,7 @@ func Render(w io.Writer, node HyperNode) error {
 //	})
 func RenderThen(node HyperNode, then func(data []byte) error) error {
 	var buffer bytes.Buffer
-	if err := Render(&buffer, node); err != nil {
+	if err := RenderNode(&buffer, node); err != nil {
 		return err
 	}
 	return then(buffer.Bytes())
@@ -45,7 +45,7 @@ func RenderThen(node HyperNode, then func(data []byte) error) error {
 // Example:
 //
 //	var node HyperNode = DIV("Hello")
-//	err := node.Render(os.Stdout)
+//	err := node.RenderNode(os.Stdout)
 type HyperNode interface {
-	Render(io.Writer) error
+	RenderNode(io.Writer) error
 }

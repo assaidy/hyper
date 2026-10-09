@@ -1,9 +1,9 @@
 package hyper
 
 import (
-	"bytes"
 	"fmt"
 	"html"
+	"io"
 	"reflect"
 	"strings"
 )
@@ -13,7 +13,7 @@ import (
 //
 // NOTE: Hyper doesn't render nil attributes. This is useful for conditional attributes using [IfElseZero]
 type Attribute interface {
-	Render(buf *bytes.Buffer) error
+	RenderAttribute(w io.Writer) error
 }
 
 // PairAttribute represents an HTML attribute with a key and value (key="value").
@@ -22,17 +22,17 @@ type PairAttribute struct {
 	Value string
 }
 
-func (me PairAttribute) Render(buf *bytes.Buffer) error {
+func (me PairAttribute) RenderAttribute(w io.Writer) error {
 	k := strings.TrimSpace(me.Key)
 	if k == "" {
 		return fmt.Errorf("empty/whitespace attribute key not allowed.")
 	}
 
-	buf.WriteByte(' ')
-	buf.WriteString(html.EscapeString(k))
-	buf.WriteString(`="`)
-	buf.WriteString(strings.ReplaceAll(me.Value, `"`, "&quot;"))
-	buf.WriteByte('"')
+	io.WriteString(w, " ")
+	io.WriteString(w, html.EscapeString(k))
+	io.WriteString(w, `="`)
+	io.WriteString(w, strings.ReplaceAll(me.Value, `"`, "&quot;"))
+	io.WriteString(w, `"`)
 
 	return nil
 }
@@ -44,15 +44,15 @@ type BooleanAttribute struct {
 	IsActive bool
 }
 
-func (me BooleanAttribute) Render(buf *bytes.Buffer) error {
+func (me BooleanAttribute) RenderAttribute(w io.Writer) error {
 	k := strings.TrimSpace(me.Key)
 	if k == "" {
 		return fmt.Errorf("empty/whitespace attribute key not allowed.")
 	}
 
 	if me.IsActive {
-		buf.WriteByte(' ')
-		buf.WriteString(html.EscapeString(k))
+		io.WriteString(w, " ")
+		io.WriteString(w, html.EscapeString(k))
 	}
 
 	return nil

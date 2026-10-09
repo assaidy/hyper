@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html"
 	"io"
-	"math/bits"
 	"sync"
 )
 
@@ -14,7 +13,7 @@ import (
 // as literal text content with HTML entities automatically escaped.
 type Text string
 
-func (me Text) Render(w io.Writer) error {
+func (me Text) RenderNode(w io.Writer) error {
 	_, err := io.WriteString(w, html.EscapeString(string(me)))
 	return err
 }
@@ -23,7 +22,7 @@ func (me Text) Render(w io.Writer) error {
 // without any HTML escaping.
 type RawText string
 
-func (me RawText) Render(w io.Writer) error {
+func (me RawText) RenderNode(w io.Writer) error {
 	_, err := io.WriteString(w, string(me))
 	return err
 }
@@ -36,8 +35,8 @@ type Element struct {
 	Children   []HyperNode // Child nodes
 }
 
-// Render generates the HTML for the element and its children to the provided writer.
-func (me Element) Render(w io.Writer) error {
+// RenderNode generates the HTML for the element and its children to the provided writer.
+func (me Element) RenderNode(w io.Writer) error {
 	buf := bufferPool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
@@ -95,7 +94,7 @@ func (me Element) renderChildren(buf *bytes.Buffer) error {
 	for _, child := range me.Children {
 		switch c := child.(type) {
 		// I'm trying to pass the concrete type [bytes.Buffer] as possible.
-		// That's why I'm not just using Render(buf), as in the default case,
+		// That's why I'm not just using RenderNode(buf, c), as in the default case,
 		// which accepts io.Writer.
 		case Element:
 			if err := c.render(buf); err != nil {
@@ -106,7 +105,7 @@ func (me Element) renderChildren(buf *bytes.Buffer) error {
 		case RawText:
 			buf.WriteString(string(c))
 		default:
-			if err := c.Render(buf); err != nil {
+			if err := c.RenderNode(buf); err != nil {
 				return err
 			}
 		}
@@ -119,13 +118,25 @@ func (me Element) renderChildren(buf *bytes.Buffer) error {
 func (me Element) renderAttrs(buf *bytes.Buffer) error {
 	for _, attr := range me.Attributes {
 		if attr != nil {
-			if err := attr.Render(buf); err != nil {
+			if err := attr.RenderAttribute(buf); err != nil {
 				return err
 			}
 		}
 	}
 
 	return nil
+}
+
+// InsertAttributes appends attributes to an [Element].
+func (me *Element) InsertAttributes(attrs ...Attribute) {
+	n := len(attrs)
+	if n == 0 {
+		return
+	}
+
+	me.Attributes = growSliceCapacity(me.Attributes, len(me.Attributes)+n)
+
+	me.Attributes = append(me.Attributes, attrs...)
 }
 
 // InsertChildren adds child nodes to an [Element]. It accepts [HyperNode] values,
@@ -136,41 +147,11 @@ func (me *Element) InsertChildren(children ...any) {
 		return
 	}
 
-	oldLen := len(me.Children)
-	newLen := oldLen + n
-
-	if newLen > cap(me.Children) {
-		// Capacity grows exponentially.
-		newCap := 1 << bits.Len(uint(newLen-1))
-		newSlice := make([]HyperNode, oldLen, newCap)
-		copy(newSlice, me.Children)
-		me.Children = newSlice
-	}
+	me.Children = growSliceCapacity(me.Children, len(me.Children)+n)
 
 	for _, child := range children {
 		me.Children = append(me.Children, toHyperNode(child))
 	}
-}
-
-// InsertAttributes appends attributes to an [Element].
-func (me *Element) InsertAttributes(attrs ...Attribute) {
-	n := len(attrs)
-	if n == 0 {
-		return
-	}
-
-	oldLen := len(me.Attributes)
-	newLen := oldLen + n
-
-	if newLen > cap(me.Attributes) {
-		// Capacity grows exponentially.
-		newCap := 1 << bits.Len(uint(newLen-1))
-		newSlice := make([]Attribute, oldLen, newCap)
-		copy(newSlice, me.Attributes)
-		me.Attributes = newSlice
-	}
-
-	me.Attributes = append(me.Attributes, attrs...)
 }
 
 // toHyperNode converts an arbitrary value to a [HyperNode].
