@@ -185,19 +185,19 @@ func TestConditionalAttr(t *testing.T) {
 }
 
 func TestRepeat(t *testing.T) {
-	t.Run("calls generate exactly n times and renders in order", func(t *testing.T) {
-		calls := 0
-		node := Repeat(3, func() any {
-			calls++
-			return LI(strconv.Itoa(calls))
+	t.Run("calls generate exactly n times with the index and renders in order", func(t *testing.T) {
+		var indexes []int
+		node := Repeat(3, func(i int) any {
+			indexes = append(indexes, i)
+			return LI(strconv.Itoa(i + 1))
 		})
 		require.Equal(t, "<li>1</li><li>2</li><li>3</li>", mustRender(t, node))
-		require.Equal(t, 3, calls)
+		require.Equal(t, []int{0, 1, 2}, indexes)
 	})
 
 	t.Run("zero count renders nothing and never calls generate", func(t *testing.T) {
 		calls := 0
-		node := Repeat(0, func() any {
+		node := Repeat(0, func(int) any {
 			calls++
 			return P("x")
 		})
@@ -208,7 +208,7 @@ func TestRepeat(t *testing.T) {
 	t.Run("converts generated values to nodes", func(t *testing.T) {
 		values := []any{"text", 42, P("elem")}
 		i := 0
-		node := Repeat(len(values), func() any {
+		node := Repeat(len(values), func(int) any {
 			v := values[i]
 			i++
 			return v
@@ -218,7 +218,7 @@ func TestRepeat(t *testing.T) {
 
 	t.Run("negative count renders nothing and never calls generate", func(t *testing.T) {
 		calls := 0
-		node := Repeat(-3, func() any {
+		node := Repeat(-3, func(int) any {
 			calls++
 			return P("x")
 		})
@@ -228,20 +228,23 @@ func TestRepeat(t *testing.T) {
 }
 
 func TestRange(t *testing.T) {
-	t.Run("maps every element in order and calls generate per element", func(t *testing.T) {
+	t.Run("maps every element in order with the index and calls generate per element", func(t *testing.T) {
 		items := []string{"Apple", "Banana"}
+		var indexes []int
 		calls := 0
-		node := Range(items, func(item string) any {
+		node := Range(items, func(i int, item string) any {
+			indexes = append(indexes, i)
 			calls++
 			return LI(item)
 		})
 		require.Equal(t, "<li>Apple</li><li>Banana</li>", mustRender(t, node))
 		require.Equal(t, 2, calls)
+		require.Equal(t, []int{0, 1}, indexes)
 	})
 
 	t.Run("empty input renders nothing without calling generate", func(t *testing.T) {
 		calls := 0
-		node := Range([]string{}, func(string) any {
+		node := Range([]string{}, func(int, string) any {
 			calls++
 			return P("x")
 		})
@@ -250,7 +253,7 @@ func TestRange(t *testing.T) {
 	})
 
 	t.Run("nil input behaves like empty input", func(t *testing.T) {
-		node := Range(nil, func(string) any { return P("x") })
+		node := Range(nil, func(int, string) any { return P("x") })
 		require.Equal(t, "", mustRender(t, node))
 	})
 }

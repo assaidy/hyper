@@ -36,22 +36,21 @@ func RenderNode(w io.Writer, node HyperNode) error {
 	return node.RenderNode(w)
 }
 
-// RenderNodeThen renders a HyperNode and passes the resulting bytes to the
-// provided callback function. This is useful for capturing rendered output for further
-// processing without writing directly to an io.Writer.
+// RenderNodeToString renders a HyperNode and returns the resulting HTML.
+//
+// Use it when you need the rendered value (for caching, emails, tests)
+// instead of writing to an io.Writer.
 //
 // Example:
 //
-//	err := RenderNodeThen(node, func(data []byte) error {
-//		return saveToCache(data)
-//	})
-func RenderNodeThen(node HyperNode, then func(data []byte) error) error {
+//	html, err := RenderNodeToString(DIV("Hello")) // "<div>Hello</div>", nil
+func RenderNodeToString(node HyperNode) (string, error) {
 	if node == nil {
-		panic("nil node passed to RenderNodeThen")
+		panic("nil node passed to RenderNodeToString")
 	}
 	var buffer bytes.Buffer
 	if err := node.RenderNode(&buffer); err != nil {
-		return err
+		return "", err
 	}
-	return then(buffer.Bytes())
+	return buffer.String(), nil
 }

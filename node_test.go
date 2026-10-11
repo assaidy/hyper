@@ -32,40 +32,22 @@ func TestRenderNode(t *testing.T) {
 	})
 }
 
-func TestRenderNodeThen(t *testing.T) {
-	t.Run("passes the rendered bytes to the callback", func(t *testing.T) {
-		var got string
-		err := RenderNodeThen(DIV("hi"), func(data []byte) error {
-			got = string(data)
-			return nil
-		})
+func TestRenderNodeToString(t *testing.T) {
+	t.Run("returns the rendered output", func(t *testing.T) {
+		html, err := RenderNodeToString(DIV("hi"))
 		require.NoError(t, err)
-		require.Equal(t, "<div>hi</div>", got)
+		require.Equal(t, "<div>hi</div>", html)
 	})
 
-	t.Run("returns the callback error", func(t *testing.T) {
-		err := RenderNodeThen(DIV("hi"), func([]byte) error { return errBoom })
+	t.Run("returns the render error with an empty string", func(t *testing.T) {
+		html, err := RenderNodeToString(errNode{errBoom})
 		require.ErrorIs(t, err, errBoom)
+		require.Empty(t, html)
 	})
 
-	t.Run("does not call the callback when rendering fails", func(t *testing.T) {
-		called := false
-		err := RenderNodeThen(errNode{errBoom}, func([]byte) error {
-			called = true
-			return nil
+	t.Run("nil node panics", func(t *testing.T) {
+		require.PanicsWithValue(t, "nil node passed to RenderNodeToString", func() {
+			_, _ = RenderNodeToString(nil)
 		})
-		require.ErrorIs(t, err, errBoom)
-		require.False(t, called)
-	})
-
-	t.Run("nil node panics before the callback", func(t *testing.T) {
-		called := false
-		require.PanicsWithValue(t, "nil node passed to RenderNodeThen", func() {
-			RenderNodeThen(nil, func([]byte) error {
-				called = true
-				return nil
-			})
-		})
-		require.False(t, called)
 	})
 }

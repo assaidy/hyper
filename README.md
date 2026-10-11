@@ -122,14 +122,14 @@ func main() {
                         ),
                     ),
 
-                    // Range maps a slice; Repeat repeats N times.
+                    // Range maps a slice; Repeat repeats N times (both pass the index).
                     UL(
                         AttrClass("space-y-2 mt-4"),
                         AttrId("users-list"),
-                        Range(users, func(name string) any {
+                        Range(users, func(_ int, name string) any {
                             return LI(AttrClass("p-2 bg-white rounded shadow"), name)
                         }),
-                        Repeat(2, func() any {
+                        Repeat(2, func(_ int) any {
                             return LI(AttrClass("p-2 opacity-50"), "Placeholder")
                         }),
                     ),
@@ -331,24 +331,24 @@ IfNode(isAdmin,
 
 #### Repeat
 
-`Repeat` calls `generate` exactly `n` times and aggregates each result (converted to a node) into a single container node. Using a function keeps each instance unique. Zero or negative renders nothing without calling `generate`.
+`Repeat` calls `generate` exactly `n` times with the zero-based index and aggregates each result (converted to a node) into a single container node. Using a function keeps each instance unique. Zero or negative renders nothing without calling `generate`. Ignore the index with `_` when it is not needed.
 
 ```go
 UL(
-    Repeat(5, func() any {
-        return LI("List item")
+    Repeat(5, func(i int) any {
+        return LI(i)
     }),
 )
 ```
 
 #### Range
 
-`Range` transforms each slice element with `generate` and aggregates the results (converted to nodes) into a single container node. Nil and empty inputs render nothing without calling `generate`.
+`Range` transforms each slice element with `generate` (receiving the index and the element) and aggregates the results (converted to nodes) into a single container node. Nil and empty inputs render nothing without calling `generate`. Ignore the index with `_` when it is not needed.
 
 ```go
 items := []string{"Apple", "Banana", "Cherry"}
 UL(
-    Range(items, func(item string) any {
+    Range(items, func(i int, item string) any {
         return LI(item)
     }),
 )

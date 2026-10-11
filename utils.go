@@ -250,52 +250,56 @@ func (me conditionalNode) RenderNode(w io.Writer) error {
 	return RenderNode(w, me.elseBranch)
 }
 
-// Repeat generates multiple nodes by calling generate exactly n times.
+// Repeat generates multiple nodes by calling generate exactly n times with
+// the zero-based index.
 //
 // Each resulting value is converted to a [HyperNode] and
 // aggregated into a single container node. Using a function ensures each node
 // instance is unique (important for elements with mutable state).
 // A zero or negative count renders nothing without calling generate.
+// Ignore the index with _ when it is not needed.
 //
 // Example:
 //
 //	UL(
-//		Repeat(5, func() any {
-//			return LI("List item")
+//		Repeat(5, func(i int) any {
+//			return LI(i)
 //		}),
 //	)
-func Repeat(n int, generate func() any) HyperNode {
+func Repeat(n int, generate func(int) any) HyperNode {
 	if n <= 0 {
 		return Fragment()
 	}
 	fragment := fragmentNode{nodes: make([]HyperNode, 0, n)}
-	for range n {
-		fragment.nodes = append(fragment.nodes, toHyperNode(generate()))
+	for i := range n {
+		fragment.nodes = append(fragment.nodes, toHyperNode(generate(i)))
 	}
 	return fragment
 }
 
-// Range transforms a slice of items into nodes by applying generate to each element.
+// Range transforms a slice of items into nodes by applying generate to each
+// element with its index.
 //
 // Each element is transformed using the provided function, converted to a
 // [HyperNode], and aggregated into a single container node.
 // Nil and empty inputs render nothing without calling generate.
+// Ignore the index with _ when it is not needed.
 //
 // Example:
 //
 //	items := []string{"Apple", "Banana", "Cherry"}
 //	UL(
-//		Range(items, func(item string) any {
+//		Range(items, func(i int, item string) any {
 //			return LI(item)
 //		}),
 //	)
-func Range[T any](input []T, generate func(T) any) HyperNode {
+func Range[T any](input []T, generate func(int, T) any) HyperNode {
 	if len(input) == 0 {
 		return Fragment()
 	}
 	fragment := fragmentNode{nodes: make([]HyperNode, 0, len(input))}
-	for _, item := range input {
-		fragment.nodes = append(fragment.nodes, toHyperNode(generate(item)))
+	for i, item := range input {
+		fragment.nodes = append(fragment.nodes, toHyperNode(generate(i, item)))
 	}
 	return fragment
 }
