@@ -11,34 +11,89 @@ import (
 	"sync"
 )
 
-// If returns the appropriate value based on a boolean condition. When no
-// alternative is given, a false condition yields the zero value of T.
+// If starts a conditional value chain for plain values such as strings,
+// numbers, or structs.
 //
-// This generic function is useful for inline conditional expressions when
-// building elements, letting you choose between two values in a single expression.
-// For conditional attributes use [IfAttr] instead: a false condition without an
-// alternative yields a nil attribute, which panics in element constructors.
+// Use If for inline conditional expressions when building elements, letting
+// you choose between values in a single expression. Extend the chain with
+// ElseIf and terminate it with Else (explicit fallback) or Value
+// (zero-value fallback).
+//
+// Do not use If with [HyperNode] or [Attribute] values. Use [IfNode] and
+// [IfAttr] instead: they are render/nil-safe — a false condition without an
+// else renders nothing, while a nil node or attribute panics in element
+// constructors.
 //
 // Example:
 //
-//	class := If(err != nil, "text-red", "text-black")
-//	class := If(err != nil, "text-red")
-func If[T any](condition bool, ifTrue T, ifFalse ...T) T {
-	if condition {
-		return ifTrue
+//	AttrClass(Classes(
+//		"btn",
+//		If(hasError, "btn-error").Else("btn-primary"),
+//		If(isHidden, "hidden").Value(),
+//	))
+func If[T any](condition bool, value T) conditionalValue[T] {
+	return conditionalValue[T]{
+		ifBranches: []valueIfBranch[T]{{condition: condition, value: value}},
 	}
-	if len(ifFalse) > 0 {
-		return ifFalse[0]
-	}
-	var zero T
-	return zero
 }
 
-// IfAttr returns a conditional attribute chain starting with a condition.
+// conditionalValue represents a chain of if-else conditions for plain values.
+// It is created by [If] and can be extended with ElseIf, then terminated
+// with Else or Value.
+type conditionalValue[T any] struct {
+	ifBranches []valueIfBranch[T]
+	elseBranch T
+}
+
+type valueIfBranch[T any] struct {
+	condition bool
+	value     T
+}
+
+// ElseIf adds an additional condition to the conditional value chain.
+//
+// Example:
+//
+//	If(isAdmin, "admin").ElseIf(isMember, "member").Else("guest")
+func (me conditionalValue[T]) ElseIf(condition bool, value T) conditionalValue[T] {
+	me.ifBranches = append(me.ifBranches, valueIfBranch[T]{condition: condition, value: value})
+	return me
+}
+
+// Else terminates the chain and returns the first matching value, or the
+// fallback value when no condition matches.
+//
+// Example:
+//
+//	If(isAdmin, "admin").Else("user")
+func (me conditionalValue[T]) Else(value T) T {
+	me.elseBranch = value
+	return me.Value()
+}
+
+// Value terminates the chain and returns the first matching value, or the
+// zero value of T when no condition matches.
+//
+// Example:
+//
+//	If(isHidden, "hidden").Value() // "" when isHidden is false
+func (me conditionalValue[T]) Value() T {
+	for _, b := range me.ifBranches {
+		if b.condition {
+			return b.value
+		}
+	}
+	return me.elseBranch
+}
+
+// IfAttr starts a conditional attribute chain.
 //
 // The attribute is rendered only when its condition is true. When no branch
 // matches and no else branch was set, nothing is rendered (the attribute is
-// omitted). Extend the chain with ElseIf and Else.
+// omitted). Extend the chain with ElseIf and terminate it with Else.
+//
+// It panics if attr is nil. Use IfAttr instead of passing a nil attribute to
+// an element constructor (which panics).
 //
 // Example:
 //
@@ -53,7 +108,9 @@ func IfAttr(condition bool, attr Attribute) conditionalAttr {
 	}
 }
 
-// ElseIf adds an additional condition to the conditional chain.
+// ElseIf adds an additional condition to the conditional attribute chain.
+//
+// It panics if attr is nil.
 //
 // Example:
 //
@@ -67,7 +124,10 @@ func (me conditionalAttr) ElseIf(condition bool, attr Attribute) conditionalAttr
 	return me
 }
 
-// Else provides a fallback attribute when no conditions match.
+// Else terminates the chain and provides a fallback attribute when no
+// conditions match.
+//
+// It panics if attr is nil.
 //
 // Example:
 //
@@ -82,10 +142,16 @@ func (me conditionalAttr) Else(attr Attribute) Attribute {
 }
 
 // conditionalAttr represents a chain of if-else conditions for attributes.
-// It is created by [IfAttr] and can be extended with ElseIf() and Else().
+// It is created by [IfAttr] and can be extended with ElseIf and terminated
+// with Else.
 type conditionalAttr struct {
 	ifBranches []attrIfBranch
 	elseBranch Attribute
+}
+
+type attrIfBranch struct {
+	condition bool
+	body      Attribute
 }
 
 func (me conditionalAttr) RenderAttribute(w io.Writer) error {
@@ -103,15 +169,15 @@ func (me conditionalAttr) RenderAttribute(w io.Writer) error {
 	return nil
 }
 
-type attrIfBranch struct {
-	condition bool
-	body      Attribute
-}
-
-// IfNode creates a conditional node chain starting with a condition.
+// IfNode starts a conditional node chain.
 //
-// The body is rendered only if the condition is true, otherwise
-// an empty fragment is rendered (preventing nil pointer issues).
+// The body is rendered only if the condition is true, otherwise an empty
+// fragment is rendered (preventing nil pointer issues). Extend the chain with
+// ElseIf and terminate it with Else.
+// Without an Else, a fully-false chain renders nothing.
+//
+// It panics if body is nil. Use IfNode instead of passing a nil node to an
+// element constructor (which panics).
 //
 // Example:
 //
@@ -128,7 +194,9 @@ func IfNode(condition bool, body HyperNode) conditionalNode {
 	}
 }
 
-// ElseIf adds an additional condition to the conditional chain.
+// ElseIf adds an additional condition to the conditional node chain.
+//
+// It panics if body is nil.
 //
 // Example:
 //
@@ -142,7 +210,10 @@ func (me conditionalNode) ElseIf(condition bool, body HyperNode) conditionalNode
 	return me
 }
 
-// Else provides a fallback body when no conditions match.
+// Else terminates the chain and provides a fallback body when no conditions
+// match.
+//
+// It panics if body is nil.
 //
 // Example:
 //
@@ -156,11 +227,18 @@ func (me conditionalNode) Else(body HyperNode) HyperNode {
 	return me
 }
 
-// conditionalNode represents a chain of if-else conditions.
-// It is created by [IfNode] and can be extended with ElseIf() and Else().
+// conditionalNode represents a chain of if-else conditions for nodes.
+// It is created by [IfNode] and can be extended with ElseIf and terminated
+// with Else.
 type conditionalNode struct {
 	ifBranches []nodeIfBranch
 	elseBranch HyperNode
+}
+
+// nodeIfBranch represents a single condition-body pair within a conditionalNode.
+type nodeIfBranch struct {
+	condition bool
+	body      HyperNode
 }
 
 func (me conditionalNode) RenderNode(w io.Writer) error {
@@ -172,18 +250,12 @@ func (me conditionalNode) RenderNode(w io.Writer) error {
 	return RenderNode(w, me.elseBranch)
 }
 
-// nodeIfBranch represents a single condition-body pair within a conditionalNode.
-type nodeIfBranch struct {
-	condition bool
-	body      HyperNode
-}
-
-// Repeat generates multiple Nodes by calling a function n times.
+// Repeat generates multiple nodes by calling generate exactly n times.
 //
-// The provided function is called exactly n times, and each resulting value
-// is converted to a [HyperNode] and aggregated into a single container Node.
-// Using a function ensures each Node instance is unique (important for elements
-// with mutable state).
+// Each resulting value is converted to a [HyperNode] and
+// aggregated into a single container node. Using a function ensures each node
+// instance is unique (important for elements with mutable state).
+// A zero or negative count renders nothing without calling generate.
 //
 // Example:
 //
@@ -193,8 +265,8 @@ type nodeIfBranch struct {
 //		}),
 //	)
 func Repeat(n int, generate func() any) HyperNode {
-	if n < 0 {
-		panic("negative count passed to Repeat")
+	if n <= 0 {
+		return Fragment()
 	}
 	fragment := fragmentNode{nodes: make([]HyperNode, 0, n)}
 	for range n {
@@ -203,11 +275,11 @@ func Repeat(n int, generate func() any) HyperNode {
 	return fragment
 }
 
-// Range transforms a slice of items into Nodes by applying a function to each element.
+// Range transforms a slice of items into nodes by applying generate to each element.
 //
-// Each element in the input slice is transformed using the provided function, and
-// all resulting values are converted to [HyperNode] and aggregated into a single
-// container Node.
+// Each element is transformed using the provided function, converted to a
+// [HyperNode], and aggregated into a single container node.
+// Nil and empty inputs render nothing without calling generate.
 //
 // Example:
 //
@@ -218,6 +290,9 @@ func Repeat(n int, generate func() any) HyperNode {
 //		}),
 //	)
 func Range[T any](input []T, generate func(T) any) HyperNode {
+	if len(input) == 0 {
+		return Fragment()
+	}
 	fragment := fragmentNode{nodes: make([]HyperNode, 0, len(input))}
 	for _, item := range input {
 		fragment.nodes = append(fragment.nodes, toHyperNode(generate(item)))
@@ -232,6 +307,9 @@ func Range[T any](input []T, generate func(T) any) HyperNode {
 //
 // This is useful when you need to pass several nodes as one value, e.g. as the
 // body of a conditional or as a single argument to another component.
+// An empty Fragment renders nothing.
+//
+// It panics on a nil argument.
 //
 // Example:
 //
@@ -272,8 +350,11 @@ func (me fragmentNode) RenderNode(w io.Writer) error {
 	return err
 }
 
-// Once is like [OnceKey] but derives the cache key automatically from the
-// caller's program counter. This guarantees uniqueness without manual key management.
+// Once caches the rendered output of a component, deriving the cache key
+// automatically from the caller's program counter. This guarantees uniqueness
+// without manual key management. It behaves like [OnceKey] otherwise: the
+// first render calls generate, caches its output, and later renders replay
+// the cache without calling generate.
 //
 // Note: When Once is called inside a loop (for, [Repeat], [Range]), all iterations
 // share the same call site and therefore the same cache key. Only the first
@@ -306,11 +387,11 @@ func Once(generate func() HyperNode) HyperNode {
 //
 // The first time the returned node is rendered, generate is called to build
 // the component, its output is rendered and cached. Subsequent renders replay
-// the cached output without calling generate. This is useful for expensive
-// static components whose tree is rebuilt per request.
+// the cached output without calling generate. A failed render is not cached.
+// This is useful for expensive static components whose tree is rebuilt per request.
 //
-// The key must be unique across all OnceKey calls in your application.
-// Two calls with the same key share the same cache entry.
+// The key must be unique across all OnceKey (and [Once]) calls in your
+// application. Two calls with the same key share the same cache entry.
 //
 // Example:
 //
@@ -357,15 +438,22 @@ func (me onceNode) RenderNode(w io.Writer) error {
 }
 
 // Classes joins multiple CSS class names into a single space-separated string.
-// Duplicate or empty classes are filtered out.
+//
+// Empty and whitespace-only entries are dropped, surrounding whitespace is
+// trimmed, and duplicates are removed (after trimming). With no classes it
+// returns "".
+//
+// Pair it with [If] for conditional classes: terminate single-branch cases
+// with Value (yields "" when false, which Classes drops) and two-way cases
+// with Else.
 //
 // Example:
 //
 //	BUTTON(
 //		AttrClass(Classes(
 //			"btn",
-//			If(err != nil, "btn-error", "btn-primary"),
-//			If(isHidden, "hidden"),
+//			If(hasError, "btn-error").Else("btn-primary"),
+//			If(isHidden, "hidden").Value(),
 //		)),
 //	)
 func Classes(classes ...string) string {
@@ -394,6 +482,7 @@ func Classes(classes ...string) string {
 // Json marshals v to a JSON string, panicking on error.
 // Useful for embedding static JSON in templates where the value is known
 // to be valid at compile time, avoiding error-handling boilerplate.
+// Pair it with [Object] for inline maps.
 //
 // Example:
 //
@@ -406,7 +495,8 @@ func Json(v any) string {
 	return string(data)
 }
 
-// Object is a shortcut for map[string]any, useful for JSON strings.
+// Object is a shortcut for map[string]any, useful with [Json] for inline
+// JSON objects.
 //
 // Example:
 //

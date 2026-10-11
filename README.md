@@ -5,7 +5,6 @@ A fast, type-safe HTML generator for Go.
 ## Features
 
 - **Auto-escaping** - Strings are HTML-escaped automatically for security
-- **Type-safe** - Compile-time checking of your HTML structure
 - **Zero runtime dependencies** - Pure Go standard library
 - **Fast** - Minimal allocations, direct writer output
 - **Composable** - Build complex layouts from simple components
@@ -27,26 +26,48 @@ import (
     . "github.com/assaidy/hyper/v3"
 )
 
+// Custom attributes via constructors.
+var (
+    AttrHxGet      = MakePairAttributeConstructor("hx-get")
+    AttrHxTarget   = MakePairAttributeConstructor("hx-target")
+    AttrHxPreserve = MakeBooleanAttributeConstructor("hx-preserve")
+)
+
 func main() {
     users := []string{"Alice", "Bob", "Charlie"}
     isAdmin := true
     isTrial := false
+    isHidden := false
+    hasError := false
 
+    // Static parts are cached: Once is auto-keyed, OnceKey uses an explicit key.
+    header := Once(func() HyperNode {
+        return HEADER(
+            AttrClass("p-4 border-b"),
+            H1(AttrClass("text-3xl font-bold"), "Dashboard"),
+        )
+    })
+    footer := OnceKey("footer", func() HyperNode {
+        return FOOTER(AttrClass("p-4 text-sm"), "Static footer")
+    })
+
+    // Fragment groups nodes without a wrapper; DOCTYPE is a void node.
     page := Fragment(
         DOCTYPE(),
         HTML(
             AttrLang("en"),
             HEAD(
                 TITLE("Dashboard"),
+                META(AttrCharset("utf-8")), // Void elements take only attributes.
+                LINK(AttrRel("stylesheet"), AttrHref("/app.css")),
                 SCRIPT(AttrSrc("https://cdn.tailwindcss.com")),
             ),
             BODY(
                 AttrClass("bg-gray-100 p-8"),
+                header,
                 DIV(
                     AttrClass("max-w-2xl mx-auto"),
-                    H1(AttrClass("text-3xl font-bold mb-4"), "Dashboard"),
-
-                    // Conditional admin panel
+                    // IfNode/ElseIf/Else for conditional nodes.
                     IfNode(isAdmin,
                         DIV(
                             AttrClass("bg-blue-50 p-4 rounded mb-4"),
@@ -58,39 +79,67 @@ func main() {
                             P(AttrClass("font-semibold"), "Try Premium"),
                         ),
                     ).Else(
-                        DIV(
-                            AttrClass("p-4"),
-                            P("Welcome Guest"),
-                        ),
+                        DIV(AttrClass("p-4"), P("Welcome Guest")),
                     ),
 
-                    // User count
-                    P("Total users: ", len(users)),
+                    // If/Else/Value for plain values; Classes joins conditional classes.
+                    P(
+                        AttrClass(Classes(
+                            "text-sm",
+                            If(hasError, "text-red-500").Else("text-gray-500"),
+                            If(isHidden, "hidden").Value(),
+                        )),
+                        "Total users: ", len(users), // Ints auto-convert to Text.
+                    ),
 
-                    // Standard form submission to refresh users
+                    // Strings escape by default; RawText does not.
+                    P("<b>escaped</b>"),
+                    DIV(RawText("<hr>")),
+
+                    // Void elements; Attr works for any key; IfAttr omits when false.
+                    IMG(AttrSrc("/logo.png"), AttrAlt("logo")),
+                    BR(),
+                    INPUT(
+                        AttrType(TypeSubmit),
+                        AttrDisabled(!isAdmin), // Boolean attr: present when true.
+                        Attr("placeholder", "Search"),
+                        IfAttr(isHidden, AttrHidden(true)),
+                    ),
+
+                    // Json/Object for inline JSON; custom attrs from constructors.
                     FORM(
                         AttrMethod(MethodPost),
                         AttrAction("/api/users/refresh"),
+                        Attr("hx-vals", Json(Object{"role": "admin", "active": true})),
                         BUTTON(
                             AttrClass("px-4 py-2 bg-blue-500 text-white rounded mt-4"),
                             AttrType(TypeSubmit),
+                            // Attrs we defined before.
+                            AttrHxGet("/api/users"),
+                            AttrHxTarget("#users-list"),
+                            AttrHxPreserve(true),
                             "Refresh Users",
                         ),
                     ),
 
-                    // User list
+                    // Range maps a slice; Repeat repeats N times.
                     UL(
                         AttrClass("space-y-2 mt-4"),
                         AttrId("users-list"),
                         Range(users, func(name string) any {
                             return LI(AttrClass("p-2 bg-white rounded shadow"), name)
                         }),
+                        Repeat(2, func() any {
+                            return LI(AttrClass("p-2 opacity-50"), "Placeholder")
+                        }),
                     ),
                 ),
+                footer,
             ),
         ),
     )
 
+    // RenderNode writes to any io.Writer.
     if err := RenderNode(os.Stdout, page); err != nil {
         panic(err)
     }
@@ -152,11 +201,11 @@ INPUT(AttrDisabled(true))   // <input disabled>
 INPUT(AttrDisabled(false))  // <input>
 ```
 
-Passing a `nil` argument to an element constructor panics. For conditional attributes use `IfAttr`, which renders nothing when no branch matches and no else branch was set:
+Passing a `nil` argument to an element constructor panics. For conditional attributes use `IfAttr`, which renders nothing when no branch matches and no else branch was set (see [IfAttr](#ifattr)):
 
 ```go
 DIV(
-    AttrClass(Classes("btn", If(isPrimary, "btn-primary"))),
+    AttrClass(Classes("btn", If(isPrimary, "btn-primary").Value())),
     IfAttr(isHidden, AttrHidden(true)),
     "Content",
 )
@@ -203,77 +252,153 @@ P("Count: ", 42)           // <p>Count: 42</p>
 P("Active: ", true)        // <p>Active: true</p>
 ```
 
-### Conditional Rendering
+### Utils
+
+Helpers for conditionals, lists, grouping, classes, JSON, and caching.
+
+#### If
+
+`If` is a generic if expression for plain values (strings, numbers, structs). Chain `ElseIf` calls and terminate with `Else` (explicit fallback) or `Value` (zero-value fallback).
+
+Do not use `If` with nodes or attributes — use [IfNode](#ifnode) and [IfAttr](#ifattr) instead, as they are render/nil-safe.
 
 ```go
-// Show element only if condition is true
-IfNode(isLoggedIn, DIV("Welcome back!"))
+// Two-way choice
+If(hasError, "btn-error").Else("btn-primary") // "btn-error" or "btn-primary"
 
-// Choose between two options
-If(isAdmin, DIV("Admin"), DIV("User"))
+// Single-branch (falls back to "" when false — dropped by Classes)
+If(isHidden, "hidden").Value()
+
+// Multi-branch
+If(isAdmin, "admin").ElseIf(isMember, "member").Else("guest")
+
+// Typical use with Classes
+BUTTON(
+    AttrClass(Classes(
+        "btn",
+        If(hasError, "btn-error").Else("btn-primary"),
+        If(isHidden, "hidden").Value(),
+    )),
+)
 ```
 
-### Lists and Iteration
+#### IfAttr
+
+`IfAttr` starts a conditional attribute chain. The attribute renders only when its condition is true; when no branch matches and no else was set, nothing renders (the attribute is omitted). Chain `ElseIf` and terminate with `Else`. Passing `nil` to `IfAttr`/`ElseIf`/`Else` panics.
 
 ```go
-items := []string{"Apple", "Banana"}
+// Rendered only when isHidden
+IfAttr(isHidden, AttrHidden(true))
 
-// Map over slice
+// With fallback
+IfAttr(isAdmin, AttrRequired(true)).
+    Else(AttrReadOnly(true))
+
+// Multi-branch
+IfAttr(isDark, AttrHidden(true)).
+    ElseIf(isLight, AttrRequired(true))
+```
+
+#### IfNode
+
+`IfNode` starts a conditional node chain. The body renders only when its condition is true, otherwise an empty fragment renders (avoiding nil panics). Without an `Else`, a fully-false chain renders nothing. Chain `ElseIf` and terminate with `Else`. Passing `nil` to `IfNode`/`ElseIf`/`Else` panics.
+
+```go
+// Show only when logged in (renders "" otherwise)
+IfNode(isLoggedIn, DIV("Welcome back!"))
+
+// Two-way choice
+IfNode(isAdmin, DIV("Admin")).Else(DIV("User"))
+
+// Multi-branch
+IfNode(isAdmin,
+    DIV(
+        AttrClass("bg-blue-50 p-4 rounded mb-4"),
+        P(AttrClass("font-semibold"), "Admin Panel"),
+    ),
+).ElseIf(isTrial,
+    DIV(
+        AttrClass("bg-yellow-50 p-4 rounded mb-4"),
+        P(AttrClass("font-semibold"), "Try Premium"),
+    ),
+).Else(
+    DIV(
+        AttrClass("p-4"),
+        P("Welcome Guest"),
+    ),
+)
+```
+
+#### Repeat
+
+`Repeat` calls `generate` exactly `n` times and aggregates each result (converted to a node) into a single container node. Using a function keeps each instance unique. Zero or negative renders nothing without calling `generate`.
+
+```go
+UL(
+    Repeat(5, func() any {
+        return LI("List item")
+    }),
+)
+```
+
+#### Range
+
+`Range` transforms each slice element with `generate` and aggregates the results (converted to nodes) into a single container node. Nil and empty inputs render nothing without calling `generate`.
+
+```go
+items := []string{"Apple", "Banana", "Cherry"}
 UL(
     Range(items, func(item string) any {
         return LI(item)
     }),
 )
-
-// Repeat N times
-DIV(
-    Repeat(3, func() any {
-        return P("Repeated")
-    }),
-)
 ```
 
-### Grouping
-Use `Fragment()` to group multiple children without wrapping them in a tag. This is useful for fragments that don't have a common ancestor:
+#### Fragment
+
+`Fragment` groups multiple nodes into a single node without a wrapping tag; children render back-to-back, identical to rendering each node individually. Useful for passing several nodes as one value (e.g. a conditional body, or a single argument to another component). Empty renders nothing; `nil` arguments panic.
 
 ```go
 Fragment(
     H1("Title"),
     P("Description"),
+    "Plain text",
 )
-// Renders: <h1>Title</h1><p>Description</p>
+// Renders: <h1>Title</h1><p>Description</p>Plain text
 ```
 
-### CSS Classes
+#### Classes
 
-`Classes()` joins multiple class names into a single space-separated string, filtering out empty and duplicate entries:
+`Classes` joins class names into a single space-separated string, trimming surrounding whitespace and dropping empty and duplicate entries. With no classes it returns `""`. Pair with `If` (see [If](#if)): terminate single-branch cases with `Value` and two-way cases with `Else`. See [Attributes](#attributes).
 
 ```go
+Classes("btn", "btn", "", " primary ") // "btn primary"
+
 BUTTON(
     AttrClass(Classes(
         "btn",
-        If(err != nil, "btn-error", "btn-primary"),
-        If(isHidden, "hidden"),
+        If(hasError, "btn-error").Else("btn-primary"),
+        If(isHidden, "hidden").Value(),
     )),
 )
 ```
 
-### JSON
+#### Json and Object
 
-`Json()` marshals a value to a JSON string, panicking on error. `Object` is a shorthand for `map[string]any`:
+`Json` marshals a value to a JSON string, panicking on error — for static values known valid at compile time. `Object` is a shorthand for `map[string]any` for inline maps.
 
 ```go
 FORM(Attr("hx-vals", Json(Object{"role": "admin", "active": true})))
+
+Json(make(chan int)) // panics: unsupported type
 ```
 
-### Caching
+#### Once and OnceKey
 
-`Once()` and `OnceKey()` cache the rendered output of a component so the underlying tree is only built and rendered once — even when the tree is reconstructed on every request.
+`Once` and `OnceKey` cache a component's rendered output so the tree is built and rendered once, even when rebuilt per request. The first render calls `generate` and caches; later renders replay the cache. A failed render is not cached.
 
-When you rebuild the component tree per request (common in web apps), wrap the expensive static parts with `Once` or `OnceKey` to avoid reconstructing and re-rendering them on every call.
-
-- `Once` derives the cache key from the caller's program counter — zero-config, guaranteed uniqueness.
-- `OnceKey` uses an explicit key — useful when the same component is built from multiple call sites. It's also slightly faster (skips the PC capture).
+- `Once` derives the key from the caller's program counter — zero-config and unique per call site.
+- `OnceKey` uses an explicit key — for shared components and slightly faster (skips PC capture). Keys must be unique; same-key calls share the entry.
 
 > **Note:** When `Once` is called inside a loop (a raw `for`, `Repeat()`, or `Range()`), all iterations share the same call site and therefore **the same cache key**. Only the first iteration renders; subsequent ones reuse the cached HTML. Use `OnceKey` with a distinguishing value (e.g., the loop index) when each iteration needs its own cache entry.
 

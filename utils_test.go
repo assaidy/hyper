@@ -10,24 +10,55 @@ import (
 )
 
 func TestIf(t *testing.T) {
-	t.Run("picks between the two values", func(t *testing.T) {
-		require.Equal(t, "yes", If(true, "yes", "no"))
-		require.Equal(t, "no", If(false, "yes", "no"))
-		require.Equal(t, 42, If(true, 42, 0))
-		require.Equal(t, 0, If(false, 42, 0))
+	t.Run("Value returns the value when the condition holds", func(t *testing.T) {
+		require.Equal(t, "x", If(true, "x").Value())
+		require.Equal(t, 42, If(true, 42).Value())
 	})
 
-	t.Run("returns the zero value when no alternative is given", func(t *testing.T) {
-		require.Equal(t, "x", If(true, "x"))
-		require.Equal(t, "", If(false, "x"))
-		require.Equal(t, 0, If(false, 42))
+	t.Run("Value returns the zero value when the condition fails and there is no else", func(t *testing.T) {
+		require.Equal(t, "", If(false, "x").Value())
+		require.Equal(t, 0, If(false, 42).Value())
 
 		var ptr *int
-		require.Nil(t, If(false, ptr))
+		require.Nil(t, If(false, ptr).Value())
 
 		items := []string{"a"}
-		require.Nil(t, If(false, items))
-		require.Equal(t, items, If(true, items))
+		require.Nil(t, If(false, items).Value())
+		require.Equal(t, items, If(true, items).Value())
+	})
+
+	t.Run("Else picks between the two values", func(t *testing.T) {
+		require.Equal(t, "yes", If(true, "yes").Else("no"))
+		require.Equal(t, "no", If(false, "yes").Else("no"))
+		require.Equal(t, 42, If(true, 42).Else(0))
+		require.Equal(t, 0, If(false, 42).Else(0))
+	})
+
+	t.Run("first true branch wins", func(t *testing.T) {
+		require.Equal(t, "one", If(true, "one").ElseIf(true, "two").Else("three"))
+	})
+
+	t.Run("skips false branches until a true one", func(t *testing.T) {
+		got := If(false, "one").ElseIf(false, "two").ElseIf(true, "three").Else("four")
+		require.Equal(t, "three", got)
+	})
+
+	t.Run("all false falls through to else", func(t *testing.T) {
+		got := If(false, "one").ElseIf(false, "two").Else("three")
+		require.Equal(t, "three", got)
+	})
+
+	t.Run("all false without else falls through to zero value", func(t *testing.T) {
+		got := If(false, "one").ElseIf(false, "two").Value()
+		require.Equal(t, "", got)
+	})
+
+	t.Run("branches derived from a shared chain stay independent", func(t *testing.T) {
+		base := If(false, "base")
+		first := base.ElseIf(true, "first")
+		second := base.ElseIf(true, "second")
+		require.Equal(t, "first", first.Value())
+		require.Equal(t, "second", second.Value())
 	})
 }
 
@@ -185,10 +216,14 @@ func TestRepeat(t *testing.T) {
 		require.Equal(t, "text42<p>elem</p>", mustRender(t, node))
 	})
 
-	t.Run("negative count panics with a clear message", func(t *testing.T) {
-		require.PanicsWithValue(t, "negative count passed to Repeat", func() {
-			Repeat(-1, func() any { return P("x") })
+	t.Run("negative count renders nothing and never calls generate", func(t *testing.T) {
+		calls := 0
+		node := Repeat(-3, func() any {
+			calls++
+			return P("x")
 		})
+		require.Equal(t, "", mustRender(t, node))
+		require.Zero(t, calls)
 	})
 }
 
