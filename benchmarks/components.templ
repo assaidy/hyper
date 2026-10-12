@@ -1,0 +1,51 @@
+package benchmarks
+
+templ Simple(name string) {
+	<div class="greeting">Hello, { name }</div>
+}
+
+templ Dashboard(d DashboardData) {
+	<div class="max-w-2xl mx-auto">
+		if d.IsAdmin {
+			<div class="bg-blue-50 p-4 rounded mb-4"><p class="font-semibold">Admin Panel</p></div>
+		} else {
+			<div class="p-4"><p>Welcome Guest</p></div>
+		}
+		<p class={ dashboardClass(d) }>Total users: { len(d.Users) }</p>
+		<ul class="space-y-2 mt-4" id="users-list">
+			for _, u := range d.Users {
+				<li class="p-2 bg-white rounded shadow">{ u }</li>
+			}
+		</ul>
+		if d.IsAdmin {
+			<input type="submit" disabled placeholder="Search"/>
+		} else {
+			<input type="submit" placeholder="Search"/>
+		}
+	</div>
+}
+
+templ UserList(users []string) {
+	<ul class="space-y-2 mt-4" id="users-list">
+		for _, u := range users {
+			<li class="p-2 bg-white rounded shadow">{ u }</li>
+		}
+	</ul>
+}
+
+templ Escape(payload string) {
+	<p>{ payload }</p>
+}
+
+// Note: templ lowercases a literal <!DOCTYPE html>, so OncePage emits it
+// via @templ.Raw("<!DOCTYPE html>") to keep output byte-identical.
+templ OncePage() {
+	@templ.Raw("<!DOCTYPE html>")
+	<html lang="en">
+		<head><title>Dashboard</title></head>
+		<body class="bg-gray-100 p-8">
+			<h1 class="text-3xl font-bold">Welcome</h1>
+			<p>Static content</p>
+		</body>
+	</html>
+}

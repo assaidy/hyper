@@ -6,6 +6,7 @@ A fast, type-safe HTML generator for Go.
 
 - **Auto-escaping** - Strings are HTML-escaped automatically for security
 - **Zero runtime dependencies** - Pure Go standard library
+- **No codegen, no CLI, no build step** - Just Go: `go get` and write components, nothing to install or generate
 - **Fast** - Minimal allocations, direct writer output
 - **Composable** - Build complex layouts from simple components
 
@@ -425,3 +426,171 @@ page := OnceKey("dashboard", func() HyperNode {
     )
 })
 ```
+
+## Benchmarks
+
+### Scenarios
+
+All three engines render **byte-identical HTML** (enforced by `TestParity`):
+
+| Scenario | What it measures |
+|---|---|
+| `Simple` | `<div class="greeting">Hello, {name}</div>`, name needs escaping |
+| `Dashboard` | Conditionals, conditional classes, boolean attr, `Range` over 3 users, count int |
+| `List100` / `List1000` | `<ul>` with 100 / 1000 `<li>` rows — loop throughput |
+| `Escape` | `<p>` with `<script>` + quotes payload — escaping cost |
+| `Once` (fresh) | Static page rendered fresh: hyper built once, `Template.Execute`, `Templ.Render` |
+| `Once` (cached) | Same page replayed from cache: hyper `Once`/`OnceKey`, pre-rendered bytes for template/templ |
+
+Hyper reports two variants: **render-only** (tree built once outside the
+loop — the expected per-request pattern) and **build+render** (tree rebuilt
+every iteration, for transparency).
+
+### Run
+
+```bash
+cd benchmarks
+go test -bench=. -benchmem -benchtime=1s -count=3 .
+```
+
+### Regenerate templ code
+
+`components_templ.go` is checked in so no tooling is needed to run the
+benchmarks. To regenerate after editing `components.templ`, use the pinned
+toolchain:
+
+```bash
+# pinned: templ v0.3.1070
+go install github.com/a-h/templ/cmd/templ@v0.3.1070
+cd benchmarks
+templ generate
+```
+### Results
+
+(`go1.27.2 linux/amd64`, i7-1165G7, `templ v0.3.1070`).
+Time is ns/op medians of the 3 runs below, with allocs/op in brackets:
+
+| Scenario | hyper | `html/template` | `templ` |
+|---|---|---|---|
+| Simple | ~225ns (1) | ~1100ns (9) | ~390ns (6) |
+| Dashboard | ~1.35µs (0) | ~5.0µs (30) | ~1.7µs (16) |
+| List100 | ~14.2µs (0) | ~83µs (603) | ~12.8µs (203) |
+| List1000 | ~142µs (0) | ~850µs (6747) | ~132µs (2003) |
+| Escape | ~332ns (2) | ~1.3µs (9) | ~630ns (7) |
+| Static page | fresh ~535ns / `Once` ~23ns / `OnceKey` ~21ns (0) | ~117ns (2) | ~195ns (3) |
+
+Full raw output of `go test -bench=. -benchmem -benchtime=1s -count=3 .`:
+
+```
+goos: linux
+goarch: amd64
+pkg: github.com/assaidy/hyper/v3/benchmarks
+cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+BenchmarkSimple_Hyper-8                 	 5451915	       211.8 ns/op	      24 B/op	       1 allocs/op
+BenchmarkSimple_Hyper-8                 	 5418240	       228.4 ns/op	      24 B/op	       1 allocs/op
+BenchmarkSimple_Hyper-8                 	 5031178	       230.1 ns/op	      24 B/op	       1 allocs/op
+BenchmarkSimple_HyperBuildRender-8      	 2142985	       561.5 ns/op	     248 B/op	       9 allocs/op
+BenchmarkSimple_HyperBuildRender-8      	 2155891	       571.9 ns/op	     248 B/op	       9 allocs/op
+BenchmarkSimple_HyperBuildRender-8      	 1988871	       603.5 ns/op	     248 B/op	       9 allocs/op
+BenchmarkSimple_Template-8              	  947815	      1104 ns/op	     288 B/op	       9 allocs/op
+BenchmarkSimple_Template-8              	  916033	      1098 ns/op	     288 B/op	       9 allocs/op
+BenchmarkSimple_Template-8              	 1000000	      2063 ns/op	     288 B/op	       9 allocs/op
+BenchmarkSimple_Templ-8                 	 2288954	       621.3 ns/op	     200 B/op	       6 allocs/op
+BenchmarkSimple_Templ-8                 	 3221280	       388.1 ns/op	     200 B/op	       6 allocs/op
+BenchmarkSimple_Templ-8                 	 3144090	       381.7 ns/op	     200 B/op	       6 allocs/op
+BenchmarkDashboard_Hyper-8              	  821268	      1352 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDashboard_Hyper-8              	  909792	      1372 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDashboard_Hyper-8              	  908710	      1275 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDashboard_HyperBuildRender-8   	  243452	      4841 ns/op	    2250 B/op	      67 allocs/op
+BenchmarkDashboard_HyperBuildRender-8   	  262700	      4792 ns/op	    2250 B/op	      67 allocs/op
+BenchmarkDashboard_HyperBuildRender-8   	  261814	      4765 ns/op	    2250 B/op	      67 allocs/op
+BenchmarkDashboard_Template-8           	  239091	      5345 ns/op	     752 B/op	      30 allocs/op
+BenchmarkDashboard_Template-8           	  224031	      5039 ns/op	     752 B/op	      30 allocs/op
+BenchmarkDashboard_Template-8           	  238149	      5016 ns/op	     752 B/op	      30 allocs/op
+BenchmarkDashboard_Templ-8              	  697069	      1697 ns/op	     592 B/op	      16 allocs/op
+BenchmarkDashboard_Templ-8              	  741787	      1697 ns/op	     592 B/op	      16 allocs/op
+BenchmarkDashboard_Templ-8              	  768928	      1643 ns/op	     592 B/op	      16 allocs/op
+BenchmarkList100_Hyper-8                	   87747	     14954 ns/op	       0 B/op	       0 allocs/op
+BenchmarkList100_Hyper-8                	   86704	     14234 ns/op	       0 B/op	       0 allocs/op
+BenchmarkList100_Hyper-8                	   75361	     13845 ns/op	       0 B/op	       0 allocs/op
+BenchmarkList100_HyperBuildRender-8     	   31137	     39112 ns/op	   19667 B/op	     608 allocs/op
+BenchmarkList100_HyperBuildRender-8     	   31360	     38956 ns/op	   19662 B/op	     608 allocs/op
+BenchmarkList100_HyperBuildRender-8     	   30390	     40675 ns/op	   19665 B/op	     608 allocs/op
+BenchmarkList100_Template-8             	   14394	     83412 ns/op	   12965 B/op	     603 allocs/op
+BenchmarkList100_Template-8             	   14774	     82823 ns/op	   12965 B/op	     603 allocs/op
+BenchmarkList100_Template-8             	   14146	     83351 ns/op	   12965 B/op	     603 allocs/op
+BenchmarkList100_Templ-8                	   95119	     12058 ns/op	    2545 B/op	     203 allocs/op
+BenchmarkList100_Templ-8                	   83366	     12831 ns/op	    2545 B/op	     203 allocs/op
+BenchmarkList100_Templ-8                	   94368	     13039 ns/op	    2545 B/op	     203 allocs/op
+BenchmarkList1000_Hyper-8               	    8659	    143599 ns/op	       6 B/op	       0 allocs/op
+BenchmarkList1000_Hyper-8               	    7755	    141711 ns/op	       7 B/op	       0 allocs/op
+BenchmarkList1000_Hyper-8               	    7660	    140776 ns/op	       7 B/op	       0 allocs/op
+BenchmarkList1000_HyperBuildRender-8    	    2643	    389185 ns/op	  195513 B/op	    6008 allocs/op
+BenchmarkList1000_HyperBuildRender-8    	    3106	    378893 ns/op	  195413 B/op	    6008 allocs/op
+BenchmarkList1000_HyperBuildRender-8    	    2889	    387311 ns/op	  195415 B/op	    6008 allocs/op
+BenchmarkList1000_Template-8            	    1395	    849805 ns/op	  134167 B/op	    6747 allocs/op
+BenchmarkList1000_Template-8            	    1420	    833930 ns/op	  134168 B/op	    6747 allocs/op
+BenchmarkList1000_Template-8            	    1398	    873191 ns/op	  134168 B/op	    6747 allocs/op
+BenchmarkList1000_Templ-8               	    8568	    130918 ns/op	   24169 B/op	    2003 allocs/op
+BenchmarkList1000_Templ-8               	    7797	    135787 ns/op	   24169 B/op	    2003 allocs/op
+BenchmarkList1000_Templ-8               	    9382	    131919 ns/op	   24169 B/op	    2003 allocs/op
+BenchmarkEscape_Hyper-8                 	 3549889	       334.4 ns/op	     192 B/op	       2 allocs/op
+BenchmarkEscape_Hyper-8                 	 3716401	       332.0 ns/op	     192 B/op	       2 allocs/op
+BenchmarkEscape_Hyper-8                 	 3485166	       322.5 ns/op	     192 B/op	       2 allocs/op
+BenchmarkEscape_HyperBuildRender-8      	 2682072	       852.7 ns/op	     240 B/op	       5 allocs/op
+BenchmarkEscape_HyperBuildRender-8      	 2308149	       518.1 ns/op	     240 B/op	       5 allocs/op
+BenchmarkEscape_HyperBuildRender-8      	 2679180	       437.8 ns/op	     240 B/op	       5 allocs/op
+BenchmarkEscape_Template-8              	  921966	      1314 ns/op	     432 B/op	       9 allocs/op
+BenchmarkEscape_Template-8              	  830755	      1340 ns/op	     432 B/op	       9 allocs/op
+BenchmarkEscape_Template-8              	  741736	      1398 ns/op	     432 B/op	       9 allocs/op
+BenchmarkEscape_Templ-8                 	 1832640	       631.5 ns/op	     416 B/op	       7 allocs/op
+BenchmarkEscape_Templ-8                 	 2012838	       603.8 ns/op	     416 B/op	       7 allocs/op
+BenchmarkEscape_Templ-8                 	 1962873	       636.4 ns/op	     416 B/op	       7 allocs/op
+BenchmarkOnce_HyperNoCache-8            	 2143704	       533.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperNoCache-8            	 2138282	       543.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperNoCache-8            	 2142007	       534.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperCached-8             	55774915	        20.59 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperCached-8             	55502074	        21.53 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperCached-8             	55982004	        21.08 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperOnceCached-8         	56760690	        22.68 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperOnceCached-8         	53884869	        22.80 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperOnceCached-8         	51631347	        24.29 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperOnceBuild-8          	 4508143	       256.7 ns/op	      32 B/op	       2 allocs/op
+BenchmarkOnce_HyperOnceBuild-8          	 4364444	       271.7 ns/op	      32 B/op	       2 allocs/op
+BenchmarkOnce_HyperOnceBuild-8          	 4237484	       275.7 ns/op	      32 B/op	       2 allocs/op
+BenchmarkOnce_HyperOnceKeyBuild-8       	43479802	        23.79 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperOnceKeyBuild-8       	46906054	        23.89 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_HyperOnceKeyBuild-8       	50845287	        21.81 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_TemplateExecute-8         	10504894	       114.8 ns/op	     128 B/op	       2 allocs/op
+BenchmarkOnce_TemplateExecute-8         	 9147585	       120.2 ns/op	     128 B/op	       2 allocs/op
+BenchmarkOnce_TemplateExecute-8         	 9732920	       116.7 ns/op	     128 B/op	       2 allocs/op
+BenchmarkOnce_TemplateCachedBytes-8     	609283545	         2.034 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_TemplateCachedBytes-8     	615087121	         1.913 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_TemplateCachedBytes-8     	612976748	         1.920 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_TemplRender-8             	 6476883	       196.1 ns/op	     144 B/op	       3 allocs/op
+BenchmarkOnce_TemplRender-8             	 6054528	       192.5 ns/op	     144 B/op	       3 allocs/op
+BenchmarkOnce_TemplRender-8             	 6334855	       197.3 ns/op	     144 B/op	       3 allocs/op
+BenchmarkOnce_TemplCachedBytes-8        	577302494	         1.938 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_TemplCachedBytes-8        	656310472	         1.958 ns/op	       0 B/op	       0 allocs/op
+BenchmarkOnce_TemplCachedBytes-8        	574639908	         2.104 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/assaidy/hyper/v3/benchmarks	127.031s
+```
+
+Takeaways:
+
+- **vs `html/template`**: hyper is several times faster on every scenario with
+  real work (roughly 4-6x on this machine), with zero allocations on
+  dashboard/list renders vs thousands. The one exception is a trivial
+  fully-static page, where `html/template` wins — hyper's fixed per-element
+  overhead dominates when there is nothing to do. Wrap statics in `OnceKey`
+  (~21ns replay vs ~530ns fresh).
+- **vs `templ`**: hyper is faster on small and branchy pages with fewer
+  allocations. `templ` is faster on the 100-row list and the static page. The
+  1000-row list is about tied in time — but `templ` allocates ~24KB / 2000
+  allocs there vs ~0 for hyper.
+- **Build cost**: even rebuilding the hyper tree on every request beats
+  `html/template` on every scenario with real work; Dashboard is about tied.
+- **`OnceKey` vs `Once`**: cached replay is identical (~21-23ns). Per-request
+  construction is about 12x cheaper with `OnceKey` (~24ns / 0 allocs vs ~270ns
+  / 2 allocs) — it skips caller-PC capture. Prefer `OnceKey` in hot paths.
