@@ -3,7 +3,7 @@ package benchmarks
 import (
 	"fmt"
 
-	. "github.com/assaidy/hyper/v3"
+	. "github.com/assaidy/hyper/v4"
 )
 
 // DashboardData is the shared fixture for the dashboard scenario.

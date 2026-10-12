@@ -13,7 +13,7 @@ A fast, type-safe HTML generator for Go.
 ## Installation
 
 ```bash
-go get github.com/assaidy/hyper/v3
+go get github.com/assaidy/hyper/v4
 ```
 
 ## Quick Start
@@ -24,7 +24,7 @@ package main
 import (
     "os"
 
-    . "github.com/assaidy/hyper/v3"
+    . "github.com/assaidy/hyper/v4"
 )
 
 // Custom attributes via constructors.

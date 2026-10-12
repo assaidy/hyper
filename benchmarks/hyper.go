@@ -1,7 +1,7 @@
 package benchmarks
 
 import (
-	. "github.com/assaidy/hyper/v3"
+	. "github.com/assaidy/hyper/v4"
 )
 
 // This file holds the hyper implementations. Each builder is called once

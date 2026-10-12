@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/assaidy/hyper/v3"
+	. "github.com/assaidy/hyper/v4"
 )
 
 // ---- render helpers (not timed) ----
